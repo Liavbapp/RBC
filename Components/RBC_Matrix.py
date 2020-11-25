@@ -3,45 +3,26 @@ import numpy as np
 
 
 def rbc(g, R, T):
-    rbc_arr = np.full(shape=(g.number_of_nodes(), 1), fill_value=0, dtype=np.float)
     nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
     s_mapping = [nodes_map[node] for node in g.nodes()]
     t_mapping = s_mapping
     num_nodes = g.number_of_nodes()
 
-    for s in s_mapping:
-        for t in t_mapping:
-            delta_arr = np.full(shape=(num_nodes, 1), fill_value=0, dtype=np.float)
-            delta_arr[s] = T(s, t)
-            updated_delta = accumulate_delta(delta_arr, s, R(s, t))
-            rbc_arr += updated_delta
-
-    return rbc_arr, nodes_map
+    all_delta_arrays = [accumulate_delta(s, t, T, R(s, t), num_nodes) for s in s_mapping for t in t_mapping]
+    rbc_arr = np.add.reduce(all_delta_arrays)
+    return rbc_arr
 
 
-# def rbc_source_target(num_nodes, R, T, rbc_arr, s, t):
-#     delta_arr = init_delta_arr(num_nodes, T=T, source=s, target=t)
-#     updated_delta = accumulate_delta(delta_arr, s, t, R)
-#     rbc_arr += updated_delta
+def accumulate_delta(src, target, T, predecessor_prob_matrix, num_nodes):
+    delta_arr = np.full(shape=(num_nodes, 1), fill_value=0, dtype=np.float)
+    delta_arr[src] = T(src, target)
 
-#
-# def init_delta_arr(num_nodes, T, source, target):
-#     delta_arr = np.full(shape=(num_nodes, 1), fill_value=0, dtype=np.float)
-#     delta_arr[source] = T(source, target)
-#
-#     return delta_arr
-
-
-def accumulate_delta(delta_arr, src, predecessor_prob_matrix):
-    predecessors = {src}
-    while len(predecessors) > 0:
+    predecessors = np.array([src])
+    while predecessors.shape[0] > 0:
         delta_arr += np.matmul(predecessor_prob_matrix, delta_arr)
-        new_predecessors = set()
-        for old_predecessor in predecessors:
-            old_successors = np.nonzero(predecessor_prob_matrix[:, ])[0]
-            new_predecessors = new_predecessors.union(set(old_successors))
-            predecessor_prob_matrix[:, old_predecessor] = 0
-        predecessors = new_predecessors
+        new_predecessors = [np.nonzero(predecessor_prob_matrix[:, predecessors])[0]]
+        predecessor_prob_matrix[:, predecessors] = 0
+        predecessors = np.unique(np.concatenate(new_predecessors, axis=0))
     return delta_arr
 
 
@@ -66,7 +47,6 @@ def to_tuple_edge_paths(all_shortest_path):
 
 
 def get_betweenness_policy_matrix(g, nodes_mapping):
-
     num_nodes = g.number_of_nodes()
     betweenness_matrix = np.full(shape=(num_nodes, num_nodes, num_nodes, num_nodes), fill_value=0, dtype=float)
     for s in g.nodes():
@@ -94,8 +74,14 @@ def get_edges_probabilities(g, src, target, nodes_mapping):
 
 
 if __name__ == '__main__':
-    edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4')}
+    # edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4')}
+    edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
+             ('v4', 'v5'), ('v1', 'v2'), ('v2', 'v3'),
+             ('v2', 't'), ('v5', 't'), ('v3', 't')}
     graph = nx.DiGraph(edges)
     nodes_mapping = {k: v for v, k in enumerate(list(graph.nodes()))}
     policy = get_betweenness_policy_matrix(graph, nodes_mapping)
     res = rbc(graph, lambda s, t: policy[s][t], lambda s, t: 100)
+    a = 1
+# <class 'tuple'>: (array([1116.66666667, 1133.33333333, 1172.22222222, 1000.        ,
+#         700.        ,  883.33333333, 1179.62962963]), {'v1': 0, 'v5': 1, 'v2': 2, 'v3': 3, 's': 4, 'v4': 5, 't': 6})

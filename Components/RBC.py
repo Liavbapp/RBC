@@ -163,10 +163,10 @@ if __name__ == '__main__':
     #      g = nx.read_edgelist(r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\test_graphs\CSV\ColiNet-1.1\grass_web\grass_web.pairs')
     #     r = get_betweenness_policy_dict(g)
     #     r = load_obj(r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\nisuy', 'betweennes')
-    # edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
-    #          ('v4', 'v5'), ('v1', 'v2'), ('v2', 'v3'),
-    #          ('v2', 't'), ('v5', 't'), ('v3', 't')}
-    edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4')}
+    edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
+             ('v4', 'v5'), ('v1', 'v2'), ('v2', 'v3'),
+             ('v2', 't'), ('v5', 't'), ('v3', 't')}
+    # edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4')}
     g = nx.DiGraph(edges)
     policy = get_betweenness_policy_dict(g)
     res = rbc(g, lambda s, u, v, t: policy[(s, t)][(u, v)] if (u, v) in policy[(s, t)] else 0, lambda s, t: 100)
