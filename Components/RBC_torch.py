@@ -20,7 +20,12 @@ def accumulate_delta(src, target, predecessor_prob_matrix, T):
     eigenvector = compute_eigenvector_values(src, target, eigenvector, T)
     return eigenvector
 
-
+# def compute_delta_ratios(predecessor_prob_matrix):
+#     eigenvalues, eigenvectors = torch.eig(input=predecessor_prob_matrix, eigenvectors=True)
+#     eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))
+#     return eigenvector
+#
+#
 def compute_eigenvector_values(src, target, eigenvector, T):
     x = 1 / float(eigenvector[src])  # the ratio between 1 to the current value of eigenvector[src]
     n_eigenvector = eigenvector * x * T(src, target)
