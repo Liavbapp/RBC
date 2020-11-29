@@ -18,24 +18,24 @@ g_2 = nx.DiGraph(edges)
 # plt.show()
 
 class Tests(unittest.TestCase):
-
-    def test_get_betweenness_policy_dict_1(self):
-        actual_policy = RBC.get_betweenness_policy_dict(g_1)
-        expected_policy_edge_s_t = {('v4', 'v5'): 1 / 3, ('v1', 'v5'): 1 / 3, ('s', 'v4'): 1 / 3, ('v2', 't'): 1 / 3,
-                                    ('s', 'v1'): 2 / 3, ('v1', 'v2'): 1 / 3, ('v5', 't'): 2 / 3}
-        self.assertTrue(actual_policy[('s', 't')] == expected_policy_edge_s_t)  # existing path
-        self.assertTrue(actual_policy[('s', 's')] == {})  # path of len 0
-        self.assertTrue(actual_policy[('t', 's')] == {})  # non existing path
-
-    def test_get_betweenness_policy_dict_2(self):
-        actual_policy = RBC.get_betweenness_policy_dict(g_2)
-        expected_policy = {('v3', 'v3'): {}, ('v3', 'v4'): {('v3', 'v4'): 1.0}, ('v3', 'v2'): {},
-                           ('v3', 'v1'): {}, ('v4', 'v3'): {}, ('v4', 'v4'): {}, ('v4', 'v2'): {},
-                           ('v4', 'v1'): {}, ('v2', 'v3'): {('v2', 'v3'): 1.0}, ('v2', 'v4'): {('v2', 'v4'): 1.0},
-                           ('v2', 'v2'): {}, ('v2', 'v1'): {}, ('v1', 'v3'): {('v2', 'v3'): 1.0, ('v1', 'v2'): 1.0},
-                           ('v1', 'v4'): {('v2', 'v4'): 1.0, ('v1', 'v2'): 1.0}, ('v1', 'v2'): {('v1', 'v2'): 1.0},
-                           ('v1', 'v1'): {}}
-        self.assertTrue(actual_policy == expected_policy)
+    #
+    # def test_get_betweenness_policy_dict_1(self):
+    #     actual_policy = RBC.get_betweenness_policy_dict(g_1)
+    #     expected_policy_edge_s_t = {('v4', 'v5'): 1 / 3, ('v1', 'v5'): 1 / 3, ('s', 'v4'): 1 / 3, ('v2', 't'): 1 / 3,
+    #                                 ('s', 'v1'): 2 / 3, ('v1', 'v2'): 1 / 3, ('v5', 't'): 2 / 3}
+    #     self.assertTrue(actual_policy[('s', 't')] == expected_policy_edge_s_t)  # existing path
+    #     self.assertTrue(actual_policy[('s', 's')] == {})  # path of len 0
+    #     self.assertTrue(actual_policy[('t', 's')] == {})  # non existing path
+    #
+    # def test_get_betweenness_policy_dict_2(self):
+    #     actual_policy = RBC.get_betweenness_policy_dict(g_2)
+    #     expected_policy = {('v3', 'v3'): {}, ('v3', 'v4'): {('v3', 'v4'): 1.0}, ('v3', 'v2'): {},
+    #                        ('v3', 'v1'): {}, ('v4', 'v3'): {}, ('v4', 'v4'): {}, ('v4', 'v2'): {},
+    #                        ('v4', 'v1'): {}, ('v2', 'v3'): {('v2', 'v3'): 1.0}, ('v2', 'v4'): {('v2', 'v4'): 1.0},
+    #                        ('v2', 'v2'): {}, ('v2', 'v1'): {}, ('v1', 'v3'): {('v2', 'v3'): 1.0, ('v1', 'v2'): 1.0},
+    #                        ('v1', 'v4'): {('v2', 'v4'): 1.0, ('v1', 'v2'): 1.0}, ('v1', 'v2'): {('v1', 'v2'): 1.0},
+    #                        ('v1', 'v1'): {}}
+    #     self.assertTrue(actual_policy == expected_policy)
 
     def test_rbc_1(self):
         expected_res = {'v1': 400, 'v2': 700, 'v3': 600, 'v4': 700}

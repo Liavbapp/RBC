@@ -9,16 +9,17 @@ def rbc(g, R, T):
     nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
     s_mapping = [nodes_map[node] for node in g.nodes()]
     t_mapping = s_mapping
-    all_delta_arrays = [accumulate_delta(s, t, R(s, t), T) for s in s_mapping for t in t_mapping]
+    all_delta_arrays = [accumulate_delta(s, R[s, t], T[s, t]) for s in s_mapping for t in t_mapping]
     rbc_arr = torch.sum(torch.stack(all_delta_arrays), dim=0)
     return rbc_arr
 
 
-def accumulate_delta(src, target, predecessor_prob_matrix, T):
+def accumulate_delta(src, predecessor_prob_matrix, T_val):
     eigenvalues, eigenvectors = torch.eig(input=predecessor_prob_matrix, eigenvectors=True)
     eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))
-    eigenvector = compute_eigenvector_values(src, target, eigenvector, T)
+    eigenvector = compute_eigenvector_values(src, eigenvector, T_val)
     return eigenvector
+
 
 # def compute_delta_ratios(predecessor_prob_matrix):
 #     eigenvalues, eigenvectors = torch.eig(input=predecessor_prob_matrix, eigenvectors=True)
@@ -26,9 +27,9 @@ def accumulate_delta(src, target, predecessor_prob_matrix, T):
 #     return eigenvector
 #
 #
-def compute_eigenvector_values(src, target, eigenvector, T):
+def compute_eigenvector_values(src, eigenvector, T_val):
     x = 1 / float(eigenvector[src])  # the ratio between 1 to the current value of eigenvector[src]
-    n_eigenvector = eigenvector * x * T(src, target)
+    n_eigenvector = eigenvector * x * T_val
     return n_eigenvector
 
 
@@ -63,8 +64,6 @@ def get_edges_probabilities(g, src, target, nodes_mapping):
     for edge in edges:
         c_e = count_edge(all_shortest_path, edge)
         edge_probability = c_e / num_paths
-        # matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_probability #TODO: return to old
-        # matrix_prob[nodes_mapping[edge[0]]][nodes_mapping[edge[1]]] = edge_probability
         matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_probability
 
     return matrix_prob
@@ -90,11 +89,12 @@ def to_tuple_edge_paths(all_shortest_path):
 
 
 if __name__ == '__main__':
-    edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4')}
+    edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4'), ('v2', 'v1')}
     # edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
     #          ('v4', 'v5'), ('v1', 'v2'), ('v2', 'v3'),
     #          ('v2', 't'), ('v5', 't'), ('v3', 't')}
     graph = nx.DiGraph(edges)
     nodes_mapping = {k: v for v, k in enumerate(list(graph.nodes()))}
-    policy = get_betweenness_policy_tensor(graph, nodes_mapping)
-    res = rbc(graph, lambda s, t: policy[s][t], lambda s, t: 100)
+    R = get_betweenness_policy_tensor(graph, nodes_mapping)
+    T = torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=100.0, dtype=float)
+    res = rbc(graph, R, T)
