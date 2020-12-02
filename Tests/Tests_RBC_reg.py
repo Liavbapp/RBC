@@ -1,8 +1,6 @@
 import unittest
 import networkx as nx
-import Components.RBC as RBC
-import matplotlib.pyplot as plt
-import scipy
+import Tests.OLD_RBC.RBC_reg as RBC
 
 edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
          ('v4', 'v5'), ('v1', 'v2'), ('v2', 'v3'),

@@ -85,4 +85,4 @@ if __name__ == '__main__':
     policy = get_betweens_policy(graph, nodes_mapping)
     # r_b = policy[nodes_mapping['v1']][nodes_mapping['v4']]
     # r_b = np.array([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [0.0, 0.3, 0.0, 0.0], [0.0, 0.7, 0.3, 0.0]])
-    res = rbc(graph, lambda s, t: r_b[s][t], lambda s, t: 100)
+    res = rbc(graph, lambda s, t: policy[s][t], lambda s, t: 100)
