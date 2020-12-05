@@ -13,7 +13,7 @@ class DegreePolicy(Policy):
 
     def get_t_tensor(self, graph: nx.Graph):
         nodes_mapping = {k: v for v, k in enumerate(list(graph.nodes()))}
-        t_tensor = torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=0.0, dtype=float)
+        t_tensor = torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=0.0)
         for s in graph.nodes():
             for t in graph.nodes():
                 if graph.has_edge(s, t):
@@ -23,10 +23,10 @@ class DegreePolicy(Policy):
 
     def get_policy_tensor(self, graph: nx.Graph, nodes_mapping):
         num_nodes = graph.number_of_nodes()
-        deg_tensor = torch.full(size=(num_nodes, num_nodes, num_nodes, num_nodes), fill_value=0.0, dtype=float)
+        deg_tensor = torch.full(size=(num_nodes, num_nodes, num_nodes, num_nodes), fill_value=0.0)
         for s in graph.nodes():
             for t in graph.nodes():
-                st_deg_matrix = torch.full(size=(num_nodes, num_nodes), fill_value=0.0, dtype=float)
+                st_deg_matrix = torch.full(size=(num_nodes, num_nodes), fill_value=0.0)
                 if graph.has_edge(s, t):
                     st_deg_matrix[nodes_mapping[t], nodes_mapping[s]] = 1.0
                 st_deg_matrix[nodes_mapping[s], nodes_mapping[s]] = 1.0
@@ -37,11 +37,11 @@ class DegreePolicy(Policy):
 class BetweennessPolicy(Policy):
 
     def get_t_tensor(self, graph, **kwargs):
-        return torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=100.0, dtype=float)
+        return torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=100.0)
 
     def get_policy_tensor(self, graph, nodes_mapping):
         num_nodes = graph.number_of_nodes()
-        betweenness_tensor = torch.full(size=(num_nodes, num_nodes, num_nodes, num_nodes), fill_value=0.0, dtype=float)
+        betweenness_tensor = torch.full(size=(num_nodes, num_nodes, num_nodes, num_nodes), fill_value=0.0)
         for s in graph.nodes():
             for t in graph.nodes():
                 edges_probabilities = self.get_edges_probabilities(graph, s, t, nodes_mapping)
@@ -50,7 +50,7 @@ class BetweennessPolicy(Policy):
         return betweenness_tensor
 
     def get_edges_probabilities(self, g, src, target, nodes_mapping):
-        matrix_prob = torch.full(size=(g.number_of_nodes(), g.number_of_nodes()), fill_value=0.0, dtype=float)
+        matrix_prob = torch.full(size=(g.number_of_nodes(), g.number_of_nodes()), fill_value=0.0)
         matrix_prob[nodes_mapping[src], nodes_mapping[src]] = 1.0
         try:
             all_shortest_path = self.to_tuple_edge_paths(nx.all_shortest_paths(g, src, target))

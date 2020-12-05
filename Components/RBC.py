@@ -52,10 +52,14 @@ if __name__ == '__main__':
     # R = betweenness_policy.get_policy_tensor(graph, nodes_mapping)
     # T = betweenness_policy.get_t_tensor(graph)
     # res = rbc(graph, R, T)
-    edges = {('v1', 'v2'), ('v1', 'v3'), ('v5', 'v8'), ('v1', 'v5')}
+    # edges = {('v1', 'v2'), ('v1', 'v3'), ('v5', 'v8'), ('v1', 'v5')}
     deg_policy = Policy.DegreePolicy()
-    graph = nx.Graph(edges)
-    graph.add_node('v10')
+    # graph = nx.Graph(edges)
+    # graph.add_node('v10')
+
+    edges_g1 = {('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v3', 'v2'), ('v1', 'v3'), ('v0', 'v4'), ('v1', 'v5'),
+                ('v6', 'v7'), ('v8', 'v3'), ('v5', 'v9'), ('v10', 'v8')}
+    graph = nx.Graph(edges_g1).to_directed()
     nodes_mapping = {k: v for v, k in enumerate(list(graph.nodes()))}
     R = deg_policy.get_policy_tensor(graph, nodes_mapping)
     T = deg_policy.get_t_tensor(graph)
