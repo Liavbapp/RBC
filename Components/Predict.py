@@ -34,14 +34,21 @@ def pre_processing():
 
 
 if __name__ == '__main__':
+    g_nisuy = nx.read_edgelist(r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_Graph_Dataset\test.edgelist', create_using=nx.DiGraph)
+    deg_policy = Policy.DegreePolicy()
+    node_map = {k: v for v, k in enumerate(list(g_nisuy.nodes()))}
+    R = deg_policy.get_policy_tensor(g_nisuy, node_map)
+    T = deg_policy.get_t_tensor(g_nisuy)
+    R_flat = torch.flatten(R, start_dim=1)
+    T_flat = torch.flatten(T, start_dim=1)
     data_set = MyOwnDataset(r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_Graph_Dataset')
     data = data_set[0]
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = Net(data_set).to(device)
+    model = Net(data_set, R_flat, T_flat).to(device)
     data = data_set[0].to(device)
     optimzer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
     model.train()
-    num_epocs = 100
+    num_epocs = 200
     for epoch in range(num_epocs):
         print(f'{epoch} out of {num_epocs}')
         optimzer.zero_grad()
@@ -56,24 +63,3 @@ if __name__ == '__main__':
     correct = int(pred[data.test_mask].eq(data.y[data.test_mask]).sum().item())
     acc = correct / sum(data.test_mask)
     print('Accuracy: {:.4f}'.format(acc))
-
-
-    # data_set = Planetoid(root='/tmp/Cora', name='Cora')
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # model = Net(data_set).to(device)
-    # data = data_set[0].to(device)
-    # optimzer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
-    # model.train()
-    # for epoch in range(200):
-    #     print(f'{epoch} out of 200')
-    #     optimzer.zero_grad()
-    #     out = model(data)
-    #     loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
-    #     loss.backward()
-    #     optimzer.step()
-    #
-    # model.eval()
-    # _, pred = model(data).max(dim=1)
-    # correct = int(pred[data.test_mask].eq(data.y[data.test_mask]).sum().item())
-    # acc = correct / int(data.test_mask.sum())
-    # print('Accuracy: {:.4f}'.format(acc))

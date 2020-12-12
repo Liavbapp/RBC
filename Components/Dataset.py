@@ -34,10 +34,10 @@ class MyOwnDataset(InMemoryDataset):
         degree_policy = Policy.DegreePolicy()
         graphs = self.get_graphs()
         data_list = []
-        for g in graphs:
+        for g, matrix in graphs:
             node_map = {k: v for v, k in enumerate(list(g.nodes()))}
             R, T = self.get_policies(g, node_map, degree_policy)
-            data_list.append(self.get_data_object(R, T, g, node_map))
+            data_list.append(self.get_data_object(R, T, g, node_map, matrix))
         return data_list
 
     @staticmethod
@@ -46,12 +46,13 @@ class MyOwnDataset(InMemoryDataset):
         t = policy.get_t_tensor(g)
         return r, t
 
-    def get_data_object(self, R, T, g, nodes_map):
-        x = self.get_features_vec(R, T)
+    def get_data_object(self, R, T, g: nx.DiGraph, nodes_map, adj_matrix):
+        x = adj_matrix
+        # x = self.get_features_vec(R, T)
         y = self.get_labels_vec(g, nodes_map)
         train_set, validation_set, test_set = self.get_data_division(len(nodes_map))
         edge_index = self.get_edge_index(g, nodes_map)
-        data = Data(x=x, y=y, edge_index=edge_index, train_mask=train_set, test_mask=test_set, validation_mask=validation_set)
+        data = Data(x=x, y=y, edge_index=edge_index, train_mask=train_set, test_mask=test_set)
         return data
 
     @staticmethod
@@ -86,7 +87,7 @@ class MyOwnDataset(InMemoryDataset):
         indices = set(range(0, num_nodes))
         train_idx = random.sample(indices, int(0.7 * num_nodes))
         indices = indices.difference(train_idx)
-        validation_idx = random.sample(indices, int(0.15 * num_nodes))
+        validation_idx = random.sample(indices, int(0.0 * num_nodes))
         indices = indices.difference(validation_idx)
         test_idx = list(indices)
         for idx in train_idx:
@@ -99,16 +100,47 @@ class MyOwnDataset(InMemoryDataset):
         return train_data, validation_data, test_data
 
     @staticmethod
-    def get_graphs():
-        # G = nx.complete_graph(20)
-        # orig_edges = set(G.edges())
-        # to_remove = random.sample(orig_edges, 30)
-        # edges = orig_edges.difference(to_remove)
-        # random_graph = nx.Graph(edges).to_directed()
+    def get_adj_matrix(g: nx.DiGraph, node_map):
+        matrix_dict = nx.convert.to_dict_of_dicts(g)
+        num_nodes = g.number_of_nodes()
+        matrix = torch.full((num_nodes, num_nodes), 0.0)
+        for node, neighbors in matrix_dict.items():
+            for neighbor in neighbors.keys():
+                matrix[node_map[node], node_map[neighbor]] = 1.0
+        return matrix
 
-        edges_g1 = {('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v3', 'v2'), ('v1', 'v3'), ('v0', 'v4'), ('v1', 'v5'),
-                    ('v6', 'v7'), ('v8', 'v3'), ('v5', 'v9'), ('v10', 'v8')}
-        g1 = nx.Graph(edges_g1).to_directed()
+
+    @staticmethod
+    def get_graphs():
+        # G = nx.graph(50)
+        G = nx.wheel_graph(50).to_directed()
+        orig_edges = set(G.edges())
+        to_remove = random.sample(orig_edges, 70)
+        edges = orig_edges.difference(to_remove)
+        random_graph = nx.Graph(edges).to_directed()
+        nx.write_edgelist(G, r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_Graph_Dataset\test.edgelist', data=False)
+        node_map_rand = {k: v for v, k in enumerate(list(random_graph.nodes()))}
+        adj_matrix_rand = MyOwnDataset.get_adj_matrix(random_graph, node_map_rand)
+
+        # edges_nisuy = [('v0', 'v1'), ('v2', 'v3'), ('v3', 'v4'), ('v4', 'v5'), ('v5', 'v6'), ('v6', 'v7'),
+        #                ('v0', 'v6'), ('v0', 'v7'),  ('v1', 'v5')]
+        # adj_matrix = torch.tensor([[0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0],
+        #                            [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+        #                            [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+        #                            [0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+        #                            [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+        #                            [0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0],
+        #                            [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0],
+        #                            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]])
+        # g_nisuy = nx.Graph(edges_nisuy).to_directed()
+        # nodes_mapping = {k: v for v, k in enumerate(list(g_nisuy.nodes()))}
+        #
+        # adj_n = MyOwnDataset.get_adj_matrix(g_nisuy, nodes_mapping)
+        # a = 1
+
+        # edges_g1 = {('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v3', 'v2'), ('v1', 'v3'), ('v0', 'v4'), ('v1', 'v5'),
+        #             ('v6', 'v7'), ('v8', 'v3'), ('v5', 'v9'), ('v10', 'v8')}
+        # g1 = nx.Graph(edges_g1).to_directed()
 
         # edges_g1 = [('v0', 'v1'), ('v0', 'v2'), ('v1', 'v0'), ('v1', 'v2'), ('v2', 'v0'), ('v2', 'v1')]
         # g1 = nx.DiGraph(edges_g1)
@@ -134,7 +166,7 @@ class MyOwnDataset(InMemoryDataset):
         # edges_g3 = [('v0', 'v1'), ('v1', 'v0'), ('v1', 'v2'), ('v2', 'v1'), ('v2', 'v1'), ('v3', 'v2'), ('v2', 'v3')]
         # g3 = nx.DiGraph(edges_g3)
         # g3.add_nodes_from(['v4', 'v5'])
-        return [g1]
+        return [(random_graph, adj_matrix_rand)]
 
 
 if __name__ == '__main__':
