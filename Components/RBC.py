@@ -53,10 +53,9 @@ if __name__ == '__main__':
     # T = betweenness_policy.get_t_tensor(graph)
     # res = rbc(graph, R, T)
     # edges = {('v1', 'v2'), ('v1', 'v3'), ('v5', 'v8'), ('v1', 'v5')}
-    deg_policy = Policy.DegreePolicy()
     # graph = nx.Graph(edges)
     # graph.add_node('v10')
-
+    deg_policy = Policy.DegreePolicy()
     edges_g1 = {('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v3', 'v2'), ('v1', 'v3'), ('v0', 'v4'), ('v1', 'v5'),
                 ('v6', 'v7'), ('v8', 'v3'), ('v5', 'v9'), ('v10', 'v8')}
     graph = nx.Graph(edges_g1).to_directed()

@@ -20,7 +20,6 @@ class DegreePolicy(Policy):
                     t_tensor[nodes_mapping[s], nodes_mapping[t]] = 0.5
         return t_tensor
 
-
     def get_policy_tensor(self, graph: nx.Graph, nodes_mapping):
         num_nodes = graph.number_of_nodes()
         deg_tensor = torch.full(size=(num_nodes, num_nodes, num_nodes, num_nodes), fill_value=0.0)
