@@ -9,27 +9,46 @@ DTYPE = torch.float
 DEVICE = torch.device("cuda:0")
 
 
-#
-
 class DegreePrediction(torch.nn.Module):
-    def __init__(self, input_features):
+    def __init__(self, x, num_nodes):
         super().__init__()
         device = torch.device('cuda:0')
         dtype = torch.float
-        self.weights = torch.nn.Parameter(
-            torch.randn(input_features.size()[0], input_features.size()[1], requires_grad=True, device=device,
-                        dtype=dtype))
+        self.num_nodes = num_nodes
+        self.x_num_rows = x.size()[0]
+        self.x_num_cols = x.size()[1]
+        self.weights_t = torch.nn.Parameter(
+            torch.randn(self.x_num_rows, self.x_num_rows, requires_grad=True, device=device, dtype=dtype))
+        self.weights_r = torch.nn.Parameter(
+            torch.randn(self.x_num_rows, self.x_num_rows, requires_grad=True, device=device, dtype=dtype))
 
     def forward(self, x):
-        return torch.sum(x * self.weights, dim=0)
+        l2 = x * self.weights_t
+        y_pred = torch.sum((l2 * self.weights_r).view(self.num_nodes, pow(self.num_nodes, 3)), dim=1)
+        return y_pred
+
+
+#
+#
+# class DegreePrediction(torch.nn.Module):
+#     def __init__(self, input_features):
+#         super().__init__()
+#         device = torch.device('cuda:0')
+#         dtype = torch.float
+#         self.weights = torch.nn.Parameter(
+#             torch.randn(input_features.size()[0], input_features.size()[1], requires_grad=True, device=device,
+#                         dtype=dtype))
+#
+#     def forward(self, x):
+#         return torch.sum(x * self.weights, dim=0)
 
 
 def predit_degree_custom_model(x, y):
-    model = DegreePrediction(input_features)
+    model = DegreePrediction(x, y.size()[0])
     criterion = torch.nn.MSELoss(reduction='sum')
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    for t in range(2000):
+    for t in range(1000):
         y_pred = model(x)
         loss = criterion(y_pred, y)
         print(t, loss.item())
@@ -109,6 +128,21 @@ if __name__ == '__main__':
     # edge_lst = [('v0', 'v1')]
     # g = nx.Graph(edge_lst).to_directed()
     # t_tensor = degree_policy.get_t_tensor(g)
+    # predit_degree_custom_model(torch.tensor([[0], [1], [1], [0]], dtype=DTYPE, device=DEVICE),
+    #                            torch.tensor([1, 1], device=DEVICE, dtype=DTYPE))
+
+
+    degree_policy = Policy.DegreePolicy()
+    edge_lst = [('v0', 'v1'), ('v1', 'v2'), ('v0', 'v2'), ('v2', 'v3')]
+    g = nx.Graph(edge_lst).to_directed()
+    t_tensor = degree_policy.get_t_tensor(g)
+    predit_degree_custom_model(torch.tensor([[0], [1], [1], [0], [1], [0], [1], [0], [1], [1], [0], [1], [0], [0], [1], [0]], dtype=DTYPE, device=DEVICE),
+                           torch.tensor([2, 2, 3, 1], device=DEVICE, dtype=DTYPE))
+
+
+
+
+
     # predit_degree_custom_model(
     #     torch.tensor([[0, 0.5], [0, 0.5], [0, 0.5], [0, 0.5], [0.5, 0], [0.5, 0], [0.5, 0], [0.5, 0]],
     #                  dtype=DTYPE, device=DEVICE),
@@ -130,17 +164,17 @@ if __name__ == '__main__':
     # target_degree = torch.tensor([2, 2, 3, 1], dtype=DTYPE, device=DEVICE)
     # predict_degree(input_features, target_degree)
 
-    degree_policy = Policy.DegreePolicy()
-    edge_lst = [('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4')]
-    g = nx.Graph(edge_lst).to_directed()
-    t_tensor = degree_policy.get_t_tensor(g)
-    lst_inputs = []
-    for i in range(0, len(t_tensor)):
-        row_i = t_tensor[i]
-        row_i_inputs = []
-        for j in range(0, len(row_i)):
-            row_i_inputs += [row_i[j]] * (len(t_tensor) * len(t_tensor))
-        lst_inputs.append(row_i_inputs)
-    input_features = torch.tensor(lst_inputs, device=DEVICE, dtype=DTYPE).transpose(0, 1)
-    target_degree = torch.tensor([2, 2, 4, 1, 1], device=DEVICE, dtype=DTYPE)
-    predit_degree_custom_model(input_features, target_degree)
+    # degree_policy = Policy.DegreePolicy()
+    # edge_lst = [('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v2', 'v3')]
+    # g = nx.Graph(edge_lst).to_directed()
+    # t_tensor = degree_policy.get_t_tensor(g)
+    # lst_inputs = []
+    # for i in range(0, len(t_tensor)):
+    #     row_i = t_tensor[i]
+    #     row_i_inputs = []
+    #     for j in range(0, len(row_i)):
+    #         row_i_inputs += [row_i[j]] * (len(t_tensor) * len(t_tensor))
+    #     lst_inputs.append(row_i_inputs)
+    # input_features = torch.tensor(lst_inputs, device=DEVICE, dtype=DTYPE).transpose(0, 1)
+    # target_degree = torch.tensor([2, 2, 3, 1], device=DEVICE, dtype=DTYPE)
+    # predit_degree_custom_model(input_features, target_degree)
