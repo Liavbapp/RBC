@@ -2,6 +2,8 @@ import networkx as nx
 import torch
 import Components.Policy as Policy
 
+DEVICE = 'cuda:0'
+DTYPE = 'float'
 
 def rbc(g, R, T):
     nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
@@ -56,12 +58,13 @@ if __name__ == '__main__':
     # graph = nx.Graph(edges)
     # graph.add_node('v10')
     deg_policy = Policy.DegreePolicy()
-    edges_g1 = {('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v3', 'v2'), ('v1', 'v3'), ('v0', 'v4'), ('v1', 'v5'),
-                ('v6', 'v7'), ('v8', 'v3'), ('v5', 'v9'), ('v10', 'v8')}
+    edges_g1 = [('v0', 'v1')]
+    # edges_g1 = {('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v3', 'v2'), ('v1', 'v3'), ('v0', 'v4'), ('v1', 'v5'),
+    #             ('v6', 'v7'), ('v8', 'v3'), ('v5', 'v9'), ('v10', 'v8')}
     graph = nx.Graph(edges_g1).to_directed()
     nodes_mapping = {k: v for v, k in enumerate(list(graph.nodes()))}
     R = deg_policy.get_policy_tensor(graph, nodes_mapping)
     T = deg_policy.get_t_tensor(graph)
     res = rbc(graph, R, T)
-    print(nodes_mapping)
+    # print(nodes_mapping)
     print(res)
