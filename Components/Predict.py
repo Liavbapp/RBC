@@ -70,27 +70,27 @@ def get_fixed_mat(adj_mat):
 
 
 if __name__ == '__main__':
-    degree_policy = Policy.DegreePolicy()
-    edge_lst = [('v0', 'v1')]
-    g = nx.Graph(edge_lst).to_directed()
-    t_tensor = degree_policy.get_t_tensor(g)
-    t_weights, r_weights = predit_degree_custom_model(
-        torch.tensor([[0, 1], [1, 0]], requires_grad=True, dtype=DTYPE, device=DEVICE),
-        torch.tensor([1, 1], device=DEVICE, dtype=DTYPE))
-
-    t_model = t_weights.to(device=torch.device("cpu"))
-    r_model = r_weights.to(device=torch.device("cpu"))
-    rbc_pred = RBC.rbc(g, r_model, t_model)
-    print(rbc_pred)
-
     # degree_policy = Policy.DegreePolicy()
-    # edge_lst = [('v0', 'v1'), ('v1', 'v2'), ('v0', 'v2'), ('v2', 'v3')]
+    # edge_lst = [('v0', 'v1')]
     # g = nx.Graph(edge_lst).to_directed()
     # t_tensor = degree_policy.get_t_tensor(g)
-    # t_model, r_model = predit_degree_custom_model(
-    #     torch.tensor([[0, 1, 1, 0], [1, 0, 1, 0], [1, 1, 0, 1], [0, 0, 1, 0]], dtype=DTYPE,
-    #                  device=DEVICE), torch.tensor([2, 2, 3, 1], device=DEVICE, dtype=DTYPE))
-    # t_model = t_model.to(device=torch.device("cpu"))
-    # r_model = r_model.to(device=torch.device("cpu"))
+    # t_weights, r_weights = predit_degree_custom_model(
+    #     torch.tensor([[0, 1], [1, 0]], requires_grad=True, dtype=DTYPE, device=DEVICE),
+    #     torch.tensor([1, 1], device=DEVICE, dtype=DTYPE))
+    #
+    # t_model = t_weights.to(device=torch.device("cpu"))
+    # r_model = r_weights.to(device=torch.device("cpu"))
     # rbc_pred = RBC.rbc(g, r_model, t_model)
     # print(rbc_pred)
+
+    degree_policy = Policy.DegreePolicy()
+    edge_lst = [('v0', 'v1'), ('v1', 'v2'), ('v0', 'v2'), ('v2', 'v3')]
+    g = nx.Graph(edge_lst).to_directed()
+    t_tensor = degree_policy.get_t_tensor(g)
+    t_model, r_model = predit_degree_custom_model(
+        torch.tensor([[0, 1, 1, 0], [1, 0, 1, 0], [1, 1, 0, 1], [0, 0, 1, 0]], dtype=DTYPE,
+                     device=DEVICE, requires_grad=True), torch.tensor([2, 2, 3, 1], device=DEVICE, dtype=DTYPE))
+    t_model = t_model.to(device=torch.device("cpu"))
+    r_model = r_model.to(device=torch.device("cpu"))
+    rbc_pred = RBC.rbc(g, r_model, t_model)
+    print(rbc_pred)
