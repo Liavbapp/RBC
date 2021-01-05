@@ -43,7 +43,7 @@ def predict_degree_custom_model(adj_mat, y):
     zero_mat, const_mat = get_fixed_mat(adj_mat)
 
     start_time = datetime.datetime.now()
-    for t in range(250):
+    for t in range(300):
         y_pred = model(adj_mat, zero_mat, const_mat)
         loss = criterion(y_pred, y)
         if t % 20 == 0:
@@ -109,12 +109,12 @@ if __name__ == '__main__':
     # print(rbc_pred)
 
     degree_policy = Policy.DegreePolicy()
-    g = nx.watts_strogatz_graph(n=90, k=6, p=0.5)
+    g = nx.watts_strogatz_graph(n=100, k=8, p=0.5)
     adj_matrix = torch.from_numpy(nx.to_numpy_matrix(g)).to(dtype=DTYPE, device=DEVICE)
     target_matrix = torch.tensor(list(map(float, dict(nx.degree(g)).values())), device=DEVICE, dtype=DTYPE)
     g = g.to_directed()
     t_model, r_model = predict_degree_custom_model(adj_matrix, target_matrix)
-    # t_model = t_model.to(device=torch.device("cpu"))
-    # r_model = r_model.to(device=torch.device("cpu"))
-    # rbc_pred = RBC.rbc(g, r_model, t_model)
-    # print(rbc_pred)
+    t_model = t_model.to(device=torch.device("cpu"))
+    r_model = r_model.to(device=torch.device("cpu"))
+    rbc_pred = RBC.rbc(g, r_model, t_model)
+    print(rbc_pred)

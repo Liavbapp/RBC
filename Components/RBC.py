@@ -5,6 +5,7 @@ import Components.Policy as Policy
 DEVICE = 'cuda:0'
 DTYPE = 'float'
 
+
 def rbc(g, R, T):
     nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
     s_mapping = [nodes_map[node] for node in g.nodes()]
