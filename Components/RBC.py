@@ -1,6 +1,7 @@
 import networkx as nx
 import torch
 import Components.Policy as Policy
+import numpy as np
 
 DEVICE = 'cuda:0'
 DTYPE = 'float'
@@ -36,13 +37,6 @@ def get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, eigenvalue):
     return eigenvector
 
 
-# def compute_delta_ratios(predecessor_prob_matrix):
-#     eigenvalues, eigenvectors = torch.eig(input=predecessor_prob_matrix, eigenvectors=True)
-#     eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))
-#     return eigenvector
-#
-#
-
 
 if __name__ == '__main__':
     # edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4')}
@@ -59,7 +53,7 @@ if __name__ == '__main__':
     # graph = nx.Graph(edges)
     # graph.add_node('v10')
     deg_policy = Policy.DegreePolicy()
-    edges_g1 = [('v0', 'v1')]
+    edges_g1 = [('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v2', 'v3')]
     # edges_g1 = {('v0', 'v1'), ('v0', 'v2'), ('v1', 'v2'), ('v3', 'v2'), ('v1', 'v3'), ('v0', 'v4'), ('v1', 'v5'),
     #             ('v6', 'v7'), ('v8', 'v3'), ('v5', 'v9'), ('v10', 'v8')}
     graph = nx.Graph(edges_g1).to_directed()

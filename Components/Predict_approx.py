@@ -33,11 +33,10 @@ class DegreePrediction(torch.nn.Module):
         return rbc_arr
 
     def accumulate_delta(self, src, predecessor_prob_matrix, T_val):
-
-        eigenvector2 = self.power_iteration(predecessor_prob_matrix)[1]
+        new_eigenevalue, eiginevector = self.power_iteration(predecessor_prob_matrix)
+        eigenvector2 = eiginevector
         eigenvector = self.compute_eigenvector_values(src, eigenvector2, T_val)
         return eigenvector
-
 
     def compute_eigenvector_values(self, src, eigenvector, T_val):
         x = 1 / float(eigenvector[src])  # the ratio between 1 to the current value of eigenvector[src]
@@ -46,14 +45,11 @@ class DegreePrediction(torch.nn.Module):
 
         return n_eigenvector
 
-
-
-
     def eigenvalue(self, A, v):
         Av = torch.mm(A, v)
         return torch.dot(v.flatten(), Av.flatten())
 
-    def power_iteration(self, A, num_iter=100):
+    def power_iteration(self, A, num_iter=10):
         n, d = A.shape
         v = (torch.ones(d) / np.sqrt(d)).to(device=DEVICE, dtype=DTYPE).view(d, 1)
         ev = self.eigenvalue(A, v)
@@ -65,8 +61,8 @@ class DegreePrediction(torch.nn.Module):
             v_new = Av / torch.linalg.norm(Av.flatten())
 
             ev_new = self.eigenvalue(A, v_new)
-            if torch.abs(ev - ev_new) < 0.01:
-                break
+            # if torch.abs(ev - ev_new) < 0.01:
+            #     break
 
             v = v_new
             ev = ev_new
@@ -74,16 +70,15 @@ class DegreePrediction(torch.nn.Module):
         return ev_new, v_new.flatten()
 
 
-
-def predict_degree_custom_model(graph, adj_mat, y):
-    zero_mat, const_mat = get_fixed_mat(adj_mat, graph)
+def predict_degree_custom_model(adj_mat, y):
+    zero_mat, const_mat = get_fixed_mat(adj_mat)
 
     model = DegreePrediction(adj_mat)
     criterion = torch.nn.MSELoss(reduction='sum')
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     start_time = datetime.datetime.now()
-    for t in range(150):
+    for t in range(800):
         y_pred = model(adj_mat, zero_mat, const_mat)
         loss = criterion(y_pred, y)
         if t % 20 == 0:
@@ -98,34 +93,45 @@ def predict_degree_custom_model(graph, adj_mat, y):
     return model_t, model_r
 
 
-def get_fixed_mat(adj_mat, graph):
-    nodes = list(graph.nodes)
+def get_fixed_mat(adj_mat):
+    adj_matrix_t = adj_mat.t()
     adj_size = adj_mat.size()[0]
     zeros_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
     constant_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
     for s in range(0, adj_size):
         for t in range(0, adj_size):
-            edges_path_lst = list(nx.all_simple_edge_paths(graph, nodes[s], nodes[t]))
-            edges = set()
-            if len(edges_path_lst) > 0:
-                # edges = set(sum(edges_path_lst, []))
-                edges = set(edges_path_lst[0])
             constant_mat[s, t, s, s] = 1
-            for edge in edges:
-                zeros_mat[s, t, edge[1], edge[0]] = 1
+            zeros_mat[s, t] = adj_matrix_t
+            zeros_mat[s, t, s] = 0  # we want to zeros all edges that go into the source node
+
     return zeros_mat, constant_mat
 
 
-if __name__ == '__main__':
-    degree_policy = Policy.DegreePolicy()
-    edge_lst = [(0, 1), (1, 2)]
-    g = nx.Graph(edge_lst)
+def test_degree():
+    edge_lst = [(0, 1), (1, 2), (2, 0), (2, 3)]
+    g = nx.DiGraph(edge_lst)
     # g = nx.watts_strogatz_graph(n=10, k=3, p=0.5)
     adj_matrix = torch.from_numpy(nx.to_numpy_matrix(g)).to(dtype=DTYPE, device=DEVICE)
     target_matrix = torch.tensor(list(map(float, dict(nx.degree(g)).values())), device=DEVICE, dtype=DTYPE)
-    g = g.to_directed()
-    t_model, r_model = predict_degree_custom_model(g, adj_matrix, target_matrix)
+    # g = g.to_directed()
+    t_model, r_model = predict_degree_custom_model(adj_matrix, target_matrix)
     t_model = t_model.to(device=torch.device("cpu"))
     r_model = r_model.to(device=torch.device("cpu"))
     rbc_pred = RBC.rbc(g, r_model, t_model)
     print(rbc_pred)
+
+
+def test_betweenness():
+    edge_lst = [(0, 1), (1, 2), (2, 0), (2, 3)]
+    g = nx.DiGraph(edge_lst)
+    adj_matrix = torch.from_numpy(nx.to_numpy_matrix(g)).to(dtype=DTYPE, device=DEVICE)
+    betweenness_tensor = torch.tensor(list(nx.betweenness_centrality(g).values()), dtype=DTYPE, device=DEVICE)
+    t_model, r_model = predict_degree_custom_model(adj_matrix, betweenness_tensor)
+    t_model = t_model.to(device=torch.device("cpu"))
+    r_model = r_model.to(device=torch.device("cpu"))
+    rbc_pred = RBC.rbc(g, r_model, t_model)
+    print(rbc_pred)
+
+
+if __name__ == '__main__':
+    test_betweenness()

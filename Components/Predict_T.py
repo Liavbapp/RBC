@@ -22,20 +22,20 @@ class DegreePrediction(torch.nn.Module):
         self.n_nodes_pow3 = pow(self.num_nodes, 3)
         self.weights_t = torch.nn.Parameter(
             torch.randn(self.num_nodes, self.num_nodes, requires_grad=True, device=device, dtype=dtype))
-        #
-        # self.weights_r = torch.nn.Parameter(torch.randn(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,
-        #                                                 requires_grad=True, device=device, dtype=dtype))
 
-        self.fixed_r = torch.mul(torch.randn(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,
-                                             requires_grad=True, device=device, dtype=dtype),
-                                 r_zeros).detach() + r_const
+        self.weights_r = torch.nn.Parameter(torch.randn(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,
+                                                        requires_grad=True, device=device, dtype=dtype))
+
+        # self.fixed_r = torch.mul(torch.randn(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,
+        #                                      requires_grad=True, device=device, dtype=dtype),
+        #                          r_zeros).detach() + r_const
 
         self.self_eigenvalue = torch.tensor([[1.0, 0.0]], device=DEVICE, dtype=DTYPE)
 
     def forward(self, x, r_zeros, r_const):
         layer2 = (x * self.weights_t).view(self.num_nodes, self.num_nodes, 1, 1) * r_const
-        # weights_r_comb = torch.mul(self.weights_r, r_zeros) + r_const
-        all_delta_arrays = [self.accumulate_delta(s,  self.fixed_r[s, t], layer2[s, t, s, s]) for s in
+        weights_r_comb = torch.mul(self.weights_r, r_zeros) + r_const
+        all_delta_arrays = [self.accumulate_delta(s,  weights_r_comb[s, t].detach(), layer2[s, t, s, s]) for s in
                             range(0, len(x)) for t in range(0, len(x))]
         rbc_arr = torch.sum(torch.stack(all_delta_arrays), dim=0)
 
@@ -102,7 +102,7 @@ def get_fixed_mat(adj_mat, graph):
 
 if __name__ == '__main__':
     degree_policy = Policy.DegreePolicy()
-    edge_lst = [(0, 1), (1, 2), (0, 2), (2, 3), (3, 4), (4, 5)]
+    edge_lst = [(0, 1), (1, 2), (0, 2), (2, 3)]
     g = nx.Graph(edge_lst)
     adj_matrix = torch.from_numpy(nx.to_numpy_matrix(g)).to(dtype=DTYPE, device=DEVICE)
     target_matrix = torch.tensor(list(map(float, dict(nx.degree(g)).values())), device=DEVICE, dtype=DTYPE)
