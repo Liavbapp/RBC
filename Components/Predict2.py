@@ -15,24 +15,20 @@ class DegreePrediction(torch.nn.Module):
         super().__init__()
         self.num_nodes = adj_mat.size()[0]
         self.weights_t = torch.nn.Parameter(
-            torch.rand(self.num_nodes, self.num_nodes, requires_grad=True, device=DEVICE, dtype=DTYPE))
-        self.weights_r = torch.nn.Parameter(torch.rand(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,
+            torch.randn(self.num_nodes, self.num_nodes, requires_grad=True, device=DEVICE, dtype=DTYPE))
+        self.weights_r = torch.nn.Parameter(torch.randn(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,
                                                        requires_grad=True, device=DEVICE, dtype=DTYPE))
 
-    def forward(self, x, r_zeros, r_const, t_paths):
-        weights_t_fixed = self.weights_t * t_paths
-        # layer2 = weights_t_fixed.view(self.num_nodes, self.num_nodes, 1,
-        #                                    1) * r_const  # todo: check how to fix traffic matrix here, I think the multiplication with r_conts is worng, then change row 25
-        weights_r_comb = torch.mul(self.weights_r,
-                                   r_zeros) + r_const  # todo: I found that if I ommit r_const the power iteration doesnt converge!!!
-
-        all_delta_arrays = [self.accumulate_delta(s, weights_r_comb[s, t], weights_t_fixed[s, t]) for s in
+    def forward(self, x, r_zeros, t_const):
+        layer2 = (x * self.weights_t).view(self.num_nodes, self.num_nodes, 1, 1) * t_const
+        weights_r_comb = torch.mul(self.weights_r, r_zeros)
+        all_delta_arrays = [self.accumulate_delta(s, weights_r_comb[s, t], layer2[s, t, s, s]) for s in
                             range(0, len(x)) for t in range(0, len(x))]
         rbc_arr = torch.sum(torch.stack(all_delta_arrays), dim=0)
         return rbc_arr
 
     def accumulate_delta(self, src, predecessor_prob_matrix, T_val):
-        new_eigenevalue, eiginevector = self.power_iteration(predecessor_prob_matrix)
+        # new_eigenevalue, eiginevector = self.power_iteration(predecessor_prob_matrix)
         eigenvector2 = eiginevector
         eigenvector = self.compute_eigenvector_values(src, eigenvector2, T_val)
         return eigenvector
@@ -60,7 +56,7 @@ class DegreePrediction(torch.nn.Module):
             v_new = Av / torch.linalg.norm(Av.flatten())
 
             ev_new = self.eigenvalue(A, v_new)
-            if torch.abs(ev - ev_new) < 0.01:
+            if torch.abs(ev - ev_new) < 0.0001:
                 break
 
             v = v_new
@@ -69,16 +65,16 @@ class DegreePrediction(torch.nn.Module):
         return ev_new, v_new.flatten()
 
 
-def predict_degree_custom_model(adj_mat, y, reverse_nodes_mapping, g):
-    zero_mat, const_mat, t_paths = get_fixed_mat(adj_mat, reverse_nodes_mapping, g)
+def predict_degree_custom_model(adj_mat, y):
+    zero_mat, t_const = get_fixed_mat(adj_mat)
 
     model = DegreePrediction(adj_mat)
     criterion = torch.nn.MSELoss(reduction='sum')
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
 
     start_time = datetime.datetime.now()
-    for t in range(400):
-        y_pred = model(adj_mat, zero_mat, const_mat, t_paths)
+    for t in range(300):
+        y_pred = model(adj_mat, zero_mat, t_const)
         loss = criterion(y_pred, y)
         if t % 20 == 0 or t == 0:
             print(t, loss.item())
@@ -88,40 +84,32 @@ def predict_degree_custom_model(adj_mat, y, reverse_nodes_mapping, g):
         optimizer.step()
 
     print(f'\nRun Time -  {datetime.datetime.now() - start_time} \n\nLearning Target - {y}')
-    model_t = model.weights_t * t_paths
-    model_r = model.weights_r * zero_mat + const_mat
+    model_t = model.weights_t * t_const
+    model_r = model.weights_r * zero_mat
     return model_t, model_r
 
 
-def get_fixed_mat(adj_mat, reverse_nodes_mapping, g):
+def get_fixed_mat(adj_mat):
     adj_matrix_t = adj_mat.t()  # transpose the matrix to because R policy matrices are transposed (predecessor matrix)
     adj_size = adj_mat.size()[0]
     zeros_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
-    constant_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
-    path_exist = torch.full(size=(adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
+    path_exist = torch.full(size=(adj_size, adj_size), fill_value=1, dtype=DTYPE, device=DEVICE)
+
     for s in range(0, adj_size):
         for t in range(0, adj_size):
-            constant_mat[s, t, s, s] = 1  # every src,src in policy matrix must have 1 to have a free variable
+            # constant_mat[s, t, s, s] = 1  # every src,src in policy matrix must have 1 to have a free variable
             zeros_mat[s, t] = adj_matrix_t  # putting zeros where the transposed adj_matrix has zeros
-            # zeros_mat[s, t, s] = 0  # we want to zeros all edges that go into the source node
+            zeros_mat[s, t, s] = 0  # we want to zeros all edges that go into the source node
 
-            # todo: instead of the code below write algorithm that for a given afj_matrix find if there is a path between s,t (path len must be >= 1, that mean no self-loops)
-            cycle_len = 0
-            try:
-                cycle = nx.find_cycle(g, reverse_nodes_mapping[s])
-                if len(cycle) > 1:
-                    cycle_len = len(cycle)
-            except:
-                pass
-            if len(list(nx.all_simple_paths(g, reverse_nodes_mapping[s], reverse_nodes_mapping[t]))) + cycle_len >= 1:
-                path_exist[s, t] = 1.0
+    return zeros_mat, path_exist
 
-    return zeros_mat, constant_mat, path_exist
+
+
 
 
 def test_degree():
     # edge_lst = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9)]
-    edge_lst = [(0, 1), (1, 2), (2, 0), (2, 3)]
+    edge_lst = [(0, 1), (1, 2), (2, 0)]
     # g = nx.gnp_random_graph(10, 0.5, directed=True)
     #
     # g = nx.DiGraph([(u, v) for (u, v) in g.edges() if u < v])
@@ -132,21 +120,19 @@ def test_degree():
     # g = g.to_directed()
 
     nodes_mapping_reverse = {k: v for k, v in enumerate(list(g.nodes()))}
-    nodes_mapping = {v: k for k, v in enumerate(list(g.nodes()))}
-
     # adj_matrix = torch.from_numpy(nx.to_numpy_matrix(g)).to(dtype=DTYPE, device=DEVICE)
     # target_matrix =  torch.tensor(list(map(float, dict(nx.degree(g)).values())), device=DEVICE, dtype=DTYPE)
     adj_matrix = get_adj_mat(g, nodes_mapping_reverse)
     target_matrix = get_degree_in_out(adj_matrix)
-    t_model, r_model = predict_degree_custom_model(adj_matrix, target_matrix, nodes_mapping_reverse, g)
+    t_model, r_model = predict_degree_custom_model(adj_matrix, target_matrix)
     t_model = t_model.to(device=torch.device("cpu"))
     r_model = r_model.to(device=torch.device("cpu"))
     rbc_pred = RBC.rbc(g, r_model, t_model)
-    print(f"\n\nRBC Prediction - {rbc_pred}")
+    print(f"\n\nRBC Prediction - {rbc_pred}" )
 
 
 def test_betweenness():
-    edge_lst = [(0, 1), (1, 2), (2, 3), (3, 4)]
+    edge_lst = [(0, 1), (1, 2), (2,0)]
     # g = nx.DiGraph(edge_lst)
     # g = nx.gnp_random_graph(10, 0.5, directed=True)
     # g = nx.DiGraph([(u, v) for (u, v) in g.edges() if u < v])
@@ -157,7 +143,7 @@ def test_betweenness():
     adj_matrix = get_adj_mat(g, nodes_mapping_reverse)
     nodes_mapping = {k: v for v, k in enumerate(list(g.nodes()))}
     betweenness_tensor = get_betweenness_tensor(g, nodes_mapping)
-    t_model, r_model = predict_degree_custom_model(adj_matrix, betweenness_tensor, nodes_mapping_reverse, g)
+    t_model, r_model = predict_degree_custom_model(adj_matrix, betweenness_tensor)
     t_model = t_model.to(device=torch.device("cpu"))
     r_model = r_model.to(device=torch.device("cpu"))
     rbc_pred = RBC.rbc(g, r_model, t_model)
@@ -195,5 +181,5 @@ def get_adj_mat(g, nodes_mapping):
 
 
 if __name__ == '__main__':
-    # test_degree()
-    test_betweenness()
+    test_degree()
+    # test_betweenness()
