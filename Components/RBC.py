@@ -11,14 +11,14 @@ def rbc(g, R, T):
     nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
     s_mapping = [nodes_map[node] for node in g.nodes()]
     t_mapping = s_mapping
-    all_delta_arrays = [accumulate_delta(s, R[s, t], T[s, t]) for s in s_mapping for t in t_mapping]
+    all_delta_arrays = [accumulate_delta(s, R[s, t], T[s, t], t) for s in s_mapping for t in t_mapping]
     rbc_arr = torch.sum(torch.stack(all_delta_arrays), dim=0)
     return rbc_arr
 
 
-def accumulate_delta(src, predecessor_prob_matrix, T_val):
+def accumulate_delta(src, predecessor_prob_matrix, T_val, t):
     eigenvalues, eigenvectors = torch.eig(input=predecessor_prob_matrix, eigenvectors=True)
-    eigenvector = eigenvectors[:, torch.argmax(eigenvalues.t()[0])] #todo: find out which impl is right this or below
+    eigenvector = eigenvectors[:, torch.argmax(eigenvalues.t()[0])]  # todo: find out which impl is right this or below
     # eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))
     eigenvector = compute_eigenvector_values(src, eigenvector, T_val)
     return eigenvector
@@ -38,9 +38,8 @@ def get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, eigenvalue):
     return eigenvector
 
 
-
 if __name__ == '__main__':
-    edges = {('v1', 'v2'), ('v2', 'v3'), ('v2', 'v4'), ('v3', 'v4')}
+    edges = {(0, 1), (1, 2), (2, 0)}
     # edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
     #          ('v4', 'v5'), ('v1', 'v2'), ('v2', 'v3'),
     #          ('v2', 't'), ('v5', 't'), ('v3', 't')}
