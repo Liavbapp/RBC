@@ -48,19 +48,29 @@ class BetweennessPolicy(Policy):
 
         return betweenness_tensor
 
+
     def get_edges_probabilities(self, g, src, target, nodes_mapping):
         matrix_prob = torch.full(size=(g.number_of_nodes(), g.number_of_nodes()), fill_value=0.0)
-        matrix_prob[nodes_mapping[src], nodes_mapping[src]] = 1.0
+        matrix_prob[nodes_mapping[src], nodes_mapping[src]] = 1.000
         try:
             all_shortest_path = self.to_tuple_edge_paths(nx.all_shortest_paths(g, src, target))
         except Exception as e:  # shortest path not exist
             return matrix_prob
         edges = set([edge for path in all_shortest_path for edge in path])
-        num_paths = len(all_shortest_path)
+        edges_src_count = {}
         for edge in edges:
-            c_e = self.count_edge(all_shortest_path, edge)
-            edge_probability = c_e / num_paths
-            matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_probability
+            if edge[0] not in edges_src_count:
+                edges_src_count[edge[0]] = 1
+            else:
+                edges_src_count[edge[0]] += 1
+        for edge in edges:
+            edge_prob = 1/edges_src_count[edge[0]]
+            matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_prob
+        # num_paths = len(all_shortest_path)
+        # for edge in edges:
+        #     c_e = self.count_edge(all_shortest_path, edge)
+        #     edge_probability = c_e / num_paths
+        #     matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_probability
 
         return matrix_prob
 

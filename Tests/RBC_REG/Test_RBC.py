@@ -1,7 +1,7 @@
 import unittest
 import networkx as nx
-import Components.RBC as RBC_T
-import Components.Policy as Policy
+import Components.RBC_REG.RBC as RBC_T
+import Components.RBC_REG.Policy as Policy
 import torch
 
 edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
@@ -85,7 +85,7 @@ class Tests(unittest.TestCase):
         expected_res = {'v1': 400, 'v2': 700, 'v3': 600, 'v4': 700}
         r_policy = betweenness_policy.get_policy_tensor(g2_dag, nodes_map_g2_dag)
         t_val = torch.full(size=(num_nodes_g2_dag, num_nodes_g2_dag), fill_value=100, dtype=float)
-        rbc_tensor = RBC_T.rbc(g2_dag, r_policy, t_val)
+        rbc_tensor = RBC_T.compute_rbc(g2_dag, r_policy, t_val)
         for key, val in expected_res.items():
             self.assertTrue(rbc_tensor[nodes_map_g2_dag[key]] == val)
 
@@ -93,7 +93,7 @@ class Tests(unittest.TestCase):
         expected_res = {'v1': 500, 'v2': 700, 'v3': 600, 'v4': 700}
         r_policy = betweenness_policy.get_policy_tensor(g3_directed, nodes_map_g3_directed)
         t_val = torch.full(size=(num_nodes_g3_directed, num_nodes_g3_directed), fill_value=100, dtype=float)
-        rbc_tensor = RBC_T.rbc(g3_directed, r_policy, t_val)
+        rbc_tensor = RBC_T.compute_rbc(g3_directed, r_policy, t_val)
         for key, val in expected_res.items():
             self.assertTrue(rbc_tensor[nodes_map_g3_directed[key]] == val)
 
@@ -101,7 +101,7 @@ class Tests(unittest.TestCase):
         expected_res = {'v1': 700, 'v2': 1200, 'v3': 700, 'v4': 900}
         r_policy = betweenness_policy.get_policy_tensor(g4_directed, nodes_map_g4_directed)
         t_val = torch.full(size=(num_nodes_g4_directed, num_nodes_g4_directed), fill_value=100, dtype=float)
-        rbc_tensor = RBC_T.rbc(g4_directed, r_policy, t_val)
+        rbc_tensor = RBC_T.compute_rbc(g4_directed, r_policy, t_val)
         for key, val in expected_res.items():
             self.assertTrue(rbc_tensor[nodes_map_g4_directed[key]] == val)
 
@@ -109,7 +109,7 @@ class Tests(unittest.TestCase):
         expected_res = {'v1': 1, 'v2': 1}
         deg_policy = degree_policy.get_policy_tensor(g1, node_map_g1)
         t_val = degree_policy.get_t_tensor(g1)
-        rbc_tensor = RBC_T.rbc(g1, deg_policy, t_val)
+        rbc_tensor = RBC_T.compute_rbc(g1, deg_policy, t_val)
         for key, val in expected_res.items():
             self.assertTrue(rbc_tensor[node_map_g1[key]] == val)
 
@@ -117,7 +117,7 @@ class Tests(unittest.TestCase):
         expected_res = {'v0': 1, 'v1': 4, 'v2': 2, 'v3': 2, 'v4': 2, 'v5': 3, 'v6': 2}
         deg_policy = degree_policy.get_policy_tensor(g2, node_map_g2)
         t_val = degree_policy.get_t_tensor(g2)
-        rbc_tensor = RBC_T.rbc(g2, deg_policy, t_val)
+        rbc_tensor = RBC_T.compute_rbc(g2, deg_policy, t_val)
         for key, val in expected_res.items():
             self.assertTrue(rbc_tensor[node_map_g2[key]] == val)
 
@@ -125,7 +125,7 @@ class Tests(unittest.TestCase):
         expected_res = {'v0': 1, 'v1': 2, 'v2': 1, 'v3': 0, 'v4': 0, 'v5': 0, 'v6': 0}
         deg_policy = degree_policy.get_policy_tensor(g3, nodes_map_g3)
         t_val = degree_policy.get_t_tensor(g3)
-        rbc_tensor = RBC_T.rbc(g3, deg_policy, t_val)
+        rbc_tensor = RBC_T.compute_rbc(g3, deg_policy, t_val)
         for key, val in expected_res.items():
             self.assertTrue(rbc_tensor[nodes_map_g3[key]] == val)
 
@@ -133,6 +133,6 @@ class Tests(unittest.TestCase):
         expected_res = {'v1': 0, 'v2': 0, 'v3': 0}
         deg_policy = degree_policy.get_policy_tensor(g4, nodes_map_g4)
         t_val = degree_policy.get_t_tensor(g4)
-        rbc_tensor = RBC_T.rbc(g4, deg_policy, t_val)
+        rbc_tensor = RBC_T.compute_rbc(g4, deg_policy, t_val)
         for key, val in expected_res.items():
             self.assertTrue(rbc_tensor[nodes_map_g4[key]] == val)

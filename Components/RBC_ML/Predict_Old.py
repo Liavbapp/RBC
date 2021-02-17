@@ -1,9 +1,8 @@
 import datetime
-import random
 
 import torch
 import networkx as nx
-import Components.RBC as RBC
+import Components.RBC_REG.RBC as RBC
 import numpy as np
 
 DTYPE = torch.float
@@ -18,7 +17,7 @@ def get_degree_in_out(adj_matrix):
 
 
 def get_betweenness_tensor(g, nodes_mapping):
-    tensor_raw = torch.tensor(list(nx.betweenness_centrality(g).values()), dtype=DTYPE, device=DEVICE)
+    tensor_raw = torch.tensor(list(nx.betweenness_centrality(g, endpoints=True).values()), dtype=DTYPE, device=DEVICE)
     tensor_norm = tensor_raw.clone()
     for node_val, node_idx in nodes_mapping.items():
         tensor_norm[node_val] = tensor_raw[node_idx]
@@ -44,8 +43,16 @@ def get_fixed_mat(adj_mat, reverse_nodes_mapping, g):
     path_exist = torch.full(size=(adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
     for s in range(0, adj_size):
         for t in range(0, adj_size):
-            constant_mat[s, t, s, s] = 1  # every src,src in policy matrix must have 1 to have a free variable
+
+            #
+            # if sum(adj_matrix_t[s]) == 0: #TODO: check theoretical aspect of this
+            #     constant_mat[s, t, s, s] = 1
+            constant_mat[s, t, s, s] = 1  # every src,src in policy matrix must have 1 to have a free variable #TODO: i think this is wrong
+            # constant_mat[s, t, s, t] = 1  # TODO: this is new theory, but the power_iteration computation doesn't ends
             zeros_mat[s, t] = adj_matrix_t  # putting zeros where the transposed adj_matrix has zeros
+            # zeros_mat[s, t, s] = 0
+            # zeros_mat[s, t, :, t] = 0
+
 
             # todo: instead of the code below write algorithm that for a given adj_matrix finds if there is a path between s,t (path len must be >= 1, that mean no self-loops)
             if s == t:
@@ -73,7 +80,8 @@ class DegreePrediction(torch.nn.Module):
                                                        requires_grad=True, device=DEVICE, dtype=DTYPE))
 
     def forward(self, x, r_zeros, r_const, t_paths):
-        weights_t_fixed = self.weights_t * t_paths
+        weights_t_fixed = self.weights_t * t_paths  # TODO: t_paths i necessary ?
+        # weights_t_fixed = self.weights_t
         weights_r_comb = torch.mul(self.weights_r,
                                    r_zeros) + r_const  # todo: I found that if I ommit r_const the power iteration doesnt converge!!!
 
@@ -105,6 +113,7 @@ class DegreePrediction(torch.nn.Module):
         ev = self.eigenvalue(A, v)
 
         i = 0
+
         while True:
             i += 1
             Av = torch.mm(A, v)
@@ -125,28 +134,38 @@ def predict_degree_custom_model(adj_mat, y, reverse_nodes_mapping, g):
 
     model = DegreePrediction(adj_mat)
     criterion = torch.nn.MSELoss(reduction='sum')
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
+    learning_rate = 1e-4
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.01)
 
     start_time = datetime.datetime.now()
-    for t in range(200):
+    for t in range(1000):
         y_pred = model(adj_mat, zero_mat, const_mat, t_paths)
         loss = criterion(y_pred, y)
-        if t % 10 == 0 or t == 0:
-            print(t, loss.item())
-        # print(t, loss.item())
+        # if t % 10 == 0 or t == 0:
+        #     print(t, loss.item())
+        print(t, loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        # if loss.item() < 1 and learning_rate == 1e-4:
+        #     learning_rate = 1e-3
+        #     for gh in optimizer.param_groups:
+        #         gh['lr'] = learning_rate
+        # model.weights_t.data.clamp_(0)
+        # model.weights_r.data.clamp_(0)
 
     print(f'\nRun Time -  {datetime.datetime.now() - start_time} \n\nLearning Target - {y}')
     model_t = model.weights_t * t_paths
+    # model_t = model.weights_t
     model_r = model.weights_r * zero_mat + const_mat
     return model_t, model_r
 
 
 def test_degree():
     # edge_lst = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9)]
-    edge_lst = [(0, 1), (1, 2), (2, 0), (2, 3), (3, 4), (4, 3)]
+    edge_lst = [(0, 1), (1, 2), (2, 0), (2, 3)]
+
+    # edge_lst = [(0, 1), (1, 2), (2, 0), (2, 3)]
     g = nx.DiGraph(edge_lst)
     nodes_mapping_reverse = {k: v for k, v in enumerate(list(g.nodes()))}
     adj_matrix = get_adj_mat(g, nodes_mapping_reverse)
@@ -154,21 +173,30 @@ def test_degree():
     t_model, r_model = predict_degree_custom_model(adj_matrix, target_matrix, nodes_mapping_reverse, g)
     t_model = t_model.to(device=torch.device("cpu"))
     r_model = r_model.to(device=torch.device("cpu"))
-    rbc_pred = RBC.rbc(g, r_model, t_model)
+    rbc_pred = RBC.compute_rbc(g, r_model, t_model)
     print(f"\n\nRBC Prediction - {rbc_pred}")
 
 
 def test_betweenness():
-    edge_lst = [(0, 1), (1, 2), (2, 3), (3, 4)]
-    g = nx.DiGraph(edge_lst)
+    # edge_lst_0 = [(0, 1), (1, 2)]
+    # edge_lst = [(0, 1), (1, 2), (2, 0), (2, 3), (3, 4), (3, 5), (4, 5), (5,6)]
+    # edge_lst_1 = [(0, 1), (1, 2), (0, 2), (1, 3), (2, 3)]
+    # edge_lst_2 = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (3, 5)]
+    # edge_lst_3 = [(0, 1), (1, 2), (0, 3), (2, 3), (3, 4), (2, 4), (0, 4), (4, 5)]
+    edge_lst_4 = [(0, 1), (0, 2), (1, 2),  (2, 3),  (1, 3), (2, 4), (3, 5), (3, 6), (4, 5), (5, 6), (1, 4)]
+    # edge_lst_5 = [(0, 1), (0, 2), (0, 3), (1, 3), (2, 4), (3, 5), (3, 6), (4, 5), (5, 6), (1, 4), (5, 7), (6, 7), (4, 8), (7, 8), (8, 9), (4, 9)]
+
+    # g = nx.DiGraph(edge_lst_0)
+    g = nx.Graph(edge_lst_4)
     nodes_mapping_reverse = {k: v for k, v in enumerate(list(g.nodes()))}
-    adj_matrix = get_adj_mat(g, nodes_mapping_reverse)
+    # adj_matrix = get_adj_mat(g, nodes_mapping_reverse)
+    adj_matrix = torch.tensor(nx.adj_matrix(g).todense(), dtype=torch.float)
     nodes_mapping = {k: v for v, k in enumerate(list(g.nodes()))}
     betweenness_tensor = get_betweenness_tensor(g, nodes_mapping)
     t_model, r_model = predict_degree_custom_model(adj_matrix, betweenness_tensor, nodes_mapping_reverse, g)
     t_model = t_model.to(device=torch.device("cpu"))
     r_model = r_model.to(device=torch.device("cpu"))
-    rbc_pred = RBC.rbc(g, r_model, t_model)
+    rbc_pred = RBC.compute_rbc(g, r_model, t_model)
     print(f'\n\nRBC Prediction - {rbc_pred}')
 
 

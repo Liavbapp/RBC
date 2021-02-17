@@ -1,13 +1,12 @@
 import networkx as nx
 import torch
-import Components.Policy as Policy
-import numpy as np
+import Components.RBC_REG.Policy as Policy
 
 DEVICE = 'cuda:0'
 DTYPE = 'float'
 
 
-def rbc(g, R, T):
+def compute_rbc(g, R, T):
     nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
     s_mapping = [nodes_map[node] for node in g.nodes()]
     t_mapping = s_mapping
@@ -18,8 +17,11 @@ def rbc(g, R, T):
 
 def accumulate_delta(src, predecessor_prob_matrix, T_val, t):
     eigenvalues, eigenvectors = torch.eig(input=predecessor_prob_matrix, eigenvectors=True)
-    eigenvector = eigenvectors[:, torch.argmax(eigenvalues.t()[0])]  # todo: find out which impl is right this or below
-    # eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))
+    # eigine_value = eigenvalues.t()[0][torch.argmax(eigenvalues.t()[0])]
+    # eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))  # todo: find out which impl is right this or below
+
+    eigenvector = eigenvectors[:, torch.argmax(eigenvalues.t()[0])]
+
     eigenvector = compute_eigenvector_values(src, eigenvector, T_val)
     return eigenvector
 
@@ -39,16 +41,17 @@ def get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, eigenvalue):
 
 
 if __name__ == '__main__':
-    edges = {(0, 1), (1, 2), (2, 0)}
+    edges = [(0, 1), (1, 2), (2, 0), (2, 3)]
+    # edges = [(0, 1), (0, 2), (1, 2), (2, 3), (1, 3), (3, 4), (4, 0), (4, 5), (5, 6)]
     # edges = {('s', 'v1'), ('s', 'v4'), ('v1', 'v5'),
     #          ('v4', 'v5'), ('v1', 'v2'), ('v2', 'v3'),
     #          ('v2', 't'), ('v5', 't'), ('v3', 't')}
     betweenness_policy = Policy.BetweennessPolicy()
-    graph = nx.DiGraph(edges)
+    graph = nx.Graph(edges)
     nodes_mapping = {k: v for v, k in enumerate(list(graph.nodes()))}
     R = betweenness_policy.get_policy_tensor(graph, nodes_mapping)
     T = betweenness_policy.get_t_tensor(graph)
-    res = rbc(graph, R, T)
+    res = compute_rbc(graph, R, T)
     # edges = {('v1', 'v2'), ('v1', 'v3'), ('v5', 'v8'), ('v1', 'v5')}
     # graph = nx.Graph(edges)
     # graph.add_node('v10')
