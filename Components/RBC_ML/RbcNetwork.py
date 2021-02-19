@@ -6,8 +6,9 @@ DEVICE = torch.device("cuda:0")
 
 
 class RbcNetwork(torch.nn.Module):
-    def __init__(self, adj_mat):
+    def __init__(self, adj_mat, use_sigmoid):
         super().__init__()
+        self.use_sigmoid = use_sigmoid
         self.num_nodes = adj_mat.size()[0]
         self.weights_t = torch.nn.Parameter(
             torch.rand(self.num_nodes, self.num_nodes, requires_grad=True, device=DEVICE, dtype=DTYPE))
@@ -16,7 +17,9 @@ class RbcNetwork(torch.nn.Module):
 
     def forward(self, x, r_zeros, r_const, max_error):
         weights_t_fixed = self.weights_t
-        weights_r_comb = torch.sigmoid(torch.mul(self.weights_r, r_zeros) + r_const)
+        weights_r_comb = torch.sigmoid(torch.mul(self.weights_r, r_zeros) + r_const) if self.use_sigmoid else\
+            torch.mul(self.weights_r, r_zeros) + r_const
+
         all_delta_arrays = [self.accumulate_delta(s, weights_r_comb[s, t], weights_t_fixed[s, t], max_error) for s in
                             range(0, len(x)) for t in range(0, len(x))]
         rbc_arr = torch.sum(torch.stack(all_delta_arrays), dim=0)
