@@ -7,18 +7,19 @@ import os
 import pandas as pd
 from Utils.CommonStr import StatisticsParams as Stas
 from Utils.CommonStr import RbcMatrices
+from Utils.CommonStr import LearningParams
+from Utils.CommonStr import HyperParams
 
 
-def plot_orig_graph(edge_lst, num_figure):
-    plt.figure(num_figure)
-    g = nx.Graph(edge_lst)
+def plot_orig_graph(adj_mat):
+    g = nx.from_numpy_matrix(adj_mat)
     nx.draw(g, with_labels=True)
     plt.show()
 
 
 def draw_routing(routing_policy, s, t):
-    routing_matrix_t = routing_policy[s, t].t()
-    edges = [np.array(row.detach().to(device=torch.device('cpu'))) for row in list(torch.nonzero(routing_matrix_t))]
+    routing_matrix_t = np.transpose(routing_policy[s, t])
+    edges = [np.array(row) for row in list(torch.nonzero(torch.tensor(routing_matrix_t)))]
     edges_weights = [(i, j, {'weight': routing_matrix_t[i, j].item()}) for i, j in edges]
     g = nx.DiGraph(edges_weights)
     g.add_nodes_from(list(range(0, len(routing_matrix_t[0]))))
@@ -37,7 +38,7 @@ def save_info(**kwargs):
 
 def save_statistics(**kwargs):
     num_nodes = len(kwargs[RbcMatrices.adjacency_matrix][0])
-    num_edges = len(torch.nonzero(torch.triu(kwargs[RbcMatrices.adjacency_matrix]), as_tuple=True))
+    num_edges = len(torch.nonzero(torch.triu(kwargs[RbcMatrices.adjacency_matrix]), as_tuple=True)[0])
     cols = Stas.cols
     new_statistics = {Stas.centrality: kwargs[Stas.centrality],
                       Stas.num_nodes: num_nodes,
@@ -56,7 +57,11 @@ def save_statistics(**kwargs):
                       Stas.momentum: kwargs[Stas.momentum],
                       Stas.optimizer: kwargs[Stas.optimizer],
                       Stas.pi_max_err: kwargs[Stas.pi_max_err],
-                      Stas.path: kwargs[Stas.path]}
+                      Stas.path: kwargs[Stas.path],
+                      Stas.comments: '',
+                      Stas.eigenvector_method: kwargs[Stas.eigenvector_method],
+                      Stas.device: kwargs[Stas.device],
+                      Stas.dtype: kwargs[Stas.dtype]}
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
 
     try:
@@ -98,10 +103,49 @@ def save_matrices(adj_matrix, routing_policy, traffic_matrix, path):
 
 
 def load_info(path):
-    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\1\0'
     adj_matrix = np.load(path + '\\adj_mat.npy')
     routing_policy = np.load(path + '\\routing_policy.npy')
     traffic_matrix = np.load(path + '\\traffic_mat.npy')
-    # hyper_params_df = np.load(path)
+    return adj_matrix, routing_policy, traffic_matrix
 
+
+def save_info_stuck(centrality, adj_matrix, target, learning_params, comments):
+    num_nodes = len(adj_matrix[0])
+    num_edges = len(torch.nonzero(torch.triu(adj_matrix), as_tuple=True)[0])
+    cols = Stas.cols
+    new_statistics = {Stas.centrality: centrality,
+                      Stas.num_nodes: num_nodes,
+                      Stas.num_edges: num_edges,
+                      Stas.target: str(target),
+                      Stas.prediction: '-',
+                      Stas.error: '-',
+                      Stas.error_type: '-',
+                      Stas.sigmoid: learning_params[LearningParams.sigmoid],
+                      Stas.src_src_one: learning_params[LearningParams.src_src_one],
+                      Stas.src_row_zeros: learning_params[LearningParams.src_row_zeros],
+                      Stas.target_col_zeros: learning_params[LearningParams.target_col_zeros],
+                      Stas.runtime: '-',
+                      Stas.learning_rate: learning_params[LearningParams.hyper_parameters][HyperParams.learning_rate],
+                      Stas.epochs: learning_params[LearningParams.hyper_parameters][HyperParams.epochs],
+                      Stas.momentum: learning_params[LearningParams.hyper_parameters][HyperParams.momentum],
+                      Stas.optimizer: learning_params[LearningParams.hyper_parameters][HyperParams.optimizer],
+                      Stas.pi_max_err: learning_params[LearningParams.hyper_parameters][HyperParams.pi_max_err],
+                      Stas.path: get_saving_matrix_path(centrality, adj_matrix),
+                      Stas.comments: comments}
+    df_new_statistics = pd.DataFrame(new_statistics, index=[0])
+
+    try:
+        df_statistics_old = pd.read_csv(
+            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\statistics.csv')
+    except Exception as ex:
+        df_statistics_old = pd.DataFrame(columns=cols)
+
+    df_combined_statistics = pd.concat([df_statistics_old, df_new_statistics])
+    df_combined_statistics.to_csv(
+        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\statistics.csv', index=False)
+
+
+if __name__ == '__main__':
+    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\10_nodes\2_edges\10'
+    adj_mat, routing_policy, traffic_mat = load_info(path)
     a = 1

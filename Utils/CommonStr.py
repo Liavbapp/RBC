@@ -1,3 +1,6 @@
+import torch
+
+
 class RbcMatrices:
     adjacency_matrix = 'Adjacency Matrix'
     routing_policy = "Routing Policy"
@@ -14,6 +17,7 @@ class HyperParams:
 
 
 class StatisticsParams:
+
     centrality = "Centrality Type"
     num_nodes = "Num Nodes"
     num_edges = "Num Edges"
@@ -32,9 +36,13 @@ class StatisticsParams:
     optimizer = HyperParams.optimizer
     pi_max_err = HyperParams.pi_max_err
     path = "Path"
+    comments = "Comments"
+    eigenvector_method = "Eigenvector Computing Method "
+    device = "Torch Device"
+    dtype = "Torch Dtype"
     cols = [centrality, num_nodes, num_edges, target, prediction,
             error, error_type, sigmoid, src_src_one, src_row_zeros, target_col_zeros, runtime, learning_rate,
-            epochs, momentum, optimizer, path]
+            epochs, momentum, optimizer, path, comments, eigenvector_method, device, dtype]
 
 
 class LearningParams:
@@ -45,12 +53,42 @@ class LearningParams:
     src_row_zeros = StatisticsParams.src_row_zeros
     target_col_zeros = StatisticsParams.target_col_zeros
     sigmoid = StatisticsParams.sigmoid
+    eigenvector_method = StatisticsParams.eigenvector_method
+    device = StatisticsParams.device
+    dtype = StatisticsParams.dtype
+
+
+class TorchDevice:
+    cpu = torch.device('cpu')
+    gpu = torch.device('cuda:0')
+
+
+class TorchDtype:
+    float = torch.float
+
+class EigenvectorMethod:
+    power_iteration = "Power Iteration"
+    torch_eig = "Torch eig"
 
 
 class OptimizerTypes:
-    adam = "Adam"
-    sgd = "SGD"
-    asgd = "ASGD"
+    Rprop = "Rprop"
+    RmsProp = "RmsProp"
+    LBFGS = "LBFGS"
+    AdaMax = "AdaMax"
+    SparseAdam = "SparseAdam"
+    AdaGrad = "AdaGrad"
+    AdaDelta = "AdaDelta"
+    Adam = "Adam"
+    SGD = "SGD"
+    ASGD = "ASGD"
+    AdamW = "ADAMW"
+
+class Centralities:
+    SPBC = "SPBC"
+    Degree = "Degree"
+    Closeness = "Closeness"
+    Eigenvector = "Eigenvector"
 
 
 class ErrorTypes:

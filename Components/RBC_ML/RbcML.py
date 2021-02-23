@@ -5,13 +5,18 @@ from Components.RBC_ML.RbcNetwork import RbcNetwork
 from Utils.CommonStr import LearningParams
 from Utils.CommonStr import ErrorTypes
 from Utils.CommonStr import OptimizerTypes
-DTYPE = torch.float
-DEVICE = torch.device("cuda:0")
 
 
 def learn_models(learning_params):
     zero_mat, const_mat = get_fixed_mat(learning_params)
-    model = RbcNetwork(learning_params[LearningParams.adjacency_matrix],  learning_params[LearningParams.sigmoid])
+    num_nodes = len(learning_params[LearningParams.adjacency_matrix][0])
+    use_sigmoid = learning_params[LearningParams.sigmoid]
+    pi_max_err = learning_params[LearningParams.hyper_parameters][HyperParams.pi_max_err]
+    eigenvector_method = learning_params[LearningParams.eigenvector_method]
+    device = learning_params[LearningParams.device]
+    dtype = learning_params[LearningParams.dtype]
+    model = RbcNetwork(num_nodes=num_nodes, use_sigmoid=use_sigmoid, pi_max_err=pi_max_err,
+                       eigenvector_method=eigenvector_method, device=device, dtype=dtype)
 
     hyper_params = learning_params[LearningParams.hyper_parameters]
     criterion = get_criterion(hyper_params[HyperParams.error_type])
@@ -21,17 +26,19 @@ def learn_models(learning_params):
     start_time = datetime.datetime.now()
 
     for t in range(hyper_params[HyperParams.epochs]):
-        y_pred = model(learning_params[LearningParams.adjacency_matrix], zero_mat, const_mat, hyper_params[HyperParams.pi_max_err])
+        y_pred = model(zero_mat, const_mat)
         loss = criterion(y_pred, learning_params[LearningParams.target])
-        print(t, loss.item()) if t % 100 == 0 else None
+        print(t, loss.item()) if t % 1 == 0 else None
         optimizer.zero_grad()
-        loss.backward()
+        loss.backward()   # backward unable handle 50 nodes
         optimizer.step()
 
     print(f'\nRun Time -  {datetime.datetime.now() - start_time} '
           f'\n\nLearning Target - {learning_params[LearningParams.target]}')
     model_t = model.weights_t
-    model_r = torch.sigmoid(model.weights_r * zero_mat + const_mat)
+    model_r = (torch.sigmoid(model.weights_r) * zero_mat + const_mat) if learning_params[LearningParams.sigmoid] else \
+              (model.weights_r * zero_mat) + const_mat
+
     return model_t, model_r, loss.item()
 
 
@@ -39,8 +46,10 @@ def get_fixed_mat(learning_params):
 
     adj_matrix_t = learning_params[LearningParams.adjacency_matrix].t()  # transpose the matrix to because R policy matrices are transposed (predecessor matrix)
     adj_size = learning_params[LearningParams.adjacency_matrix].size()[0]
-    zeros_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
-    constant_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=DTYPE, device=DEVICE)
+    device = learning_params[LearningParams.device]
+    dtype = learning_params[LearningParams.dtype]
+    zeros_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=dtype, device=device)
+    constant_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=dtype, device=device)
 
     for s in range(0, adj_size):
         for t in range(0, adj_size):
@@ -60,11 +69,27 @@ def get_criterion(error_type):
 
 
 def get_optimizer(model, optimizer_type, learning_rate, momentum):
-    if optimizer_type == OptimizerTypes.asgd:
-        return torch.optim.ASGD(model.parameters(), lr=learning_rate)
-    elif optimizer_type == OptimizerTypes.adam:
+    if optimizer_type == OptimizerTypes.AdaDelta:
+        return torch.optim.Adadelta(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.AdaGrad:
+        return torch.optim.Adagrad(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.Adam:
         return torch.optim.Adam(model.parameters(), lr=learning_rate)
-    elif optimizer_type == OptimizerTypes.sgd:
+    elif optimizer_type == OptimizerTypes.AdamW:
+        return torch.optim.AdamW(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.SparseAdam:
+        return torch.optim.SparseAdam(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.AdaMax:
+        return torch.optim.Adamax(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.ASGD:
+        return torch.optim.ASGD(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.LBFGS:
+        return torch.optim.LBFGS(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.RmsProp:
+        return torch.optim.RMSprop(model.parameters(), lr=learning_rate, momentum=momentum, eps=1e-05, centered=True)
+    elif optimizer_type == OptimizerTypes.Rprop:
+        return torch.optim.Rprop(model.parameters(), lr=learning_rate)
+    elif optimizer_type == OptimizerTypes.SGD:
         return torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
-    else:
-        return torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+
+
