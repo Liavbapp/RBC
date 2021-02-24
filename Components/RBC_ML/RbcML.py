@@ -1,4 +1,6 @@
 import datetime
+
+import networkx as nx
 import torch
 from Utils.CommonStr import HyperParams
 from Components.RBC_ML.RbcNetwork import RbcNetwork
@@ -7,16 +9,17 @@ from Utils.CommonStr import ErrorTypes
 from Utils.CommonStr import OptimizerTypes
 
 
-def learn_models(learning_params):
-    zero_mat, const_mat = get_fixed_mat(learning_params)
+def learn_models(learning_params, nodes_mapping_reverse):
+    zero_mat, const_mat, traffic_paths = get_fixed_mat(learning_params, nodes_mapping_reverse)
     num_nodes = len(learning_params[LearningParams.adjacency_matrix][0])
     use_sigmoid = learning_params[LearningParams.sigmoid]
     pi_max_err = learning_params[LearningParams.hyper_parameters][HyperParams.pi_max_err]
     eigenvector_method = learning_params[LearningParams.eigenvector_method]
+    zero_traffic = learning_params[LearningParams.zeros_no_path_traffic_matrix]
     device = learning_params[LearningParams.device]
     dtype = learning_params[LearningParams.dtype]
     model = RbcNetwork(num_nodes=num_nodes, use_sigmoid=use_sigmoid, pi_max_err=pi_max_err,
-                       eigenvector_method=eigenvector_method, device=device, dtype=dtype)
+                       eigenvector_method=eigenvector_method, device=device, dtype=dtype, zero_traffic=zero_traffic)
 
     hyper_params = learning_params[LearningParams.hyper_parameters]
     criterion = get_criterion(hyper_params[HyperParams.error_type])
@@ -26,7 +29,7 @@ def learn_models(learning_params):
     start_time = datetime.datetime.now()
 
     for t in range(hyper_params[HyperParams.epochs]):
-        y_pred = model(zero_mat, const_mat)
+        y_pred = model(zero_mat, const_mat, traffic_paths)
         loss = criterion(y_pred, learning_params[LearningParams.target])
         print(t, loss.item()) if t % 1 == 0 else None
         optimizer.zero_grad()
@@ -42,7 +45,7 @@ def learn_models(learning_params):
     return model_t, model_r, loss.item()
 
 
-def get_fixed_mat(learning_params):
+def get_fixed_mat(learning_params, nodes_mapping_reverse):
 
     adj_matrix_t = learning_params[LearningParams.adjacency_matrix].t()  # transpose the matrix to because R policy matrices are transposed (predecessor matrix)
     adj_size = learning_params[LearningParams.adjacency_matrix].size()[0]
@@ -50,6 +53,7 @@ def get_fixed_mat(learning_params):
     dtype = learning_params[LearningParams.dtype]
     zeros_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=dtype, device=device)
     constant_mat = torch.full(size=(adj_size, adj_size, adj_size, adj_size), fill_value=0, dtype=dtype, device=device)
+    path_exist = torch.full(size=(adj_size, adj_size), fill_value=0, dtype=dtype, device=device)
 
     for s in range(0, adj_size):
         for t in range(0, adj_size):
@@ -58,7 +62,19 @@ def get_fixed_mat(learning_params):
             zeros_mat[s, t, s] = 0 if learning_params[LearningParams.src_row_zeros] else zeros_mat[s, t, s]
             zeros_mat[s, t, :, t] = 0 if learning_params[LearningParams.target_col_zeros] else zeros_mat[s, t, :, t]
 
-    return zeros_mat, constant_mat
+            if s == t:
+                try:
+                    nx.find_cycle(g, nodes_mapping_reverse[s])
+                    path_exist[s, t] = 1.0
+                except:
+                    path_exist[s, t] = 0.0
+            else:
+                if nx.has_path(g, nodes_mapping_reverse[s], nodes_mapping_reverse[t]):
+                    path_exist[s, t] = 1.0
+                else:
+                    path_exist[s, t] = 0.0
+
+    return zeros_mat, constant_mat, path_exist
 
 
 def get_criterion(error_type):

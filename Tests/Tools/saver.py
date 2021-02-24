@@ -61,7 +61,8 @@ def save_statistics(**kwargs):
                       Stas.comments: '',
                       Stas.eigenvector_method: kwargs[Stas.eigenvector_method],
                       Stas.device: kwargs[Stas.device],
-                      Stas.dtype: kwargs[Stas.dtype]}
+                      Stas.dtype: kwargs[Stas.dtype],
+                      Stas.zeros_no_path_traffic_matrix: kwargs[Stas.zeros_no_path_traffic_matrix]}
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
 
     try:
@@ -131,7 +132,8 @@ def save_info_stuck(centrality, adj_matrix, target, learning_params, comments):
                       Stas.optimizer: learning_params[LearningParams.hyper_parameters][HyperParams.optimizer],
                       Stas.pi_max_err: learning_params[LearningParams.hyper_parameters][HyperParams.pi_max_err],
                       Stas.path: get_saving_matrix_path(centrality, adj_matrix),
-                      Stas.comments: comments}
+                      Stas.comments: comments,
+                      Stas.zeros_no_path_traffic_matrix: learning_params[LearningParams.zeros_no_path_traffic_matrix]}
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
 
     try:

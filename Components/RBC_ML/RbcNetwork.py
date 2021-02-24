@@ -4,10 +4,11 @@ from Utils.CommonStr import EigenvectorMethod
 
 
 class RbcNetwork(torch.nn.Module):
-    def __init__(self, num_nodes, use_sigmoid, pi_max_err, eigenvector_method, device, dtype):
+    def __init__(self, num_nodes, use_sigmoid, zero_traffic, pi_max_err, eigenvector_method, device, dtype):
         super().__init__()
         self.use_sigmoid = use_sigmoid
         self.num_nodes = num_nodes
+        self.zero_traffic = zero_traffic
         self.weights_t = torch.nn.Parameter(
             torch.rand(self.num_nodes, self.num_nodes, requires_grad=True, device=device, dtype=dtype))
         self.weights_r = torch.nn.Parameter(torch.rand(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,
@@ -15,8 +16,8 @@ class RbcNetwork(torch.nn.Module):
         self.pi_handler = PowerIteration(device=device, dtype=dtype, max_error=pi_max_err)
         self.eigenvector_method = eigenvector_method
 
-    def forward(self, r_zeros, r_const):
-        weights_t_fixed = self.weights_t
+    def forward(self, r_zeros, r_const, traffic_paths):
+        weights_t_fixed = torch.mul(self.weights_t, traffic_paths) if self.zero_traffic else self.weights_t
         weights_r_comb = (torch.mul(torch.sigmoid(self.weights_r), r_zeros) + r_const) if self.use_sigmoid else\
             torch.mul(self.weights_r, r_zeros) + r_const
 

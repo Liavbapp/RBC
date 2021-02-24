@@ -40,12 +40,14 @@ class StatisticsParams:
     eigenvector_method = "Eigenvector Computing Method "
     device = "Torch Device"
     dtype = "Torch Dtype"
+    zeros_no_path_traffic_matrix = "Zero Traffic Matrix No Path"
     cols = [centrality, num_nodes, num_edges, target, prediction,
             error, error_type, sigmoid, src_src_one, src_row_zeros, target_col_zeros, runtime, learning_rate,
-            epochs, momentum, optimizer, path, comments, eigenvector_method, device, dtype]
+            epochs, momentum, optimizer, path, comments, eigenvector_method, device, dtype, zeros_no_path_traffic_matrix]
 
 
 class LearningParams:
+
     hyper_parameters = "Hyper Parameters"
     adjacency_matrix = RbcMatrices.adjacency_matrix
     target = StatisticsParams.target
@@ -56,6 +58,7 @@ class LearningParams:
     eigenvector_method = StatisticsParams.eigenvector_method
     device = StatisticsParams.device
     dtype = StatisticsParams.dtype
+    zeros_no_path_traffic_matrix = StatisticsParams.zeros_no_path_traffic_matrix
 
 
 class TorchDevice:
