@@ -39,7 +39,7 @@ class ParamsManager:
         learning_target = get_learning_target(centrality, g, nodes_mapping, device, dtype, adj_matrix)
 
         self.hyper_params = {HyperParams.learning_rate: 1e-3,
-                             HyperParams.epochs: 800,
+                             HyperParams.epochs: 5,
                              HyperParams.momentum: 0,
                              HyperParams.optimizer: OptimizerTypes.RmsProp,
                              HyperParams.pi_max_err: 0.0001,
@@ -52,13 +52,13 @@ class ParamsManager:
                                 LearningParams.src_row_zeros: False,
                                 LearningParams.target_col_zeros: False,
                                 LearningParams.sigmoid: True,
-                                LearningParams.zeros_no_path_traffic_matrix: True,
+                                LearningParams.consider_traffic_paths: True,
                                 LearningParams.eigenvector_method: EigenvectorMethod.power_iteration,
                                 LearningParams.device: device,
                                 LearningParams.dtype: dtype
                                 }
 
-    def save_params_statistics(self, t_model, r_model, final_error, rtime, rbc_pred):
+    def save_params_statistics(self, t_model, r_model, final_error, rtime, rbc_pred, optimizer_params):
         kwargs_dict = {RbcMatrices.adjacency_matrix: self.learning_params[LearningParams.adjacency_matrix],
                        RbcMatrices.routing_policy: r_model,
                        RbcMatrices.traffic_matrix: t_model,
@@ -74,13 +74,13 @@ class ParamsManager:
                        Stas.runtime: rtime,
                        Stas.learning_rate: self.hyper_params[Stas.learning_rate],
                        Stas.epochs: self.hyper_params[Stas.epochs],
-                       Stas.momentum: self.hyper_params[Stas.momentum],
                        Stas.optimizer: self.hyper_params[Stas.optimizer],
+                       Stas.optimizer_params: optimizer_params,
                        Stas.pi_max_err: self.hyper_params[Stas.pi_max_err],
                        Stas.eigenvector_method: self.learning_params[LearningParams.eigenvector_method],
                        Stas.device: self.learning_params[LearningParams.device],
                        Stas.dtype: self.learning_params[LearningParams.dtype],
-                       Stas.zeros_no_path_traffic_matrix: self.learning_params[LearningParams.zeros_no_path_traffic_matrix]
+                       Stas.consider_traffic_paths: self.learning_params[LearningParams.consider_traffic_paths]
                        }
 
         saver.save_info(**kwargs_dict)

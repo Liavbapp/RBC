@@ -4,11 +4,11 @@ from Utils.CommonStr import EigenvectorMethod
 
 
 class RbcNetwork(torch.nn.Module):
-    def __init__(self, num_nodes, use_sigmoid, zero_traffic, pi_max_err, eigenvector_method, device, dtype):
+    def __init__(self, num_nodes, use_sigmoid, cosnider_traffic_paths, pi_max_err, eigenvector_method, device, dtype):
         super().__init__()
         self.use_sigmoid = use_sigmoid
         self.num_nodes = num_nodes
-        self.zero_traffic = zero_traffic
+        self.zero_traffic = cosnider_traffic_paths
         self.weights_t = torch.nn.Parameter(
             torch.rand(self.num_nodes, self.num_nodes, requires_grad=True, device=device, dtype=dtype))
         self.weights_r = torch.nn.Parameter(torch.rand(self.num_nodes, self.num_nodes, self.num_nodes, self.num_nodes,

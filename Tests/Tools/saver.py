@@ -11,6 +11,7 @@ from Utils.CommonStr import LearningParams
 from Utils.CommonStr import HyperParams
 
 
+
 def plot_orig_graph(adj_mat):
     g = nx.from_numpy_matrix(adj_mat)
     nx.draw(g, with_labels=True)
@@ -54,15 +55,15 @@ def save_statistics(**kwargs):
                       Stas.runtime: str(kwargs[Stas.runtime]),
                       Stas.learning_rate: kwargs[Stas.learning_rate],
                       Stas.epochs: kwargs[Stas.epochs],
-                      Stas.momentum: kwargs[Stas.momentum],
                       Stas.optimizer: kwargs[Stas.optimizer],
+                      Stas.optimizer_params: kwargs[Stas.optimizer_params],
                       Stas.pi_max_err: kwargs[Stas.pi_max_err],
                       Stas.path: kwargs[Stas.path],
                       Stas.comments: '',
                       Stas.eigenvector_method: kwargs[Stas.eigenvector_method],
                       Stas.device: kwargs[Stas.device],
                       Stas.dtype: kwargs[Stas.dtype],
-                      Stas.zeros_no_path_traffic_matrix: kwargs[Stas.zeros_no_path_traffic_matrix]}
+                      Stas.consider_traffic_paths: kwargs[Stas.consider_traffic_paths]}
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
 
     try:
@@ -110,7 +111,7 @@ def load_info(path):
     return adj_matrix, routing_policy, traffic_matrix
 
 
-def save_info_stuck(centrality, adj_matrix, target, learning_params, comments):
+def save_info_stuck(centrality, adj_matrix, target, learning_params, comments, optimizer_params):
     num_nodes = len(adj_matrix[0])
     num_edges = len(torch.nonzero(torch.triu(adj_matrix), as_tuple=True)[0])
     cols = Stas.cols
@@ -128,12 +129,12 @@ def save_info_stuck(centrality, adj_matrix, target, learning_params, comments):
                       Stas.runtime: '-',
                       Stas.learning_rate: learning_params[LearningParams.hyper_parameters][HyperParams.learning_rate],
                       Stas.epochs: learning_params[LearningParams.hyper_parameters][HyperParams.epochs],
-                      Stas.momentum: learning_params[LearningParams.hyper_parameters][HyperParams.momentum],
                       Stas.optimizer: learning_params[LearningParams.hyper_parameters][HyperParams.optimizer],
+                      Stas.optimizer_params: optimizer_params,
                       Stas.pi_max_err: learning_params[LearningParams.hyper_parameters][HyperParams.pi_max_err],
                       Stas.path: get_saving_matrix_path(centrality, adj_matrix),
                       Stas.comments: comments,
-                      Stas.zeros_no_path_traffic_matrix: learning_params[LearningParams.zeros_no_path_traffic_matrix]}
+                      Stas.consider_traffic_paths: learning_params[LearningParams.consider_traffic_paths]}
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
 
     try:
