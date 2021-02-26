@@ -19,6 +19,7 @@ class HyperParams:
 class StatisticsParams:
 
     centrality = "Centrality Type"
+    centrality_params = "Centrality Params"
     num_nodes = "Num Nodes"
     num_edges = "Num Edges"
     target = "Target"
@@ -60,6 +61,8 @@ class LearningParams:
     device = StatisticsParams.device
     dtype = StatisticsParams.dtype
     consider_traffic_paths = StatisticsParams.consider_traffic_paths
+    centrality_params = StatisticsParams.centrality_params
+
 
 
 class TorchDevice:

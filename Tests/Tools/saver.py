@@ -42,6 +42,7 @@ def save_statistics(**kwargs):
     num_edges = len(torch.nonzero(torch.triu(kwargs[RbcMatrices.adjacency_matrix]), as_tuple=True)[0])
     cols = Stas.cols
     new_statistics = {Stas.centrality: kwargs[Stas.centrality],
+                      Stas.centrality_params: kwargs[Stas.centrality_params],
                       Stas.num_nodes: num_nodes,
                       Stas.num_edges: num_edges,
                       Stas.target: str(kwargs[Stas.target]),
@@ -116,6 +117,7 @@ def save_info_stuck(centrality, adj_matrix, target, learning_params, comments, o
     num_edges = len(torch.nonzero(torch.triu(adj_matrix), as_tuple=True)[0])
     cols = Stas.cols
     new_statistics = {Stas.centrality: centrality,
+                      Stas.centrality_params: learning_params[LearningParams.centrality_params],
                       Stas.num_nodes: num_nodes,
                       Stas.num_edges: num_edges,
                       Stas.target: str(target),
@@ -149,6 +151,6 @@ def save_info_stuck(centrality, adj_matrix, target, learning_params, comments, o
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\10_nodes\2_edges\10'
+    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\4_nodes\2_edges\9'
     adj_mat, routing_policy, traffic_mat = load_info(path)
     a = 1

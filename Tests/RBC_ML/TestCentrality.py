@@ -1,6 +1,7 @@
 import datetime
 import json
-
+import sys
+sys.path.append('C:\\Users\\LiavB\\PycharmProjects\\RBC')
 from Components.RBC_ML.Optimizer import Optimizer
 from Components.RBC_ML.RbcNetwork import RbcNetwork
 from Utils.CommonStr import HyperParams
@@ -12,6 +13,8 @@ from Utils.CommonStr import Centralities
 from Tests.RBC_ML.GraphGenerator import GraphGenerator
 from Tests.RBC_ML.ParamsManager import ParamsManager
 
+import sys
+sys.path.append('C:\\Users\\LiavB\\PycharmProjects\\RBC\\Components')
 
 
 def init_model(learning_params):
@@ -52,8 +55,8 @@ class CentralityTester():
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
-        graphs = self.graphs_generator.generate_by_centrality()
-        for i in range(1, len(graphs)):
+        graphs = self.graphs_generator.custom_graph()
+        for i in range(0, len(graphs)):
             self.test_centrality_on_graph(graphs[i], i)
 
     def test_centrality_on_graph(self, g, test_num):
@@ -78,15 +81,17 @@ class CentralityTester():
             print(f'\n\ntest of figure_{test_num}, RBC Prediction returned - {rbc_pred}')
             params_manager.save_params_statistics(t_model, r_model, final_error, runtime, rbc_pred, optimizer_params)
         except Exception as e:
+            print(str(e))
             saver.save_info_stuck(self.centrality, adj_matrix, learning_target, learning_params, str(e), optimizer_params)
 
 
 if __name__ == '__main__':
-    spbc_tester = CentralityTester(Centralities.Closeness)
+    spbc_tester = CentralityTester(Centralities.SPBC)
     degree_tester = CentralityTester(Centralities.Degree)
     eigenvector_tester = CentralityTester(Centralities.Eigenvector)
     closeness_tester = CentralityTester(Centralities.Closeness)
     testers = [spbc_tester, degree_tester, eigenvector_tester, closeness_tester]
+
 
     for tester in testers:
         tester.test_centrality()

@@ -1,3 +1,5 @@
+import json
+
 import torch
 import networkx as nx
 
@@ -8,25 +10,35 @@ from Utils.CommonStr import TorchDevice, TorchDtype, HyperParams, LearningParams
 
 def get_learning_target(centrality, g, nodes_mapping, device, dtype, adj_mat):
     if centrality == Centralities.SPBC:
-        tensor_raw = torch.tensor(list(nx.betweenness_centrality(g).values()), dtype=dtype, device=device)
-        tensor_norm = tensor_raw.clone()
+        params = {'k': None, 'normalized': False, 'weight': None, 'endpoints': False, 'seed': None}
+        tensor_raw = torch.tensor(list(nx.betweenness_centrality(g, k=params['k'], normalized=params['normalized'],
+                                                                 weight=params['weight'],endpoints=params['endpoints'],
+                                                                 seed=params['seed']).values()), dtype=dtype, device=device)
+        learning_target = tensor_raw.clone()
         for node_val, node_idx in nodes_mapping.items():
-            tensor_norm[node_val] = tensor_raw[node_idx]
-        return tensor_norm
+            learning_target[node_val] = tensor_raw[node_idx]
     elif centrality == Centralities.Degree:
-        return torch.sum(adj_mat, 1)
+        params = {}
+        learning_target = torch.sum(adj_mat, 1)
     elif centrality == Centralities.Eigenvector:
-        tensor_raw = torch.tensor(list(nx.eigenvector_centrality(g).values()), dtype=dtype, device=device)
-        tensor_norm = tensor_raw.clone()
+        params = {'max_iter': 100, 'tol': 1e-06, 'nstart': None, 'weight': None}
+        tensor_raw = torch.tensor(list(nx.eigenvector_centrality(g, max_iter=params['max_iter'], tol=params['tol'],
+                                                                 nstart=params['nstart'],
+                                                                 weight=params['weight']).values()), dtype=dtype, device=device)
+        learning_target = tensor_raw.clone()
         for node_val, node_idx in nodes_mapping.items():
-            tensor_norm[node_val] = tensor_raw[node_idx]
-        return tensor_norm
+            learning_target[node_val] = tensor_raw[node_idx]
     elif centrality == Centralities.Closeness:
-        tensor_raw = torch.tensor(list(nx.betweenness_centrality(g).values()), dtype=dtype, device=device)
-        tensor_norm = tensor_raw.clone()
+        params = {'u': None, 'distance': None, 'wf_improved': True}
+        tensor_raw = torch.tensor(list(nx.closeness_centrality(g, u=params['u'], distance=params['distance'],
+                                                               wf_improved=params['wf_improved']).values()), dtype=dtype, device=device)
+        learning_target = tensor_raw.clone()
         for node_val, node_idx in nodes_mapping.items():
-            tensor_norm[node_val] = tensor_raw[node_idx]
-        return tensor_norm
+            learning_target[node_val] = tensor_raw[node_idx]
+    else:
+        raise NotImplementedError
+
+    return learning_target, params
 
 
 class ParamsManager:
@@ -36,16 +48,18 @@ class ParamsManager:
         dtype = TorchDtype.float
         adj_matrix = torch.tensor(nx.adj_matrix(g).todense(), dtype=dtype)
         nodes_mapping = {k: v for v, k in enumerate(list(g.nodes()))}
-        learning_target = get_learning_target(centrality, g, nodes_mapping, device, dtype, adj_matrix)
+        learning_target, centrality_params = get_learning_target(centrality, g, nodes_mapping, device, dtype, adj_matrix)
+        centrality_params = json.dumps(centrality_params)
 
         self.hyper_params = {HyperParams.learning_rate: 1e-3,
-                             HyperParams.epochs: 5,
+                             HyperParams.epochs: 1100,
                              HyperParams.momentum: 0,
                              HyperParams.optimizer: OptimizerTypes.RmsProp,
                              HyperParams.pi_max_err: 0.0001,
                              HyperParams.error_type: ErrorTypes.mse
                              }
         self.learning_params = {LearningParams.hyper_parameters: self.hyper_params,
+                                LearningParams.centrality_params: centrality_params,
                                 LearningParams.adjacency_matrix: adj_matrix,
                                 LearningParams.target: learning_target,
                                 LearningParams.src_src_one: True,
@@ -63,6 +77,7 @@ class ParamsManager:
                        RbcMatrices.routing_policy: r_model,
                        RbcMatrices.traffic_matrix: t_model,
                        Stas.centrality: self.centrality,
+                       Stas.centrality_params: self.learning_params[LearningParams.centrality_params],
                        Stas.target: self.learning_params[LearningParams.target],
                        Stas.prediction: rbc_pred,
                        Stas.error: final_error,

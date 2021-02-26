@@ -30,8 +30,9 @@ class GraphGenerator:
         edge_lst_7 = [(0, 1), (0, 2), (1, 2), (2, 3), (1, 3), (2, 4), (3, 5), (3, 6), (4, 5), (5, 6), (1, 4)]
         edge_lst_8 = [(0, 1), (0, 2), (1, 2), (0, 3), (1, 3), (2, 4), (3, 5), (3, 6), (4, 5), (5, 6), (1, 4), (5, 7),
                       (6, 7), (4, 8), (7, 8), (8, 9), (4, 9)]
-        all_edge_lst = [edge_lst_0, edge_lst_1, edge_lst_2, edge_lst_3, edge_lst_4, edge_lst_5, edge_lst_6, edge_lst_7,
-                        edge_lst_8]
+        # all_edge_lst = [edge_lst_0, edge_lst_1, edge_lst_2, edge_lst_3, edge_lst_4, edge_lst_5, edge_lst_6, edge_lst_7,
+        #                 edge_lst_8]
+        all_edge_lst = [edge_lst_0, edge_lst_0, edge_lst_0, edge_lst_0, edge_lst_0]
         graphs = [nx.Graph(edges) for edges in all_edge_lst]
         return graphs
 
@@ -52,9 +53,18 @@ class GraphGenerator:
     @staticmethod
     def generate_n_nodes_graph(n):
         G = nx.complete_graph(n)
-        all_edge_lst = [random.sample(list(nx.edges(G)), int(n * 0.8))]
-        graphs = [nx.Graph(edges) for edges in all_edge_lst]
-        return graphs
+        edge_list = list(nx.edges(G))
+        rand_edges = random.sample(edge_list, int(0.8 * len(edge_list)))
+        g = nx.Graph()
+        g.add_nodes_from(G)
+        g.add_edges_from(rand_edges)
+        return [g]
 
+
+    def custom_graph(self):
+        edge_list = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)]
+        g = nx.Graph(edge_list)
+        return [g]
+        return [g]
 
 

@@ -15,7 +15,7 @@ class PowerIteration:
         return torch.dot(v.flatten(), Av.flatten())
 
     def power_iteration(self, A):
-        max_loops = 1000
+        max_loops = 100000
         n, d = A.shape
         v = (torch.ones(d) / np.sqrt(d)).to(device=self.device, dtype=self.dtype).view(d, 1)
         ev = self.eigenvalue(A, v)
