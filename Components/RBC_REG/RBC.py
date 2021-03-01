@@ -36,6 +36,7 @@ class RBC:
     def normalize_eigenvector(self, src, eigenvector, T_val):
         x = 1 / float(eigenvector[src])  # the ratio between 1 to the current value of eigenvector[src]
         n_eigenvector = eigenvector * x * T_val
+
         return n_eigenvector
 
     def get_eigenvector_by_eigenvalue(self, eigenvalues, eigenvectors, eigenvalue):

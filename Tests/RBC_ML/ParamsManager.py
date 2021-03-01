@@ -51,8 +51,8 @@ class ParamsManager:
         learning_target, centrality_params = get_learning_target(centrality, g, nodes_mapping, device, dtype, adj_matrix)
         centrality_params = json.dumps(centrality_params)
 
-        self.hyper_params = {HyperParams.learning_rate: 1e-3,
-                             HyperParams.epochs: 1100,
+        self.hyper_params = {HyperParams.learning_rate: 1e-4,
+                             HyperParams.epochs: 2000,
                              HyperParams.momentum: 0,
                              HyperParams.optimizer: OptimizerTypes.RmsProp,
                              HyperParams.pi_max_err: 0.0001,

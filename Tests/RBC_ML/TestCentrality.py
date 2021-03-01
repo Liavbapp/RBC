@@ -55,7 +55,7 @@ class CentralityTester():
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
-        graphs = self.graphs_generator.custom_graph()
+        graphs = self.graphs_generator.generate_n_nodes_graph(30)
         for i in range(0, len(graphs)):
             self.test_centrality_on_graph(graphs[i], i)
 
@@ -73,6 +73,7 @@ class CentralityTester():
         optimizer_params = json.dumps(optimizer.get_optimizer_params())
 
         start_time = datetime.datetime.now()
+        print(f'start time: {start_time}')
 
         try:
             t_model, r_model, final_error = learn_models(model, g, learning_params, nodes_mapping_reverse, optimizer)
@@ -90,7 +91,8 @@ if __name__ == '__main__':
     degree_tester = CentralityTester(Centralities.Degree)
     eigenvector_tester = CentralityTester(Centralities.Eigenvector)
     closeness_tester = CentralityTester(Centralities.Closeness)
-    testers = [spbc_tester, degree_tester, eigenvector_tester, closeness_tester]
+    # testers = [spbc_tester, degree_tester, eigenvector_tester, closeness_tester]
+    testers = [spbc_tester]
 
 
     for tester in testers:

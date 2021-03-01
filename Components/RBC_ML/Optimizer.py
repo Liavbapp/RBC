@@ -43,3 +43,6 @@ class Optimizer:
 
     def zero_grad(self):
         return self.optimizer.zero_grad()
+
+    def change_learning_rate(self, new_lr):
+        self.optimizer.param_groups[0]['lr'] = new_lr

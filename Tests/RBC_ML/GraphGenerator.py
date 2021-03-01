@@ -65,6 +65,5 @@ class GraphGenerator:
         edge_list = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)]
         g = nx.Graph(edge_list)
         return [g]
-        return [g]
 
 

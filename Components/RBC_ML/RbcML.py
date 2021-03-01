@@ -16,6 +16,7 @@ def learn_models(model, g, learning_params, nodes_mapping_reverse, optimizer):
     zero_mat, const_mat, traffic_paths = get_fixed_mat(g, learning_params, nodes_mapping_reverse)
 
     start_time = datetime.datetime.now()
+    changed =False
     for t in range(hyper_params[HyperParams.epochs]):
         y_pred = model(zero_mat, const_mat, traffic_paths)
         loss = loss_criterion(y_pred, learning_params[LearningParams.target])
@@ -23,6 +24,9 @@ def learn_models(model, g, learning_params, nodes_mapping_reverse, optimizer):
         optimizer.zero_grad()
         loss.backward()  # backward unable handle 50 nodes
         optimizer.step()
+        # if loss.item() < 0.05 and not changed:
+        #     optimizer.change_learning_rate(1e-6)
+        #     changed = True
 
     print(f'\nRun Time -  {datetime.datetime.now() - start_time} '
           f'\n\nLearning Target - {learning_params[LearningParams.target]}')
