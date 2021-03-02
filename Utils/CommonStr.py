@@ -2,12 +2,14 @@ import torch
 
 
 class RbcMatrices:
+    name = "RBC Matrices"
     adjacency_matrix = 'Adjacency Matrix'
     routing_policy = "Routing Policy"
     traffic_matrix = "Traffic Matrix"
 
 
 class HyperParams:
+    name = "Hyper Params"
     epochs = "Epochs"
     learning_rate = "Learning Rate"
     momentum = "Momentum"
@@ -17,7 +19,7 @@ class HyperParams:
 
 
 class StatisticsParams:
-
+    name = "Statistics Params"
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
     num_nodes = "Num Nodes"
@@ -43,13 +45,14 @@ class StatisticsParams:
     dtype = "Torch Dtype"
     consider_traffic_paths = "Traffic Paths"
     optimizer_params = "optimizer params"
+
     cols = [centrality, num_nodes, num_edges, target, prediction,
             error, error_type, sigmoid, src_src_one, src_row_zeros, target_col_zeros, runtime, learning_rate,
             epochs, optimizer, optimizer_params, path, comments, eigenvector_method, device, dtype, consider_traffic_paths]
 
 
 class LearningParams:
-
+    name = "Learning Params"
     hyper_parameters = "Hyper Parameters"
     adjacency_matrix = RbcMatrices.adjacency_matrix
     target = StatisticsParams.target
@@ -92,6 +95,7 @@ class OptimizerTypes:
     AdamW = "ADAMW"
 
 class Centralities:
+    name = "Centralities"
     SPBC = "SPBC"
     Degree = "Degree"
     Closeness = "Closeness"
@@ -99,4 +103,5 @@ class Centralities:
 
 
 class ErrorTypes:
+
     mse = "MSE"

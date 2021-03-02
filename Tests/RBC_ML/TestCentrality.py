@@ -1,6 +1,9 @@
+import concurrent
 import datetime
 import json
 import sys
+from concurrent.futures.thread import ThreadPoolExecutor
+
 sys.path.append('C:\\Users\\LiavB\\PycharmProjects\\RBC')
 from Components.RBC_ML.Optimizer import Optimizer
 from Components.RBC_ML.RbcNetwork import RbcNetwork
@@ -55,11 +58,13 @@ class CentralityTester():
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
-        graphs = self.graphs_generator.generate_n_nodes_graph(30)
+        graphs = self.graphs_generator.generate_n_nodes_graph(4)
+        results = []
         for i in range(0, len(graphs)):
-            self.test_centrality_on_graph(graphs[i], i)
+            results.append(self.load_params_statistics(graphs[i], i))
+        return results
 
-    def test_centrality_on_graph(self, g, test_num):
+    def load_params_statistics(self, g, test_num):
         print(f' Testing {self.centrality} Centrality - test number {test_num}')
         params_manager = ParamsManager(g, self.centrality)
         hyper_params = params_manager.hyper_params
@@ -80,10 +85,12 @@ class CentralityTester():
             runtime = datetime.datetime.now() - start_time
             rbc_pred = rbc_handler.compute_rbc(g, r_model, t_model)
             print(f'\n\ntest of figure_{test_num}, RBC Prediction returned - {rbc_pred}')
-            params_manager.save_params_statistics(t_model, r_model, final_error, runtime, rbc_pred, optimizer_params)
+            params_manager.prepare_params_statistics(t_model, r_model, final_error, runtime, rbc_pred, optimizer_params)
         except Exception as e:
             print(str(e))
-            saver.save_info_stuck(self.centrality, adj_matrix, learning_target, learning_params, str(e), optimizer_params)
+            params_manager.prepare_stuck_params_statistics(self.centrality, adj_matrix, learning_target, learning_params, str(e), optimizer_params)
+
+        return params_manager
 
 
 if __name__ == '__main__':
@@ -91,9 +98,16 @@ if __name__ == '__main__':
     degree_tester = CentralityTester(Centralities.Degree)
     eigenvector_tester = CentralityTester(Centralities.Eigenvector)
     closeness_tester = CentralityTester(Centralities.Closeness)
-    # testers = [spbc_tester, degree_tester, eigenvector_tester, closeness_tester]
-    testers = [spbc_tester]
+    testers = [spbc_tester, degree_tester, eigenvector_tester, closeness_tester]
 
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(testers)) as executor:
+        # Start the load operations and mark each future with its URL
+        future_to_url = {executor.submit(CentralityTester.test_centrality, tester): tester for tester in testers}
+        for future in concurrent.futures.as_completed(future_to_url):
+            tester_identity = future_to_url[future].centrality
+            try:
+                params_managers = future.result()
+                [param_manager.save_params_statistics() for param_manager in params_managers]
+            except Exception as exc:
+                print('%r generated an exception: %s' % (tester_identity, exc))
 
-    for tester in testers:
-        tester.test_centrality()

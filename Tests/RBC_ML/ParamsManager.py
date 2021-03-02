@@ -52,7 +52,7 @@ class ParamsManager:
         centrality_params = json.dumps(centrality_params)
 
         self.hyper_params = {HyperParams.learning_rate: 1e-4,
-                             HyperParams.epochs: 2000,
+                             HyperParams.epochs: 5,
                              HyperParams.momentum: 0,
                              HyperParams.optimizer: OptimizerTypes.RmsProp,
                              HyperParams.pi_max_err: 0.0001,
@@ -71,9 +71,11 @@ class ParamsManager:
                                 LearningParams.device: device,
                                 LearningParams.dtype: dtype
                                 }
+        self.params_statistics = None
+        self.params_stuck_statics = None
 
-    def save_params_statistics(self, t_model, r_model, final_error, rtime, rbc_pred, optimizer_params):
-        kwargs_dict = {RbcMatrices.adjacency_matrix: self.learning_params[LearningParams.adjacency_matrix],
+    def prepare_params_statistics(self, t_model, r_model, final_error, rtime, rbc_pred, optimizer_params):
+        params_statistic_dict = {RbcMatrices.adjacency_matrix: self.learning_params[LearningParams.adjacency_matrix],
                        RbcMatrices.routing_policy: r_model,
                        RbcMatrices.traffic_matrix: t_model,
                        Stas.centrality: self.centrality,
@@ -97,5 +99,20 @@ class ParamsManager:
                        Stas.dtype: self.learning_params[LearningParams.dtype],
                        Stas.consider_traffic_paths: self.learning_params[LearningParams.consider_traffic_paths]
                        }
+        self.params_statistics = params_statistic_dict
 
-        saver.save_info(**kwargs_dict)
+    def prepare_stuck_params_statistics(self, centrality, adj_matrix, learning_target, learning_params, err_msg, optimizer_params):
+        stuck_params_statistic_dict = {Stas.centrality: centrality,
+                                       RbcMatrices.adjacency_matrix: adj_matrix,
+                                       Stas.target: learning_target,
+                                       LearningParams.name: learning_params,
+                                       Stas.comments: err_msg,
+                                       Stas.optimizer_params: optimizer_params
+                                       }
+        self.params_stuck_statics = stuck_params_statistic_dict
+
+    def save_params_statistics(self):
+        if self.params_statistics is not None:
+            saver.save_statistics(**self.params_statistics)
+        else:
+            saver.save_info_stuck(**self.params_stuck_statics)
