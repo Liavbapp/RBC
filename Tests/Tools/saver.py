@@ -40,7 +40,8 @@ def save_statistics(**kwargs):
     num_nodes = len(kwargs[RbcMatrices.adjacency_matrix][0])
     num_edges = len(torch.nonzero(torch.triu(kwargs[RbcMatrices.adjacency_matrix]), as_tuple=True)[0])
     cols = Stas.cols
-    new_statistics = {Stas.centrality: kwargs[Stas.centrality],
+    new_statistics = {Stas.id: kwargs[Stas.id],
+                      Stas.centrality: kwargs[Stas.centrality],
                       Stas.centrality_params: kwargs[Stas.centrality_params],
                       Stas.num_nodes: num_nodes,
                       Stas.num_edges: num_edges,
@@ -58,8 +59,8 @@ def save_statistics(**kwargs):
                       Stas.optimizer: kwargs[Stas.optimizer],
                       Stas.optimizer_params: kwargs[Stas.optimizer_params],
                       Stas.pi_max_err: kwargs[Stas.pi_max_err],
-                      Stas.path: kwargs[Stas.path],
-                      Stas.comments: '',
+                      Stas.path: get_saving_matrix_path(kwargs[Stas.centrality], kwargs[RbcMatrices.adjacency_matrix]),
+                      Stas.comments: None,
                       Stas.eigenvector_method: kwargs[Stas.eigenvector_method],
                       Stas.device: kwargs[Stas.device],
                       Stas.dtype: kwargs[Stas.dtype],
@@ -118,7 +119,8 @@ def save_info_stuck(**kwargs):
     num_nodes = len(adj_matrix[0])
     num_edges = len(torch.nonzero(torch.triu(adj_matrix), as_tuple=True)[0])
     cols = Stas.cols
-    new_statistics = {Stas.centrality: centrality,
+    new_statistics = {Stas.id: kwargs[Stas.id],
+                      Stas.centrality: centrality,
                       Stas.centrality_params: learning_params[LearningParams.centrality_params],
                       Stas.num_nodes: num_nodes,
                       Stas.num_edges: num_edges,

@@ -20,6 +20,7 @@ class HyperParams:
 
 class StatisticsParams:
     name = "Statistics Params"
+    id = "ID"
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
     num_nodes = "Num Nodes"
