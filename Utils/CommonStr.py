@@ -47,7 +47,7 @@ class StatisticsParams:
     consider_traffic_paths = "Traffic Paths"
     optimizer_params = "optimizer params"
 
-    cols = [centrality, num_nodes, num_edges, target, prediction,
+    cols = [id, centrality, num_nodes, num_edges, target, prediction,
             error, error_type, sigmoid, src_src_one, src_row_zeros, target_col_zeros, runtime, learning_rate,
             epochs, optimizer, optimizer_params, path, comments, eigenvector_method, device, dtype, consider_traffic_paths]
 

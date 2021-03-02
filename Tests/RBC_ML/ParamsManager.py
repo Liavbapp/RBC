@@ -80,7 +80,7 @@ class ParamsManager:
         self.params_stuck_statics = None
 
     def prepare_params_statistics(self, t_model, r_model, final_error, rtime, rbc_pred, optimizer_params):
-        params_statistic_dict = {Stas.id: str(datetime.datetime.now()),
+        params_statistic_dict = {Stas.id: datetime.datetime.now(),
                                  RbcMatrices.adjacency_matrix: self.learning_params[LearningParams.adjacency_matrix],
                                  RbcMatrices.routing_policy: r_model,
                                  RbcMatrices.traffic_matrix: t_model,
@@ -111,7 +111,7 @@ class ParamsManager:
 
     def prepare_stuck_params_statistics(self, centrality, adj_matrix, learning_target, learning_params, err_msg,
                                         optimizer_params):
-        stuck_params_statistic_dict = {Stas.id: str(datetime.datetime.now()),
+        stuck_params_statistic_dict = {Stas.id: datetime.datetime.now(),
                                        Stas.centrality: centrality,
                                        RbcMatrices.adjacency_matrix: adj_matrix,
                                        Stas.target: learning_target,
