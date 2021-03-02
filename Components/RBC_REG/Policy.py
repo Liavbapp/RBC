@@ -36,7 +36,7 @@ class DegreePolicy(Policy):
 class BetweennessPolicy(Policy):
 
     def get_t_tensor(self, graph, **kwargs):
-        return torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=100.0)
+        return torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=0.5)
 
     def get_policy_tensor(self, graph, nodes_mapping):
         num_nodes = graph.number_of_nodes()
