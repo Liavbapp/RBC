@@ -4,14 +4,14 @@ import json
 import torch
 import networkx as nx
 
-from Tests.Tools import saver
+from Utils import Saver
 from Utils.CommonStr import TorchDevice, TorchDtype, HyperParams, LearningParams, EigenvectorMethod, OptimizerTypes, \
     ErrorTypes, Centralities, RbcMatrices, StatisticsParams as Stas
 
 
 def get_learning_target(centrality, g, nodes_mapping, device, dtype, adj_mat):
     if centrality == Centralities.SPBC:
-        params = {'k': None, 'normalized': False, 'weight': None, 'endpoints': False, 'seed': None}
+        params = {'k': None, 'normalized': False, 'weight': None, 'endpoints': True, 'seed': None}
         tensor_raw = torch.tensor(list(nx.betweenness_centrality(g, k=params['k'], normalized=params['normalized'],
                                                                  weight=params['weight'], endpoints=params['endpoints'],
                                                                  seed=params['seed']).values()), dtype=dtype,
@@ -57,10 +57,10 @@ class ParamsManager:
         centrality_params = json.dumps(centrality_params)
 
         self.hyper_params = {HyperParams.learning_rate: 1e-4,
-                             HyperParams.epochs: 5,
+                             HyperParams.epochs: 2500,
                              HyperParams.momentum: 0,
                              HyperParams.optimizer: OptimizerTypes.RmsProp,
-                             HyperParams.pi_max_err: 0.0001,
+                             HyperParams.pi_max_err: 0.00001,
                              HyperParams.error_type: ErrorTypes.mse
                              }
         self.learning_params = {LearningParams.hyper_parameters: self.hyper_params,
@@ -123,6 +123,6 @@ class ParamsManager:
 
     def save_params_statistics(self):
         if self.params_statistics is not None:
-            saver.save_statistics(**self.params_statistics)
+            Saver.save_statistics(**self.params_statistics)
         else:
-            saver.save_info_stuck(**self.params_stuck_statics)
+            Saver.save_info_stuck(**self.params_stuck_statics)

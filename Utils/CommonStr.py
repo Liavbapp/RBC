@@ -47,9 +47,10 @@ class StatisticsParams:
     consider_traffic_paths = "Traffic Paths"
     optimizer_params = "optimizer params"
 
-    cols = [id, centrality, num_nodes, num_edges, target, prediction,
-            error, error_type, sigmoid, src_src_one, src_row_zeros, target_col_zeros, runtime, learning_rate,
-            epochs, optimizer, optimizer_params, path, comments, eigenvector_method, device, dtype, consider_traffic_paths]
+
+    cols = [id, centrality, centrality_params, num_nodes, num_edges, epochs, learning_rate, optimizer, optimizer_params, eigenvector_method,
+            pi_max_err, sigmoid, src_src_one, src_row_zeros, target_col_zeros, consider_traffic_paths,  device, dtype, path, comments,
+            target, prediction, error, error_type, runtime]
 
 
 class LearningParams:
@@ -104,5 +105,5 @@ class Centralities:
 
 
 class ErrorTypes:
-
     mse = "MSE"
+

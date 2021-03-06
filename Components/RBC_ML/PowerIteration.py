@@ -1,8 +1,6 @@
 import torch
 import numpy as np
 
-from Tests.Tools.saver import save_info_stuck
-
 
 class PowerIteration:
     def __init__(self, device, dtype, max_error):

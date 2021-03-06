@@ -16,17 +16,14 @@ def learn_models(model, g, learning_params, nodes_mapping_reverse, optimizer):
     zero_mat, const_mat, traffic_paths = get_fixed_mat(g, learning_params, nodes_mapping_reverse)
 
     start_time = datetime.datetime.now()
-    changed =False
+    changed = False
     for t in range(hyper_params[HyperParams.epochs]):
         y_pred = model(zero_mat, const_mat, traffic_paths)
         loss = loss_criterion(y_pred, learning_params[LearningParams.target])
-        print(t, loss.item()) if t % 1 == 0 else None
+        print(t, loss.item()) if t % 100 == 0 else None
         optimizer.zero_grad()
         loss.backward()  # backward unable handle 50 nodes
         optimizer.step()
-        # if loss.item() < 0.05 and not changed:
-        #     optimizer.change_learning_rate(1e-6)
-        #     changed = True
 
     print(f'\nRun Time -  {datetime.datetime.now() - start_time} '
           f'\n\nLearning Target - {learning_params[LearningParams.target]}')
@@ -71,9 +68,10 @@ def get_fixed_mat(g, learning_params, nodes_mapping_reverse):
 
 def get_criterion(error_type):
     if error_type == ErrorTypes.mse:
-        return torch.nn.MSELoss(reduction='sum')
+        return torch.nn.MSELoss()
     else:
-        return torch.nn.MSELoss(reduction='sum')
+        return torch.nn.MSELoss()
+
 
 
 

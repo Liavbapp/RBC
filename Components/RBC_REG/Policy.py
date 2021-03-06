@@ -35,8 +35,21 @@ class DegreePolicy(Policy):
 
 class BetweennessPolicy(Policy):
 
-    def get_t_tensor(self, graph, **kwargs):
-        return torch.full(size=(graph.number_of_nodes(), graph.number_of_nodes()), fill_value=0.5)
+    def get_t_tensor(self, graph, nodes_mapping_reverse):
+
+        num_nodes = len(nodes_mapping_reverse)
+        traffic_mat = torch.full(size=(num_nodes, num_nodes), fill_value=0.5)
+        for s in range(0, num_nodes):
+            for t in range(0, num_nodes):
+                if s == t:
+                    traffic_mat[s, t] = 0.0
+                else:
+                    if nx.has_path(graph, nodes_mapping_reverse[s], nodes_mapping_reverse[t]):
+                        traffic_mat[s, t] = 0.5
+                    else:
+                        traffic_mat[s, t] = 0.0
+
+        return traffic_mat
 
     def get_policy_tensor(self, graph, nodes_mapping):
         num_nodes = graph.number_of_nodes()

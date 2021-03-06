@@ -16,8 +16,6 @@ class GraphGenerator:
         else:
             return self.generate_rand_graphs()
 
-
-
     @staticmethod
     def generate_spbc_graphs():
         edge_lst_0 = [(0, 1), (0, 2), (1, 2), (2, 3)]
@@ -36,18 +34,19 @@ class GraphGenerator:
         graphs = [nx.Graph(edges) for edges in all_edge_lst]
         return graphs
 
-
     @staticmethod
     def generate_rand_graphs():
         graphs = []
         for i in range(4, 14):
             g = nx.complete_graph(i)
             edge_lst = list(nx.edges(g))
-            rand_edges = random.sample(edge_lst, int(0.8 * len(edge_lst)))
+            rand_edges = random.sample(edge_lst, int(0.7 * len(edge_lst)))
             h = nx.Graph()
             h.add_nodes_from(g)
             h.add_edges_from(rand_edges)
-            graphs.append(h)
+            largest_cc = max(nx.connected_components(h), key=len)
+            largest_cc_graph = h.subgraph(largest_cc).copy()
+            graphs.append(largest_cc_graph)
         return graphs
 
     @staticmethod
@@ -60,10 +59,11 @@ class GraphGenerator:
         g.add_edges_from(rand_edges)
         return [g]
 
-
     def custom_graph(self):
         edge_list = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)]
         g = nx.Graph(edge_list)
         return [g]
 
 
+if __name__ == '__main__':
+    GraphGenerator('bb').generate_rand_graphs()

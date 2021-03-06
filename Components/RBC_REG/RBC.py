@@ -52,9 +52,10 @@ if __name__ == '__main__':
     betweenness_policy = Policy.BetweennessPolicy()
     graph = nx.Graph(edges)
     nodes_mapping = {k: v for v, k in enumerate(list(graph.nodes()))}
+    nodes_mapping_reverse = {k: v for k, v in enumerate(list(graph.nodes()))}
     R = betweenness_policy.get_policy_tensor(graph, nodes_mapping)
-    T = betweenness_policy.get_t_tensor(graph)
+    T = betweenness_policy.get_t_tensor(graph, nodes_mapping_reverse)
     res = RBC(eigenvector_method=EigenvectorMethod.power_iteration, pi_max_error=0.0001,
               device=torch.device('cpu'), dtype=torch.float).compute_rbc(graph, R, T)
 
-    print(res)
+    print(f'networkx result: {nx.betweenness_centrality(graph, endpoints=True, normalized=False).values()}, actual result: {res}')

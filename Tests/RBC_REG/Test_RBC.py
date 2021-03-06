@@ -21,6 +21,10 @@ edges = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)]
 g6 = nx.Graph()
 g6.add_edges_from(edges)
 
+edges = [(0, 1), (1, 2), (2, 0), (2, 3)]
+g7 = nx.Graph()
+g7.add_edges_from(edges)
+
 betweenness_policy = Policy.BetweennessPolicy()
 degree_policy = Policy.DegreePolicy()
 
@@ -156,4 +160,27 @@ class Tests(unittest.TestCase):
         pi_rbc = self.rbc_spbc(g6)[0]
         self.init_object(eigenvector_method=EigenvectorMethod.torch_eig)
         eig_rbc = self.rbc_spbc(g6)[0]
+        self.assertTrue(all(pi_rbc == eig_rbc))
+
+
+
+    def test_g7_pi_spbc(self):
+        self.init_object(eigenvector_method=EigenvectorMethod.power_iteration, max_pi_err=0.00001)
+        expected_rbc = nx.betweenness_centrality(g7, normalized=False, endpoints=True)
+        actual_rbc, nodes_map_g = self.rbc_spbc(g7)
+        for key, val in expected_rbc.items():
+            self.assertTrue(actual_rbc[nodes_map_g[key]] == val)
+
+    def test_g7_torch_spbc(self):
+        self.init_object(eigenvector_method=EigenvectorMethod.torch_eig)
+        expected_rbc = nx.betweenness_centrality(g7, normalized=False, endpoints=True)
+        actual_rbc, nodes_map_g = self.rbc_spbc(g7)
+        for key, val in expected_rbc.items():
+            self.assertTrue(actual_rbc[nodes_map_g[key]] == val)
+
+    def test_g7_eq_pi_torch_spbc(self):
+        self.init_object(eigenvector_method=EigenvectorMethod.power_iteration, max_pi_err=0.0001)
+        pi_rbc = self.rbc_spbc(g7)[0]
+        self.init_object(eigenvector_method=EigenvectorMethod.torch_eig)
+        eig_rbc = self.rbc_spbc(g7)[0]
         self.assertTrue(all(pi_rbc == eig_rbc))
