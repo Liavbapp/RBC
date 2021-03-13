@@ -5,7 +5,7 @@ import datetime
 from Utils.CommonStr import StatisticsParams
 
 
-class Drwaer:
+class Drawer:
 
     def __init__(self, max_err):
         self.orig_df = pd.read_csv(r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\Combined_Results\statistics.csv')
@@ -44,6 +44,6 @@ class Drwaer:
 
 
 if __name__ == '__main__':
-    drawer = Drwaer(1e-05)
-    drawer.draw_rtime_as_func_of_num_node()
-    # drawer.draw_rtime_as_func_of_num_edges()
+    drawer = Drawer(1e-05)
+    # drawer.draw_rtime_as_func_of_num_node()
+    drawer.draw_rtime_as_func_of_num_edges()

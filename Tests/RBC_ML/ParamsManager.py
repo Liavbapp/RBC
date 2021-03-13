@@ -123,6 +123,9 @@ class ParamsManager:
 
     def save_params_statistics(self):
         if self.params_statistics is not None:
-            Saver.save_statistics(**self.params_statistics)
+            self.params_statistics.update({'stuck': False})
+            Saver.save_info(**self.params_statistics)
         else:
-            Saver.save_info_stuck(**self.params_stuck_statics)
+            Saver.save_info(**self.params_stuck_statics, stuck=True)
+            self.params_statistics.update({'stuck': True})
+

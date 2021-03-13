@@ -33,7 +33,10 @@ def save_info(**kwargs):
     save_matrices(kwargs[RbcMatrices.adjacency_matrix], kwargs[RbcMatrices.routing_policy],
                   kwargs[RbcMatrices.traffic_matrix], saving_path)
     kwargs.update({Stas.path: saving_path})
-    save_statistics(**kwargs)
+    if not kwargs['stuck']:
+        save_statistics(**kwargs)
+    else:
+        save_info_stuck(**kwargs)
 
 
 def save_statistics(**kwargs):
@@ -59,7 +62,7 @@ def save_statistics(**kwargs):
                       Stas.optimizer: kwargs[Stas.optimizer],
                       Stas.optimizer_params: kwargs[Stas.optimizer_params],
                       Stas.pi_max_err: kwargs[Stas.pi_max_err],
-                      Stas.path: get_saving_matrix_path(kwargs[Stas.centrality], kwargs[RbcMatrices.adjacency_matrix]),
+                      Stas.path: kwargs[Stas.path],
                       Stas.comments: None,
                       Stas.eigenvector_method: kwargs[Stas.eigenvector_method],
                       Stas.device: kwargs[Stas.device],
@@ -76,6 +79,7 @@ def save_statistics(**kwargs):
     df_combined_statistics = pd.concat([df_statistics_old, df_new_statistics])
     df_combined_statistics.to_csv(
         f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\statistics.csv', index=False)
+
 
 
 def get_saving_matrix_path(centrality, adj_matrix):

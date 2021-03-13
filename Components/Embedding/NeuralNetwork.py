@@ -14,11 +14,13 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(dimensions * 4, 10),
-            nn.Sigmoid(),
-            nn.Linear(10, 5),
-            nn.Sigmoid(),
-            nn.Linear(5, 1),
+            nn.Linear(dimensions * 4, dimensions * 4),
+            nn.BatchNorm1d(dimensions * 4),
+            nn.ReLU(),
+            nn.Linear(dimensions * 4, dimensions * 1),
+            nn.BatchNorm1d(dimensions * 1),
+            nn.ReLU(),
+            nn.Linear(dimensions * 1, 1),
             nn.Sigmoid()
         )
 
@@ -30,17 +32,19 @@ class NeuralNetwork(nn.Module):
 
 class EmbeddingML:
 
-    def predict(self, features, labels):
+    def predict(self, features, labels, dimensions):
         start_time = datetime.datetime.now()
         loss_fn = torch.nn.MSELoss(reduction='sum')
         # expected_res = torch.tensor([0.7], dtype=torch.float)
-        learning_rate = 1e-2
-        model = NeuralNetwork(5)
+        learning_rate = 1e-4
+        model = NeuralNetwork(dimensions)
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-        for t in range(0, 10000):
+        i = 0
+        for t in range(0, 500000):
             y_pred = model(features)
+            i += 1
             loss = loss_fn(y_pred, labels)
-            print(t, loss.item())
+            print(t, loss.item()) if t % 200 == 0 else 1
             optimizer.zero_grad()
             loss.backward()  # backward unable handle 50 nodes
             optimizer.step()
