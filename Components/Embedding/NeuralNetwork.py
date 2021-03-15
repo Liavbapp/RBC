@@ -8,21 +8,24 @@ import torch.nn.functional as F
 from Components.Embedding.Node2Vec import Node2Vec
 from Utils.GraphGenerator import GraphGenerator
 
+DEVICE = torch.device('cpu')
+DTYPE = torch.float
+
 
 class NeuralNetwork(nn.Module):
     def __init__(self, dimensions):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(dimensions * 4, dimensions * 4),
-            nn.BatchNorm1d(dimensions * 4),
+            nn.Linear(dimensions * 4, 100),
+            # nn.BatchNorm1d(100),
             nn.ReLU(),
-            nn.Linear(dimensions * 4, dimensions * 1),
-            nn.BatchNorm1d(dimensions * 1),
+            nn.Linear(100, 20),
+            # nn.BatchNorm1d(20),
             nn.ReLU(),
-            nn.Linear(dimensions * 1, 1),
+            nn.Linear(20, 1),
             nn.Sigmoid()
-        )
+        ).to(device=DEVICE, dtype=DTYPE)
 
     def forward(self, x):
         x = self.flatten(x)
@@ -39,15 +42,20 @@ class EmbeddingML:
         learning_rate = 1e-4
         model = NeuralNetwork(dimensions)
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-        i = 0
+
+        batch_size = 32
+        loss = None
         for t in range(0, 500000):
-            y_pred = model(features)
-            i += 1
-            loss = loss_fn(y_pred, labels)
-            print(t, loss.item()) if t % 200 == 0 else 1
-            optimizer.zero_grad()
-            loss.backward()  # backward unable handle 50 nodes
-            optimizer.step()
+            for i in range(0, len(features), batch_size):
+                features_batch = features[i:i + batch_size]
+                labels_batch = labels[i: i + batch_size]
+                y_pred = model(features_batch)
+                loss = loss_fn(y_pred, labels_batch)
+                optimizer.zero_grad()
+                loss.backward()  # backward unable handle 50 nodes
+                optimizer.step()
+
+            print(t, loss.item()) if t % 2 == 0 else 1
 
         return model
 

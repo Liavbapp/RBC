@@ -45,5 +45,5 @@ class Drawer:
 
 if __name__ == '__main__':
     drawer = Drawer(1e-05)
-    # drawer.draw_rtime_as_func_of_num_node()
-    drawer.draw_rtime_as_func_of_num_edges()
+    drawer.draw_rtime_as_func_of_num_node()
+    # drawer.draw_rtime_as_func_of_num_edges()
