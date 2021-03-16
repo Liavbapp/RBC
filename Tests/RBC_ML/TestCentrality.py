@@ -59,7 +59,7 @@ class CentralityTester():
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
-        graphs = self.graphs_generator.generate_n_nodes_graph(5)
+        graphs = self.graphs_generator.generate_n_nodes_graph(3, keep_rate=1)
         results = []
         for i in range(0, len(graphs)):
             for j in range(0,10):

@@ -1,4 +1,6 @@
 import datetime
+import random
+
 import numpy as np
 import networkx as nx
 import torch
@@ -17,13 +19,17 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
+            nn.BatchNorm1d(dimensions * 4),
             nn.Linear(dimensions * 4, 100),
             # nn.BatchNorm1d(100),
-            nn.ReLU(),
-            nn.Linear(100, 20),
+            nn.ELU(),
+            nn.Linear(100, 80),
             # nn.BatchNorm1d(20),
-            nn.ReLU(),
-            nn.Linear(20, 1),
+            nn.ELU(),
+            nn.Linear(80, 10),
+            # nn.BatchNorm1d(20),
+            nn.ELU(),
+            nn.Linear(10, 1),
             nn.Sigmoid()
         ).to(device=DEVICE, dtype=DTYPE)
 
@@ -35,17 +41,22 @@ class NeuralNetwork(nn.Module):
 
 class EmbeddingML:
 
-    def predict(self, features, labels, dimensions):
+    def predict(self, samples, dimensions):
         start_time = datetime.datetime.now()
-        loss_fn = torch.nn.MSELoss(reduction='sum')
+        loss_fn = torch.nn.MSELoss(reduction='mean')
         # expected_res = torch.tensor([0.7], dtype=torch.float)
         learning_rate = 1e-4
         model = NeuralNetwork(dimensions)
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        optimizer = torch.optim.RMSprop(model.parameters(), lr=learning_rate, momentum=0.8)
 
-        batch_size = 32
+        batch_size = 128
         loss = None
-        for t in range(0, 500000):
+
+        random.shuffle(samples)
+        features = torch.stack([embedding for embedding, label in samples])
+        labels = torch.stack([label for embedding, label in samples])
+        for t in range(0, 8000):
+
             for i in range(0, len(features), batch_size):
                 features_batch = features[i:i + batch_size]
                 labels_batch = labels[i: i + batch_size]
@@ -55,7 +66,7 @@ class EmbeddingML:
                 loss.backward()  # backward unable handle 50 nodes
                 optimizer.step()
 
-            print(t, loss.item()) if t % 2 == 0 else 1
+            print(t, loss.item()) if t % 1 == 0 else 1
 
         return model
 
