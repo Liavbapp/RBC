@@ -149,13 +149,13 @@ def save_info_stuck(**kwargs):
 
     try:
         df_statistics_old = pd.read_csv(
-            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\statistics.csv')
+            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv')
     except Exception as ex:
         df_statistics_old = pd.DataFrame(columns=cols)
 
     df_combined_statistics = pd.concat([df_statistics_old, df_new_statistics])
     df_combined_statistics.to_csv(
-        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\statistics.csv', index=False)
+        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv', index=False)
 
 
 if __name__ == '__main__':
