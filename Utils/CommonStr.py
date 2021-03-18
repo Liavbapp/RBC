@@ -18,6 +18,31 @@ class HyperParams:
     error_type = "Error Type"
 
 
+class EmbeddingStatistics:
+    name = "EmbeddingsStatistics"
+    id = "ID"
+    centrality = "Centrality Type"
+    centrality_params = "Centrality Params"
+    target = "Target"
+    prediction = "Prediction"
+    error = "Error"
+    error_type = "Error Type"
+    runtime = "RunTime"
+    learning_rate = HyperParams.learning_rate
+    epochs = HyperParams.epochs
+    optimizer = HyperParams.optimizer
+    optimizer_params = "optimizer params"
+    eigenvector_method = "Eigenvector Computing Method "
+    pi_max_err = HyperParams.pi_max_err
+    path = "Path"
+    comments = "Comments"
+    device = "Torch Device"
+    dtype = "Torch Dtype"
+
+    cols = [id, centrality, centrality_params, target, prediction, error, error_type, runtime, learning_rate,
+            epochs, optimizer, optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
+
+
 class StatisticsParams:
     name = "Statistics Params"
     id = "ID"
@@ -47,9 +72,10 @@ class StatisticsParams:
     consider_traffic_paths = "Traffic Paths"
     optimizer_params = "optimizer params"
 
-
-    cols = [id, centrality, centrality_params, num_nodes, num_edges, epochs, learning_rate, optimizer, optimizer_params, eigenvector_method,
-            pi_max_err, sigmoid, src_src_one, src_row_zeros, target_col_zeros, consider_traffic_paths,  device, dtype, path, comments,
+    cols = [id, centrality, centrality_params, num_nodes, num_edges, epochs, learning_rate, optimizer, optimizer_params,
+            eigenvector_method,
+            pi_max_err, sigmoid, src_src_one, src_row_zeros, target_col_zeros, consider_traffic_paths, device, dtype,
+            path, comments,
             target, prediction, error, error_type, runtime]
 
 
@@ -69,7 +95,6 @@ class LearningParams:
     centrality_params = StatisticsParams.centrality_params
 
 
-
 class TorchDevice:
     cpu = torch.device('cpu')
     gpu = torch.device('cuda:0')
@@ -77,6 +102,7 @@ class TorchDevice:
 
 class TorchDtype:
     float = torch.float
+
 
 class EigenvectorMethod:
     power_iteration = "Power Iteration"
@@ -96,6 +122,7 @@ class OptimizerTypes:
     ASGD = "ASGD"
     AdamW = "ADAMW"
 
+
 class Centralities:
     name = "Centralities"
     SPBC = "SPBC"
@@ -106,4 +133,3 @@ class Centralities:
 
 class ErrorTypes:
     mse = "MSE"
-
