@@ -1,12 +1,9 @@
 import torch
 import torch.nn as nn
 
-DEVICE = torch.device('cuda:0')
-DTYPE = torch.float
-
 
 class NeuralNetwork(nn.Module):
-    def __init__(self, dimensions):
+    def __init__(self, dimensions, device, dtype):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
@@ -25,7 +22,7 @@ class NeuralNetwork(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(30, 1),
             nn.Sigmoid()
-        ).to(device=DEVICE, dtype=DTYPE)
+        ).to(device=device, dtype=dtype)
 
     def forward(self, x):
         x = self.flatten(x)

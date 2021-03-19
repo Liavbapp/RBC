@@ -8,6 +8,11 @@ class RbcMatrices:
     traffic_matrix = "Traffic Matrix"
 
 
+class EmbeddingOutputs:
+    test_routing_policy = 'Test Routing Policy'
+    trained_model = "Model"
+
+
 class HyperParams:
     name = "Hyper Params"
     epochs = "Epochs"
@@ -16,6 +21,7 @@ class HyperParams:
     optimizer = "Optimizer"
     pi_max_err = "PI Max Error"
     error_type = "Error Type"
+    batch_size = "Batch Size"
 
 
 class EmbeddingStatistics:
@@ -23,14 +29,17 @@ class EmbeddingStatistics:
     id = "ID"
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
+    embedding_dimensions = "Embedding Dimensions"
     target = "Target"
     prediction = "Prediction"
     error = "Error"
     error_type = "Error Type"
-    runtime = "RunTime"
+    network_structure = "Network Structure"
+    train_runtime = "Train RunTime"
     learning_rate = HyperParams.learning_rate
     epochs = HyperParams.epochs
     optimizer = HyperParams.optimizer
+    batch_size = HyperParams.batch_size
     optimizer_params = "optimizer params"
     eigenvector_method = "Eigenvector Computing Method "
     pi_max_err = HyperParams.pi_max_err
@@ -39,8 +48,10 @@ class EmbeddingStatistics:
     device = "Torch Device"
     dtype = "Torch Dtype"
 
-    cols = [id, centrality, centrality_params, target, prediction, error, error_type, runtime, learning_rate,
-            epochs, optimizer, optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
+
+    cols = [id, centrality, centrality_params, embedding_dimensions, target, prediction, error, error_type,
+            network_structure, train_runtime, learning_rate, epochs,  batch_size,optimizer, optimizer_params,
+            eigenvector_method, pi_max_err, path, comments, device, dtype]
 
 
 class StatisticsParams:

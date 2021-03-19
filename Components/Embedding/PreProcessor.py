@@ -10,11 +10,11 @@ DTYPE = torch.float
 
 
 class PreProcessor:
-    def __init__(self, embeddings_dimensions, g_lst, r_lst, t_lst):
-        self.dimensions = embeddings_dimensions
-        self.g_lst = g_lst
-        self.r_lst = r_lst
-        self.t_lst = t_lst
+    def __init__(self, dimensions, Gs, Rs, Ts):
+        self.dimensions = dimensions
+        self.g_lst = Gs
+        self.r_lst = Rs
+        self.t_lst = Ts
 
     def pre_process_data(self, testing_mode=False):
         embeddings = self.compute_embeddings()

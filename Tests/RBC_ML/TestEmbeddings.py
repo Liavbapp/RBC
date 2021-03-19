@@ -3,14 +3,14 @@ import datetime
 import torch
 import numpy as np
 import networkx as nx
-
+from Components.Embedding.NeuralNetwork import NeuralNetwork as EmbeddingNeuralNetwork
 from Components.Embedding.EmbeddingML import EmbeddingML
 from Components.Embedding.PreProcessor import PreProcessor
+from Components.RBC_ML.Optimizer import Optimizer
 from Components.RBC_REG.RBC import RBC
-from Utils.CommonStr import EigenvectorMethod
-
-DTYPE = torch.float
-DEVICE = torch.device('cuda:0')
+from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
+from Utils.CommonStr import EigenvectorMethod, EmbeddingStatistics as EmbedStats, Centralities, TorchDevice, TorchDtype, \
+    HyperParams, OptimizerTypes, ErrorTypes
 
 
 def get_paths():
@@ -36,32 +36,77 @@ def extract_info_from_path(paths):
     return R_lst, T_lst, G_lst
 
 
-def test_embeddings():
-    train_paths, tests_paths = get_paths()
-    train_R_lst, train_T_lst, train_G_lst = extract_info_from_path(train_paths)
-    test_R_lst, test_T_lst, test_G_lst = extract_info_from_path(tests_paths)
+def init_nn_model(param_embed):
+    device = param_embed[EmbedStats.device]
+    dtype = param_embed[EmbedStats.dtype]
+    embed_dimension = param_embed[EmbedStats.embedding_dimensions]
+    model = EmbeddingNeuralNetwork(embed_dimension, device, dtype)
+    return model
 
-    embedding_dim = 5
+
+def train_model(nn_model, train_info, p_man, optimizer):
+    train_Rs, train_Ts, train_Gs = train_info
     embedding_ml = EmbeddingML()
-    train_pre_processor = PreProcessor(embeddings_dimensions=embedding_dim, g_lst=train_G_lst, r_lst=train_R_lst,
-                                       t_lst=train_T_lst)
+    train_pre_processor = PreProcessor(dimensions=p_man.embedding_dimensions, Gs=train_Gs, Rs=train_Rs, Ts=train_Ts)
     samples = train_pre_processor.pre_process_data()
     start_time = datetime.datetime.now()
-    model = embedding_ml.train_model(samples, embedding_dim)
+    model_trained = embedding_ml.train_model(nn_model, samples, p_man, optimizer)
     train_time = datetime.datetime.now() - start_time
     print(f'train time: {train_time}')
+    return model_trained, train_time
 
-    test_preprocessor = PreProcessor(5, test_G_lst, test_R_lst, test_T_lst)
 
-    rbc_train = RBC(EigenvectorMethod.power_iteration, pi_max_error=0.00001, device=DEVICE, dtype=DTYPE)
-    rbc_test = RBC(EigenvectorMethod.power_iteration, pi_max_error=0.00001, device=DEVICE, dtype=DTYPE)
-    expected_rbc = rbc_train.compute_rbc(train_G_lst[0], train_R_lst[0], train_T_lst[0])
-    embeddings_test = test_preprocessor.compute_embeddings()[0]
-    actual_rbc = rbc_test.compute_rbc(test_G_lst[0], embedding_ml.predict_routing(model, embeddings_test), train_T_lst[0])
+def test_model(test_data, train_example, p_man: EmbeddingsParams):
+    pi_max_err = p_man.hyper_params[HyperParams.pi_max_err]
+    device = p_man.device
+    dtype = p_man.dtype
 
-    print(f'expected rbc: {expected_rbc}')
+    test_R, test_T, test_G = test_data
+    train_R, train_T, train_G = train_example
+
+    test_preprocessor = PreProcessor(p_man.embedding_dimensions, [test_G], [test_R], [test_T])
+    test_embeddings = test_preprocessor.compute_embeddings()[0]
+    rbc_train = RBC(EigenvectorMethod.power_iteration, pi_max_error=pi_max_err, device=device, dtype=dtype)
+    rbc_test = RBC(EigenvectorMethod.power_iteration, pi_max_error=pi_max_err, device=device, dtype=dtype)
+
+    expected_rbc = rbc_train.compute_rbc(train_G, train_R, train_T)
+    actual_rbc = rbc_test.compute_rbc(test_G, embedding_ml.predict_routing(model, embeddings_test), test_T)
+
+    print(f'expected rbc: {train_example}')
     print(f'actual rbc: {actual_rbc}')
 
 
 if __name__ == '__main__':
-    test_embeddings()
+    train_paths, tests_paths = get_paths()
+    train_data = extract_info_from_path(train_paths)
+    test_data = extract_info_from_path(tests_paths)
+
+    params_statistics = {
+        EmbedStats.centrality: Centralities.SPBC,
+        EmbedStats.device: TorchDevice.gpu,
+        EmbedStats.dtype: TorchDtype.float,
+        EmbedStats.embedding_dimensions: 5,
+        HyperParams.optimizer: OptimizerTypes.AdaMax,
+        HyperParams.learning_rate: 1e-4,
+        HyperParams.momentum: 0,
+        HyperParams.epochs: 2000,
+        HyperParams.batch_size: 512,
+        HyperParams.pi_max_err: 0.000001,
+        HyperParams.error_type: ErrorTypes.mse,
+        EmbedStats.eigenvector_method: EigenvectorMethod.power_iteration
+    }
+    nn_model = init_nn_model(params_statistics)
+    params_statistics[EmbedStats.network_structure] = nn_model.linear_relu_stack.__str__()
+
+    optimizer_name = params_statistics[EmbedStats.optimizer]
+    learning_rate = params_statistics[EmbedStats.learning_rate]
+    momentum = params_statistics[HyperParams.momentum]
+    optimizer = Optimizer(nn_model, optimizer_name, learning_rate, momentum=momentum)
+    params_statistics[EmbedStats.optimizer_params] = optimizer.get_optimizer_params()
+
+    params_man = EmbeddingsParams(params_statistics)
+    trained_model, train_time = train_model(nn_model, train_data, params_man, optimizer)
+    params_man.trained_model = trained_model
+    params_man.train_runtime = train_time
+
+    test_model(train_data, test_data, params_man)
