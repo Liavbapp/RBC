@@ -59,10 +59,11 @@ class CentralityTester():
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
-        graphs = self.graphs_generator.generate_n_nodes_graph(3, keep_rate=1)
+        graphs = self.graphs_generator.generate_n_nodes_graph(n=5, keep_rate=0.7)
         results = []
         for i in range(0, len(graphs)):
-            for j in range(0,10):
+            for j in range(0, 21):
+                print(f'{j} out of 21')
                 results.append(self.load_params_statistics(graphs[i], j))
                 # results.append(self.load_params_statistics(graphs[i], i))
 

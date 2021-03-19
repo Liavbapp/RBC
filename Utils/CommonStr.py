@@ -10,7 +10,9 @@ class RbcMatrices:
 
 class EmbeddingOutputs:
     test_routing_policy = 'Test Routing Policy'
+    test_graph = 'Test graph'
     trained_model = "Model"
+
 
 
 class HyperParams:
@@ -30,9 +32,9 @@ class EmbeddingStatistics:
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
     embedding_dimensions = "Embedding Dimensions"
-    target = "Target"
-    prediction = "Prediction"
-    error = "Error"
+    rbc_target = "RBC Target"
+    rbc_test = "RBC Test"
+    train_error = "Train Error"
     error_type = "Error Type"
     network_structure = "Network Structure"
     train_runtime = "Train RunTime"
@@ -48,9 +50,8 @@ class EmbeddingStatistics:
     device = "Torch Device"
     dtype = "Torch Dtype"
 
-
-    cols = [id, centrality, centrality_params, embedding_dimensions, target, prediction, error, error_type,
-            network_structure, train_runtime, learning_rate, epochs,  batch_size,optimizer, optimizer_params,
+    cols = [id, centrality, centrality_params, embedding_dimensions, rbc_target, rbc_test, train_error, error_type,
+            network_structure, train_runtime, learning_rate, epochs, batch_size, optimizer, optimizer_params,
             eigenvector_method, pi_max_err, path, comments, device, dtype]
 
 

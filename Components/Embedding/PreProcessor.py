@@ -5,12 +5,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
 from Components.Embedding.Node2Vec import Node2Vec
 import torch
 
-DEVICE = torch.device('cuda:0')
-DTYPE = torch.float
-
 
 class PreProcessor:
-    def __init__(self, dimensions, Gs, Rs, Ts):
+    def __init__(self, dimensions, Gs, Rs, Ts, device, dtype):
+        self.device = device
+        self.dtype = dtype
         self.dimensions = dimensions
         self.g_lst = Gs
         self.r_lst = Rs
@@ -44,8 +43,8 @@ class PreProcessor:
                 for u in range(0, len(R)):
                     for v in range(0, len(R)):
                         sample_features = torch.tensor([embedding[s], embedding[u], embedding[v], embedding[t]],
-                                                       device=DEVICE, dtype=DTYPE)
-                        sample_label = torch.tensor([R[s, t][v, u]], device=DEVICE, dtype=DTYPE)
+                                                       device=self.device, dtype=self.dtype)
+                        sample_label = torch.tensor([R[s, t][v, u]], device=self.device, dtype=self.dtype)
                         samples.append((sample_features, sample_label))
                         embeddings_routing.update({f'{s}_{u}_{v}_{t}': (sample_features, sample_label)})
 

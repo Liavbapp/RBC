@@ -35,12 +35,12 @@ class GraphGenerator:
         return graphs
 
     @staticmethod
-    def generate_rand_graphs():
+    def generate_rand_graphs(min_nodes, max_nodes, keep_rate=0.7):
         graphs = []
-        for i in range(4, 14):
+        for i in range(min_nodes, max_nodes):
             g = nx.complete_graph(i)
             edge_lst = list(nx.edges(g))
-            rand_edges = random.sample(edge_lst, int(0.7 * len(edge_lst)))
+            rand_edges = random.sample(edge_lst, int(keep_rate * len(edge_lst)))
             h = nx.Graph()
             h.add_nodes_from(g)
             h.add_edges_from(rand_edges)
@@ -50,7 +50,7 @@ class GraphGenerator:
         return graphs
 
     @staticmethod
-    def generate_n_nodes_graph(n, keep_rate=0.8):
+    def generate_n_nodes_graph(n, keep_rate=0.7):
         G = nx.complete_graph(n)
         edge_list = list(nx.edges(G))
         rand_edges = random.sample(edge_list, int(keep_rate * len(edge_list)))

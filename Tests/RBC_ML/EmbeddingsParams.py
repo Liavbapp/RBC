@@ -40,17 +40,22 @@ class EmbeddingsParams:
                                 }
         self.trained_model = None
         self.train_runtime = None
+        self.train_error = None
+        self.expected_rbc = None
+        self.actual_rbc = None
         self.emb_params_statistics = None
         self.emb_params_stuck_statics = None
+        self.test_routing_policy = None
+        self.test_graph = None
 
-    def prepare_params_statistics(self, final_error, rbc_pred, test_r_policy):
+    def prepare_params_statistics(self):
         params_statistic_dict = {EmbStas.id: datetime.datetime.now(),
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
                                  EmbStas.embedding_dimensions: self.embedding_dimensions,
-                                 EmbStas.target: self.learning_params[LearningParams.target],
-                                 EmbStas.prediction: rbc_pred,
-                                 EmbStas.error: final_error,
+                                 EmbStas.rbc_target: self.expected_rbc,
+                                 EmbStas.rbc_test: self.actual_rbc,
+                                 EmbStas.train_error: self.train_error,
                                  EmbStas.error_type: self.learning_params[LearningParams.hyper_parameters][HyperParams.error_type],
                                  EmbStas.train_runtime: self.train_runtime,
                                  EmbStas.network_structure: self.network_structure,
@@ -64,7 +69,8 @@ class EmbeddingsParams:
                                  EmbStas.device: self.learning_params[LearningParams.device],
                                  EmbStas.dtype: self.learning_params[LearningParams.dtype],
                                  EmbeddingOutputs.trained_model: self.trained_model,
-                                 EmbeddingOutputs.test_routing_policy: test_r_policy
+                                 EmbeddingOutputs.test_routing_policy: self.test_routing_policy,
+                                 EmbeddingOutputs.test_graph: self.test_graph
                                  }
         self.emb_params_statistics = params_statistic_dict
 
@@ -72,7 +78,7 @@ class EmbeddingsParams:
                                         optimizer_params):
         stuck_params_statistic_dict = {EmbStas.id: datetime.datetime.now(),
                                        EmbStas.centrality: centrality,
-                                       EmbStas.target: learning_target,
+                                       EmbStas.rbc_target: learning_target,
                                        LearningParams.name: learning_params,
                                        EmbStas.comments: err_msg,
                                        OptimizerTypes: optimizer_params

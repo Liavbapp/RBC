@@ -40,8 +40,12 @@ def save_info(**kwargs):
 
 
 def save_info_embeddings(**kwargs):
+    test_r_policy = kwargs[EmbeddingOutputs.test_routing_policy]
+    trained_model = kwargs[EmbeddingOutputs.trained_model]
+    test_graph = kwargs[EmbeddingOutputs.test_graph]
+
     saving_path = get_saving_embedding_r_path(kwargs[EmbStats.centrality])
-    save_embedding_outputs(kwargs[EmbeddingOutputs.test_routing_policy], kwargs[EmbeddingOutputs.trained_model], saving_path)
+    save_embedding_outputs(test_r_policy, trained_model, test_graph, saving_path)
     kwargs.update({EmbStats.path: saving_path})
     if not kwargs['stuck']:
         save_statistics_embeddings(**kwargs)
@@ -98,9 +102,9 @@ def save_statistics_embeddings(**kwargs):
                             EmbStats.centrality: kwargs[EmbStats.centrality],
                             EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
                             EmbStats.embedding_dimensions: kwargs[EmbStats.embedding_dimensions],
-                            EmbStats.target: kwargs[EmbStats.target],
-                            EmbStats.prediction: str(kwargs[EmbStats.prediction]),
-                            EmbStats.error: kwargs[EmbStats.error],
+                            EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
+                            EmbStats.rbc_test: str(kwargs[EmbStats.rbc_test]),
+                            EmbStats.train_error: kwargs[EmbStats.train_error],
                             EmbStats.error_type: kwargs[EmbStats.error_type],
                             EmbStats.network_structure: kwargs[EmbStats.network_structure],
                             EmbStats.train_runtime: str(kwargs[EmbStats.train_runtime]),
@@ -119,13 +123,13 @@ def save_statistics_embeddings(**kwargs):
     df_new_embedding_statistics = pd.DataFrame(new_embed_statistics, index=[0])
     try:
         df_statistics_old_embed = pd.read_csv(
-            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics.csv')
+            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv')
     except Exception as ex:
         df_statistics_old_embed = pd.DataFrame(columns=cols)
 
     df_combined_statistics_embedding = pd.concat([df_statistics_old_embed, df_new_embedding_statistics])
     df_combined_statistics_embedding.to_csv(
-        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv', index=False)
+        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv', index=False)
 
 def get_saving_matrix_path(centrality, adj_matrix):
     num_nodes = len(adj_matrix[0])
@@ -167,10 +171,11 @@ def save_matrices(adj_matrix, routing_policy, traffic_matrix, path):
     np.save(f'{path}\\traffic_mat', traffic_matrix_np)
 
 
-def save_embedding_outputs(test_routing_policy, model, path):
-    r_policy_np = test_routing_policy.detach().to(device=torch.device('cpu')).numpy()
-    np.save(f'{path}\\routing_policy', r_policy_np)
-    torch.save(model.state_dict(), f'{path}\\model.pt')
+def save_embedding_outputs(test_routing_policy, trained_model, test_graph, path):
+    test_routing_policy_np = test_routing_policy.detach().to(device=torch.device('cpu')).numpy()
+    np.save(f'{path}\\test_routing_policy', test_routing_policy_np)
+    np.save(f'{path}\\test_graph', test_graph)
+    torch.save(trained_model.state_dict(), f'{path}\\trained_model.pt')
 
 
 def load_info(path):
@@ -232,9 +237,9 @@ def save_info_stuck_embeddings(**kwargs):
                       EmbStats.centrality: centrality,
                       EmbStats.centrality_params: learning_params[EmbStats.centrality_params],
                       EmbStats.embedding_dimensions: kwargs[EmbStats.embedding_dimensions],
-                      EmbStats.target: str(kwargs[ParamsStats.target]),
-                      EmbStats.prediction: None,
-                      EmbStats.error: None,
+                      EmbStats.rbc_target: str(kwargs[ParamsStats.target]),
+                      EmbStats.rbc_test: None,
+                      EmbStats.train_error: None,
                       EmbStats.error_type: None,
                       EmbStats.network_structure: kwargs[EmbStats.network_structure],
                       EmbStats.train_runtime: None,
@@ -251,13 +256,13 @@ def save_info_stuck_embeddings(**kwargs):
 
     try:
         df_statistics_old = pd.read_csv(
-            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv')
+            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv')
     except Exception as ex:
         df_statistics_old = pd.DataFrame(columns=cols)
 
     df_combined_statistics = pd.concat([df_statistics_old, df_new_statistics])
     df_combined_statistics.to_csv(
-        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv',
+        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv',
         index=False)
 
 
