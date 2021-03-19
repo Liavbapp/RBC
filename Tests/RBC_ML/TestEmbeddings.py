@@ -46,17 +46,16 @@ def init_nn_model(param_embed):
 
 def train_model(nn_model, train_info, p_man, optimizer):
     train_Rs, train_Ts, train_Gs = train_info
-    embedding_ml = EmbeddingML()
     train_pre_processor = PreProcessor(dimensions=p_man.embedding_dimensions, Gs=train_Gs, Rs=train_Rs, Ts=train_Ts)
     samples = train_pre_processor.pre_process_data()
     start_time = datetime.datetime.now()
-    model_trained = embedding_ml.train_model(nn_model, samples, p_man, optimizer)
+    model_trained = EmbeddingML.train_model(nn_model, samples, p_man, optimizer)
     train_time = datetime.datetime.now() - start_time
     print(f'train time: {train_time}')
     return model_trained, train_time
 
 
-def test_model(test_data, train_example, p_man: EmbeddingsParams):
+def test_model(model, test_data, train_example, p_man: EmbeddingsParams):
     pi_max_err = p_man.hyper_params[HyperParams.pi_max_err]
     device = p_man.device
     dtype = p_man.dtype
@@ -70,10 +69,12 @@ def test_model(test_data, train_example, p_man: EmbeddingsParams):
     rbc_test = RBC(EigenvectorMethod.power_iteration, pi_max_error=pi_max_err, device=device, dtype=dtype)
 
     expected_rbc = rbc_train.compute_rbc(train_G, train_R, train_T)
-    actual_rbc = rbc_test.compute_rbc(test_G, embedding_ml.predict_routing(model, embeddings_test), test_T)
+    actual_rbc = rbc_test.compute_rbc(test_G, EmbeddingML.predict_routing(model, test_embeddings), test_T)
 
     print(f'expected rbc: {train_example}')
     print(f'actual rbc: {actual_rbc}')
+
+    return expected_rbc, actual_rbc
 
 
 if __name__ == '__main__':
@@ -109,4 +110,5 @@ if __name__ == '__main__':
     params_man.trained_model = trained_model
     params_man.train_runtime = train_time
 
-    test_model(train_data, test_data, params_man)
+    train_example = (train_data[0][0], train_data[1][0], train_data[2][0])
+    test_model(trained_model, train_data, train_example, params_man)
