@@ -29,7 +29,10 @@ def draw_routing(routing_policy, s, t):
 
 
 def save_info(**kwargs):
-    saving_path = get_saving_matrix_path(kwargs[ParamsStats.centrality], kwargs[RbcMatrices.adjacency_matrix])
+    rbc_matrices_root_path = kwargs[RbcMatrices.root_path]
+    centrality = kwargs[ParamsStats.centrality]
+    adj_matrix = kwargs[RbcMatrices.adjacency_matrix]
+    saving_path = get_saving_matrix_path(centrality, adj_matrix, rbc_matrices_root_path)
     save_matrices(kwargs[RbcMatrices.adjacency_matrix], kwargs[RbcMatrices.routing_policy],
                   kwargs[RbcMatrices.traffic_matrix], saving_path)
     kwargs.update({ParamsStats.path: saving_path})
@@ -43,8 +46,9 @@ def save_info_embeddings(**kwargs):
     test_r_policy = kwargs[EmbeddingOutputs.test_routing_policy]
     trained_model = kwargs[EmbeddingOutputs.trained_model]
     test_graph = kwargs[EmbeddingOutputs.test_graph]
+    root_embedding_outputs_path = kwargs[EmbeddingOutputs.root_path]
 
-    saving_path = get_saving_embedding_r_path(kwargs[EmbStats.centrality])
+    saving_path = get_saving_embedding_matrices_path(kwargs[EmbStats.centrality], root_embedding_outputs_path)
     save_embedding_outputs(test_r_policy, trained_model, test_graph, saving_path)
     kwargs.update({EmbStats.path: saving_path})
     if not kwargs['stuck']:
@@ -70,6 +74,8 @@ def save_statistics(**kwargs):
                       ParamsStats.src_src_one: kwargs[ParamsStats.src_src_one],
                       ParamsStats.src_row_zeros: kwargs[ParamsStats.src_row_zeros],
                       ParamsStats.target_col_zeros: kwargs[ParamsStats.target_col_zeros],
+                      ParamsStats.fixed_T: False if kwargs[ParamsStats.fixed_T] is None else True,
+                      ParamsStats.fixed_R: False if kwargs[ParamsStats.fixed_R] is None else True,
                       ParamsStats.runtime: str(kwargs[ParamsStats.runtime]),
                       ParamsStats.learning_rate: kwargs[ParamsStats.learning_rate],
                       ParamsStats.epochs: kwargs[ParamsStats.epochs],
@@ -84,105 +90,14 @@ def save_statistics(**kwargs):
                       ParamsStats.consider_traffic_paths: kwargs[ParamsStats.consider_traffic_paths]}
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
 
+    csv_path = kwargs[ParamsStats.csv_save_path]
     try:
-        df_statistics_old = pd.read_csv(
-            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv')
+        df_statistics_old = pd.read_csv(csv_path)
     except Exception as ex:
         df_statistics_old = pd.DataFrame(columns=cols)
 
     df_combined_statistics = pd.concat([df_statistics_old, df_new_statistics])
-    df_combined_statistics.to_csv(
-        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv', index=False)
-
-
-def save_statistics_embeddings(**kwargs):
-    cols = EmbStats.cols
-    new_embed_statistics = {
-                            EmbStats.id: kwargs[EmbStats.id],
-                            EmbStats.centrality: kwargs[EmbStats.centrality],
-                            EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
-                            EmbStats.embedding_dimensions: kwargs[EmbStats.embedding_dimensions],
-                            EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
-                            EmbStats.rbc_test: str(kwargs[EmbStats.rbc_test]),
-                            EmbStats.train_error: kwargs[EmbStats.train_error],
-                            EmbStats.error_type: kwargs[EmbStats.error_type],
-                            EmbStats.network_structure: kwargs[EmbStats.network_structure],
-                            EmbStats.train_runtime: str(kwargs[EmbStats.train_runtime]),
-                            EmbStats.learning_rate: kwargs[EmbStats.learning_rate],
-                            EmbStats.epochs: kwargs[EmbStats.epochs],
-                            EmbStats.batch_size: kwargs[EmbStats.batch_size],
-                            EmbStats.optimizer: kwargs[EmbStats.optimizer],
-                            EmbStats.optimizer_params: kwargs[EmbStats.optimizer_params],
-                            EmbStats.pi_max_err: kwargs[EmbStats.pi_max_err],
-                            EmbStats.path: kwargs[EmbStats.path],
-                            EmbStats.comments: None,
-                            EmbStats.eigenvector_method: kwargs[EmbStats.eigenvector_method],
-                            EmbStats.device: kwargs[EmbStats.device],
-                            EmbStats.dtype: kwargs[EmbStats.dtype]
-                            }
-    df_new_embedding_statistics = pd.DataFrame(new_embed_statistics, index=[0])
-    try:
-        df_statistics_old_embed = pd.read_csv(
-            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv')
-    except Exception as ex:
-        df_statistics_old_embed = pd.DataFrame(columns=cols)
-
-    df_combined_statistics_embedding = pd.concat([df_statistics_old_embed, df_new_embedding_statistics])
-    df_combined_statistics_embedding.to_csv(
-        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv', index=False)
-
-def get_saving_matrix_path(centrality, adj_matrix):
-    num_nodes = len(adj_matrix[0])
-    num_edges = len(torch.nonzero(torch.triu(adj_matrix), as_tuple=True))
-    path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\RBC_results\\{centrality}\\' \
-           f'{str(num_nodes)}_nodes\\{str(num_edges)}_edges'
-    if not os.path.isdir(path):
-        os.makedirs(path)
-
-    all_dirs = [int(name) for name in os.listdir(path) if os.path.isdir(path + '\\' + name)]
-    next_dir = 0 if len(all_dirs) == 0 else max(all_dirs) + 1
-
-    final_path = path + f'\\{str(next_dir)}'
-    os.mkdir(final_path)
-
-    return final_path
-
-
-def get_saving_embedding_r_path(centrality):
-    path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Embedding_results\\{centrality}'
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    all_dirs = [int(name) for name in os.listdir(path) if os.path.isdir(path + '\\' + name)]
-    next_dir = 0 if len(all_dirs) == 0 else max(all_dirs) + 1
-
-    final_path = path + f'\\{str(next_dir)}'
-    os.mkdir(final_path)
-
-    return final_path
-
-
-def save_matrices(adj_matrix, routing_policy, traffic_matrix, path):
-    adj_matrix_np = adj_matrix.detach().to(device=torch.device('cpu')).numpy()
-    routing_policy_np = routing_policy.detach().to(device=torch.device('cpu')).numpy()
-    traffic_matrix_np = traffic_matrix.detach().to(device=torch.device('cpu')).numpy()
-
-    np.save(f'{path}\\adj_mat', adj_matrix_np)
-    np.save(f'{path}\\routing_policy', routing_policy_np)
-    np.save(f'{path}\\traffic_mat', traffic_matrix_np)
-
-
-def save_embedding_outputs(test_routing_policy, trained_model, test_graph, path):
-    test_routing_policy_np = test_routing_policy.detach().to(device=torch.device('cpu')).numpy()
-    np.save(f'{path}\\test_routing_policy', test_routing_policy_np)
-    np.save(f'{path}\\test_graph', test_graph)
-    torch.save(trained_model.state_dict(), f'{path}\\trained_model.pt')
-
-
-def load_info(path):
-    adj_matrix = np.load(path + '\\adj_mat.npy')
-    routing_policy = np.load(path + '\\routing_policy.npy')
-    traffic_matrix = np.load(path + '\\traffic_mat.npy')
-    return adj_matrix, routing_policy, traffic_matrix
+    df_combined_statistics.to_csv(csv_path, index=False)
 
 
 def save_info_stuck(**kwargs):
@@ -217,16 +132,53 @@ def save_info_stuck(**kwargs):
                       ParamsStats.consider_traffic_paths: learning_params[LearningParams.consider_traffic_paths]}
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
 
+    csv_path = kwargs[ParamsStats.csv_save_path]
     try:
-        df_statistics_old = pd.read_csv(
-            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv')
+        df_statistics_old = pd.read_csv(csv_path)
     except Exception as ex:
         df_statistics_old = pd.DataFrame(columns=cols)
 
     df_combined_statistics = pd.concat([df_statistics_old, df_new_statistics])
-    df_combined_statistics.to_csv(
-        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv',
-        index=False)
+    df_combined_statistics.to_csv(csv_path, index=False)
+
+
+def save_statistics_embeddings(**kwargs):
+    cols = EmbStats.cols
+    new_embed_statistics = {
+        EmbStats.id: kwargs[EmbStats.id],
+        EmbStats.centrality: kwargs[EmbStats.centrality],
+        EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
+        EmbStats.embedding_dimensions: kwargs[EmbStats.embedding_dimensions],
+        EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
+        EmbStats.rbc_test: str(kwargs[EmbStats.rbc_test]),
+        EmbStats.train_error: kwargs[EmbStats.train_error],
+        EmbStats.error_type: kwargs[EmbStats.error_type],
+        EmbStats.network_structure: kwargs[EmbStats.network_structure],
+        EmbStats.train_runtime: str(kwargs[EmbStats.train_runtime]),
+        EmbStats.learning_rate: kwargs[EmbStats.learning_rate],
+        EmbStats.epochs: kwargs[EmbStats.epochs],
+        EmbStats.batch_size: kwargs[EmbStats.batch_size],
+        EmbStats.optimizer: kwargs[EmbStats.optimizer],
+        EmbStats.optimizer_params: kwargs[EmbStats.optimizer_params],
+        EmbStats.pi_max_err: kwargs[EmbStats.pi_max_err],
+        EmbStats.path: kwargs[EmbStats.path],
+        EmbStats.comments: None,
+        EmbStats.eigenvector_method: kwargs[EmbStats.eigenvector_method],
+        EmbStats.device: kwargs[EmbStats.device],
+        EmbStats.dtype: kwargs[EmbStats.dtype]
+    }
+
+    df_new_embedding_statistics = pd.DataFrame(new_embed_statistics, index=[0])
+    csv_path = kwargs[EmbStats.csv_save_path]
+
+    try:
+        df_statistics_old_embed = pd.read_csv(csv_path)
+    except Exception as ex:
+        df_statistics_old_embed = pd.DataFrame(columns=cols)
+
+    df_combined_statistics_embedding = pd.concat([df_statistics_old_embed, df_new_embedding_statistics])
+    df_combined_statistics_embedding.to_csv(csv_path, index=False)
+
 
 def save_info_stuck_embeddings(**kwargs):
     centrality = kwargs[EmbStats.centrality]
@@ -234,6 +186,7 @@ def save_info_stuck_embeddings(**kwargs):
     cols = EmbStats.cols
 
     new_statistics = {EmbStats.id: kwargs[EmbStats.id],
+                      EmbStats.csv_save_path: kwargs[EmbStats.csv_save_path],
                       EmbStats.centrality: centrality,
                       EmbStats.centrality_params: learning_params[EmbStats.centrality_params],
                       EmbStats.embedding_dimensions: kwargs[EmbStats.embedding_dimensions],
@@ -253,17 +206,68 @@ def save_info_stuck_embeddings(**kwargs):
                       EmbStats.comments: kwargs[EmbStats.comments]}
 
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
+    csv_path = kwargs[EmbStats.csv_save_path]
 
     try:
-        df_statistics_old = pd.read_csv(
-            f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv')
+        df_statistics_old = pd.read_csv(csv_path)
     except Exception as ex:
         df_statistics_old = pd.DataFrame(columns=cols)
 
     df_combined_statistics = pd.concat([df_statistics_old, df_new_statistics])
-    df_combined_statistics.to_csv(
-        f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv',
-        index=False)
+    df_combined_statistics.to_csv(csv_path, index=False)
+
+
+def get_saving_matrix_path(centrality, adj_matrix, rbc_matrices_root_path):
+    num_nodes = len(adj_matrix[0])
+    num_edges = len(torch.nonzero(torch.triu(adj_matrix), as_tuple=True))
+    path = f'{rbc_matrices_root_path}\\{centrality}\\{str(num_nodes)}_nodes\\{str(num_edges)}_edges'
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    all_dirs = [int(name) for name in os.listdir(path) if os.path.isdir(path + '\\' + name)]
+    next_dir = 0 if len(all_dirs) == 0 else max(all_dirs) + 1
+
+    final_path = path + f'\\{str(next_dir)}'
+    os.mkdir(final_path)
+
+    return final_path
+
+
+def get_saving_embedding_matrices_path(centrality, root_path):
+    path = f'{root_path}\\{centrality}'
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    all_dirs = [int(name) for name in os.listdir(path) if os.path.isdir(path + '\\' + name)]
+    next_dir = 0 if len(all_dirs) == 0 else max(all_dirs) + 1
+
+    final_path = path + f'\\{str(next_dir)}'
+    os.mkdir(final_path)
+
+    return final_path
+
+
+def save_matrices(adj_matrix, routing_policy, traffic_matrix, path):
+    adj_matrix_np = adj_matrix.detach().to(device=torch.device('cpu')).numpy()
+    routing_policy_np = routing_policy.detach().to(device=torch.device('cpu')).numpy()
+    traffic_matrix_np = traffic_matrix.detach().to(device=torch.device('cpu')).numpy()
+
+    np.save(f'{path}\\adj_mat', adj_matrix_np)
+    np.save(f'{path}\\routing_policy', routing_policy_np)
+    np.save(f'{path}\\traffic_mat', traffic_matrix_np)
+
+
+def save_embedding_outputs(test_routing_policy, trained_model, test_graph, path):
+    test_routing_policy_np = test_routing_policy.detach().to(device=torch.device('cpu')).numpy()
+    np.save(f'{path}\\test_routing_policy', test_routing_policy_np)
+    np.save(f'{path}\\test_graph', test_graph)
+    torch.save(trained_model.state_dict(), f'{path}\\trained_model.pt')
+
+
+def load_info(path):
+    adj_matrix = np.load(path + '\\adj_mat.npy')
+    routing_policy = np.load(path + '\\routing_policy.npy')
+    traffic_matrix = np.load(path + '\\traffic_mat.npy')
+    return adj_matrix, routing_policy, traffic_matrix
 
 
 if __name__ == '__main__':

@@ -17,6 +17,8 @@ def get_centrality_params(centrality, device, dtype):
 class EmbeddingsParams:
     def __init__(self, params_dict):
         self.centrality = params_dict[EmbStas.centrality]
+        self.csv_path = params_dict[EmbStas.csv_save_path]
+        self.embedding_output_root_path = params_dict[EmbeddingOutputs.root_path]
         self.embedding_dimensions = params_dict[EmbStas.embedding_dimensions]
         self.device = params_dict[EmbStas.device]
         self.dtype = params_dict[EmbStas.dtype]
@@ -49,7 +51,9 @@ class EmbeddingsParams:
         self.test_graph = None
 
     def prepare_params_statistics(self):
-        params_statistic_dict = {EmbStas.id: datetime.datetime.now(),
+        params_statistic_dict = {EmbeddingOutputs.root_path: self.embedding_output_root_path,
+                                 EmbStas.csv_save_path: self.csv_path,
+                                 EmbStas.id: datetime.datetime.now(),
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
                                  EmbStas.embedding_dimensions: self.embedding_dimensions,
@@ -77,6 +81,7 @@ class EmbeddingsParams:
     def prepare_stuck_params_statistics(self, centrality, learning_target, learning_params, err_msg,
                                         optimizer_params):
         stuck_params_statistic_dict = {EmbStas.id: datetime.datetime.now(),
+                                       EmbStas.csv_save_path: self.csv_path,
                                        EmbStas.centrality: centrality,
                                        EmbStas.rbc_target: learning_target,
                                        LearningParams.name: learning_params,
@@ -90,6 +95,6 @@ class EmbeddingsParams:
             self.emb_params_statistics.update({'stuck': False})
             Saver.save_info_embeddings(**self.emb_params_statistics)
         else:
-            Saver.save_info_embeddings(**self.emb_params_stuck_statics, stuck=True)
             self.emb_params_statistics.update({'stuck': True})
+            Saver.save_info_embeddings(**self.emb_params_stuck_statics, stuck=True)
 

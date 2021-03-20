@@ -3,6 +3,7 @@ import torch
 
 class RbcMatrices:
     name = "RBC Matrices"
+    root_path = "Root Path"
     adjacency_matrix = 'Adjacency Matrix'
     routing_policy = "Routing Policy"
     traffic_matrix = "Traffic Matrix"
@@ -10,6 +11,7 @@ class RbcMatrices:
 
 class EmbeddingOutputs:
     test_routing_policy = 'Test Routing Policy'
+    root_path = "Root Path"
     test_graph = 'Test graph'
     trained_model = "Model"
 
@@ -49,6 +51,7 @@ class EmbeddingStatistics:
     comments = "Comments"
     device = "Torch Device"
     dtype = "Torch Dtype"
+    csv_save_path = "Saving Csv Path"
 
     cols = [id, centrality, centrality_params, embedding_dimensions, rbc_target, rbc_test, train_error, error_type,
             network_structure, train_runtime, learning_rate, epochs, batch_size, optimizer, optimizer_params,
@@ -70,6 +73,8 @@ class StatisticsParams:
     src_src_one = "Predecessor[src, src]=1"
     src_row_zeros = "Predecessor[src, :]=0"
     target_col_zeros = "Predecessor[:, target]=0"
+    fixed_R = "Fixed R policy"
+    fixed_T = "Fixed T Matrix"
     runtime = "RunTime"
     learning_rate = HyperParams.learning_rate
     epochs = HyperParams.epochs
@@ -83,12 +88,12 @@ class StatisticsParams:
     dtype = "Torch Dtype"
     consider_traffic_paths = "Traffic Paths"
     optimizer_params = "optimizer params"
+    csv_save_path = "Saving csv Path"
 
     cols = [id, centrality, centrality_params, num_nodes, num_edges, epochs, learning_rate, optimizer, optimizer_params,
             eigenvector_method,
-            pi_max_err, sigmoid, src_src_one, src_row_zeros, target_col_zeros, consider_traffic_paths, device, dtype,
-            path, comments,
-            target, prediction, error, error_type, runtime]
+            pi_max_err, sigmoid, src_src_one, src_row_zeros, target_col_zeros, fixed_T, fixed_R, consider_traffic_paths,
+            device, dtype, path, comments, target, prediction, error, error_type, runtime]
 
 
 class LearningParams:
@@ -100,6 +105,8 @@ class LearningParams:
     src_row_zeros = StatisticsParams.src_row_zeros
     target_col_zeros = StatisticsParams.target_col_zeros
     sigmoid = StatisticsParams.sigmoid
+    fixed_R = StatisticsParams.fixed_R
+    fixed_T = StatisticsParams.fixed_T
     eigenvector_method = StatisticsParams.eigenvector_method
     device = StatisticsParams.device
     dtype = StatisticsParams.dtype

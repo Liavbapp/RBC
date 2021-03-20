@@ -60,7 +60,7 @@ class GraphGenerator:
         return [g]
 
     def custom_graph(self):
-        edge_list = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)]
+        edge_list = [(0, 1), (1, 2), (2, 3), (3, 4), (1, 5), (1, 6), (4, 5), (5, 6)]
         g = nx.Graph(edge_list)
         return [g]
 

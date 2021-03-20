@@ -10,7 +10,7 @@ from Components.RBC_ML.Optimizer import Optimizer
 from Components.RBC_REG.RBC import RBC
 from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import EigenvectorMethod, EmbeddingStatistics as EmbedStats, Centralities, TorchDevice, TorchDtype, \
-    HyperParams, OptimizerTypes, ErrorTypes
+    HyperParams, OptimizerTypes, ErrorTypes, EmbeddingOutputs
 
 
 def get_paths():
@@ -29,8 +29,10 @@ def get_paths():
 
 
 def extract_info_from_path(paths, p_man):
-    R_lst = [torch.tensor(np.load(path + '\\routing_policy.npy'), dtype=p_man.dtype, device=params_man.device) for path in paths]
-    T_lst = [torch.tensor(np.load(path + '\\traffic_mat.npy'), dtype=p_man.dtype, device=params_man.device) for path in paths]
+    R_lst = [torch.tensor(np.load(path + '\\routing_policy.npy'), dtype=p_man.dtype, device=params_man.device) for path
+             in paths]
+    T_lst = [torch.tensor(np.load(path + '\\traffic_mat.npy'), dtype=p_man.dtype, device=params_man.device) for path in
+             paths]
     G_lst = [nx.convert_matrix.from_numpy_matrix(np.load(path + '\\adj_mat.npy')) for path in paths]
 
     return R_lst, T_lst, G_lst
@@ -55,7 +57,7 @@ def train_model(nn_model, train_info, p_man, optimizer):
     model_trained, train_error = EmbeddingML.train_model(nn_model, samples, p_man, optimizer)
     train_time = datetime.datetime.now() - start_time
     print(f'train time: {train_time}')
-    return model_trained, train_time,  train_error
+    return model_trained, train_time, train_error
 
 
 def test_model(model, train_example, test_example, p_man: EmbeddingsParams):
@@ -82,13 +84,15 @@ def test_model(model, train_example, test_example, p_man: EmbeddingsParams):
 
 
 if __name__ == '__main__':
-
-
+    csv_save_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\With_Embedding\\statistics_embedding.csv'
+    embedding_outputs_root_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Embedding_results'
     params_statistics = {
         EmbedStats.centrality: Centralities.SPBC,
         EmbedStats.device: TorchDevice.gpu,
         EmbedStats.dtype: TorchDtype.float,
         EmbedStats.embedding_dimensions: 5,
+        EmbedStats.csv_save_path: csv_save_path,
+        EmbeddingOutputs.root_path: embedding_outputs_root_path,
         HyperParams.optimizer: OptimizerTypes.AdaMax,
         HyperParams.learning_rate: 1e-4,
         HyperParams.momentum: 0,
