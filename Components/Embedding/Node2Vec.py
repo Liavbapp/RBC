@@ -1,6 +1,10 @@
+import os
+import sys
+
 
 import numpy as np
 import networkx as nx
+
 from gensim.models.word2vec import Word2Vec
 from karateclub.utils.walker import BiasedRandomWalker
 from karateclub.estimator import Estimator

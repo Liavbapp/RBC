@@ -11,7 +11,7 @@ class Optimizer:
         elif name == OptimizerTypes.AdaGrad:
             self.optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
         elif name == OptimizerTypes.Adam:
-            self.optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+            self.optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.001)
         elif name == OptimizerTypes.AdamW:
             self.optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
         elif name == OptimizerTypes.SparseAdam:
