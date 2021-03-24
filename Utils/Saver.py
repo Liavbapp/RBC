@@ -148,7 +148,7 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.id: kwargs[EmbStats.id],
         EmbStats.centrality: kwargs[EmbStats.centrality],
         EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
-        EmbStats.embedding_dimensions: kwargs[EmbStats.embedding_dimensions],
+        EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
         EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
         EmbStats.rbc_test: str(kwargs[EmbStats.rbc_test]),
         EmbStats.train_error: kwargs[EmbStats.train_error],
@@ -157,9 +157,10 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.train_runtime: str(kwargs[EmbStats.train_runtime]),
         EmbStats.learning_rate: kwargs[EmbStats.learning_rate],
         EmbStats.epochs: kwargs[EmbStats.epochs],
+        EmbStats.weight_decay: kwargs[EmbStats.weight_decay],
         EmbStats.batch_size: kwargs[EmbStats.batch_size],
         EmbStats.optimizer: kwargs[EmbStats.optimizer],
-        EmbStats.optimizer_params: kwargs[EmbStats.optimizer_params],
+        EmbStats.optimizer_params: str(kwargs[EmbStats.optimizer_params]),
         EmbStats.pi_max_err: kwargs[EmbStats.pi_max_err],
         EmbStats.path: kwargs[EmbStats.path],
         EmbStats.comments: None,
@@ -167,7 +168,6 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.device: kwargs[EmbStats.device],
         EmbStats.dtype: kwargs[EmbStats.dtype]
     }
-
     df_new_embedding_statistics = pd.DataFrame(new_embed_statistics, index=[0])
     csv_path = kwargs[EmbStats.csv_save_path]
 
@@ -189,7 +189,7 @@ def save_info_stuck_embeddings(**kwargs):
                       EmbStats.csv_save_path: kwargs[EmbStats.csv_save_path],
                       EmbStats.centrality: centrality,
                       EmbStats.centrality_params: learning_params[EmbStats.centrality_params],
-                      EmbStats.embedding_dimensions: kwargs[EmbStats.embedding_dimensions],
+                      EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
                       EmbStats.rbc_target: str(kwargs[ParamsStats.target]),
                       EmbStats.rbc_test: None,
                       EmbStats.train_error: None,

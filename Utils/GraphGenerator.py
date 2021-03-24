@@ -59,11 +59,15 @@ class GraphGenerator:
         g.add_edges_from(rand_edges)
         return [g]
 
+    # def custom_graph(self):
+    #     edge_list = [(0, 1), (1, 2), (2, 3), (3, 4), (1, 5), (1, 6), (4, 5), (5, 6)]
+    #     g = nx.Graph(edge_list)
+    #     return [g]
+
     def custom_graph(self):
-        edge_list = [(0, 1), (1, 2), (2, 3), (3, 4), (1, 5), (1, 6), (4, 5), (5, 6)]
+        edge_list = [(0, 1), (1, 2), (2, 0), (2, 3)]
         g = nx.Graph(edge_list)
         return [g]
-
-
+#
 if __name__ == '__main__':
-    GraphGenerator('bb').generate_rand_graphs()
+    GraphGenerator('bb').generate_rand_graphs(4, 1)

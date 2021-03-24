@@ -16,12 +16,12 @@ class EmbeddingOutputs:
     trained_model = "Model"
 
 
-
 class HyperParams:
     name = "Hyper Params"
     epochs = "Epochs"
     learning_rate = "Learning Rate"
     momentum = "Momentum"
+    weight_decay = "Weight Decay"
     optimizer = "Optimizer"
     pi_max_err = "PI Max Error"
     error_type = "Error Type"
@@ -33,7 +33,7 @@ class EmbeddingStatistics:
     id = "ID"
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
-    embedding_dimensions = "Embedding Dimensions"
+    embd_dim = "Embedding Dimensions"
     rbc_target = "RBC Target"
     rbc_test = "RBC Test"
     train_error = "Train Error"
@@ -42,6 +42,7 @@ class EmbeddingStatistics:
     train_runtime = "Train RunTime"
     learning_rate = HyperParams.learning_rate
     epochs = HyperParams.epochs
+    weight_decay = HyperParams.weight_decay
     optimizer = HyperParams.optimizer
     batch_size = HyperParams.batch_size
     optimizer_params = "optimizer params"
@@ -53,9 +54,9 @@ class EmbeddingStatistics:
     dtype = "Torch Dtype"
     csv_save_path = "Saving Csv Path"
 
-    cols = [id, centrality, centrality_params, embedding_dimensions, rbc_target, rbc_test, train_error, error_type,
-            network_structure, train_runtime, learning_rate, epochs, batch_size, optimizer, optimizer_params,
-            eigenvector_method, pi_max_err, path, comments, device, dtype]
+    cols = [id, centrality, centrality_params, embd_dim, rbc_target, rbc_test, train_error, error_type,
+            network_structure, train_runtime, learning_rate, epochs, batch_size, weight_decay, optimizer,
+            optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
 
 
 class StatisticsParams:
@@ -78,6 +79,7 @@ class StatisticsParams:
     runtime = "RunTime"
     learning_rate = HyperParams.learning_rate
     epochs = HyperParams.epochs
+    weight_decay = HyperParams.weight_decay
     momentum = HyperParams.momentum
     optimizer = HyperParams.optimizer
     pi_max_err = HyperParams.pi_max_err
@@ -90,10 +92,10 @@ class StatisticsParams:
     optimizer_params = "optimizer params"
     csv_save_path = "Saving csv Path"
 
-    cols = [id, centrality, centrality_params, num_nodes, num_edges, epochs, learning_rate, optimizer, optimizer_params,
-            eigenvector_method,
-            pi_max_err, sigmoid, src_src_one, src_row_zeros, target_col_zeros, fixed_T, fixed_R, consider_traffic_paths,
-            device, dtype, path, comments, target, prediction, error, error_type, runtime]
+    cols = [id, centrality, centrality_params, num_nodes, num_edges, epochs, learning_rate, weight_decay,
+            optimizer, optimizer_params, eigenvector_method, pi_max_err, sigmoid, src_src_one, src_row_zeros,
+            target_col_zeros, fixed_T, fixed_R, consider_traffic_paths, device, dtype, path, comments, target
+            , prediction, error, error_type, runtime]
 
 
 class LearningParams:

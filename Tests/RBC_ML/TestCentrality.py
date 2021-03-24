@@ -65,13 +65,10 @@ class CentralityTester():
         self.centrality = centrality
         csv_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv'
         rbc_matrices_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\RBC_results'
-        fixed_t = torch.tensor([[0.0000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000],
-                                [0.5000, 0.0000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000],
-                                [0.5000, 0.5000, 0.0000, 0.5000, 0.5000, 0.5000, 0.5000],
-                                [0.5000, 0.5000, 0.5000, 0.0000, 0.5000, 0.5000, 0.5000],
-                                [0.5000, 0.5000, 0.5000, 0.5000, 0.0000, 0.5000, 0.5000],
-                                [0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.0000, 0.5000],
-                                [0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.0000]])
+        fixed_t = torch.tensor([[0.0000, 0.5000, 0.5000, 0.5000],
+                                [0.5000, 0.0000, 0.5000, 0.5000],
+                                [0.5000, 0.5000, 0.0000, 0.5000],
+                                [0.5000, 0.5000, 0.5000, 0.0000]])
 
         self.params_dict = {RbcMatrices.root_path: rbc_matrices_path,
                             StatsParams.csv_save_path: csv_path,
@@ -79,7 +76,7 @@ class CentralityTester():
                             StatsParams.device: TorchDevice.cpu,
                             StatsParams.dtype: TorchDtype.float,
                             HyperParams.learning_rate: 1e-4,
-                            HyperParams.epochs: 3800,
+                            HyperParams.epochs: 1,
                             HyperParams.momentum: 0,
                             HyperParams.optimizer: OptimizerTypes.RmsProp,
                             HyperParams.pi_max_err: 0.00001,
@@ -95,12 +92,14 @@ class CentralityTester():
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
-        # graphs = self.graphs_generator.generate_n_nodes_graph(n=5, keep_rate=0.7)
+        # graphs = self.graphs_generator.generate_n_nodes_graph(n=4, keep_rate=1)
         graphs = self.graphs_generator.custom_graph()
         results = []
         for i in range(0, len(graphs)):
-            for j in range(1, 12):
-                results.append(self.load_params_statistics(graphs[i], j))
+            for j in range(1, 30):
+                params_manager = self.load_params_statistics(graphs[i], j)
+                params_manager.save_params_statistics()
+                results.append(params_manager)
                 # results.append(self.load_params_statistics(graphs[i], i))
 
         return results
@@ -129,7 +128,7 @@ class CentralityTester():
             rbc_pred = rbc_handler.compute_rbc(g, r_model, t_model)
             print(f'\n\ntest of figure_{test_num}, RBC Prediction returned - {rbc_pred}')
 
-            params_manager.t_model = t_model.deatach()
+            params_manager.t_model = t_model.detach()
             params_manager.r_model = r_model.detach()
             params_manager.final_error = final_error
             params_manager.rtime = runtime
@@ -148,7 +147,7 @@ if __name__ == '__main__':
     spbc_tester = CentralityTester(Centralities.SPBC)
 
     params_managers = spbc_tester.test_centrality()
-    [param_manager.save_params_statistics() for param_manager in params_managers]
+    # [param_manager.save_params_statistics() for param_manager in params_managers]
     # degree_tester = CentralityTester(Centralities.Degree)
     # eigenvector_tester = CentralityTester(Centralities.Eigenvector)
     # closeness_tester = CentralityTester(Centralities.Closeness)

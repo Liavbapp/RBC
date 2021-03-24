@@ -19,11 +19,9 @@ class EmbeddingsParams:
         self.centrality = params_dict[EmbStas.centrality]
         self.csv_path = params_dict[EmbStas.csv_save_path]
         self.embedding_output_root_path = params_dict[EmbeddingOutputs.root_path]
-        self.embedding_dimensions = params_dict[EmbStas.embedding_dimensions]
+        self.embedding_dimensions = params_dict[EmbStas.embd_dim]
         self.device = params_dict[EmbStas.device]
         self.dtype = params_dict[EmbStas.dtype]
-        self.network_structure = params_dict[EmbStas.network_structure]
-        self.optimizer_params = params_dict[EmbStas.optimizer_params]
         centrality_params = get_centrality_params(self.centrality, self.device, self.dtype)
 
         self.hyper_params = {HyperParams.learning_rate: params_dict[HyperParams.learning_rate],
@@ -32,7 +30,8 @@ class EmbeddingsParams:
                              HyperParams.optimizer: params_dict[HyperParams.optimizer],
                              HyperParams.pi_max_err: params_dict[HyperParams.pi_max_err],
                              HyperParams.error_type: params_dict[HyperParams.error_type],
-                             HyperParams.batch_size: params_dict[HyperParams.batch_size]
+                             HyperParams.batch_size: params_dict[HyperParams.batch_size],
+                             HyperParams.weight_decay:params_dict[HyperParams.weight_decay]
                              }
         self.learning_params = {LearningParams.hyper_parameters: self.hyper_params,
                                 LearningParams.centrality_params: centrality_params,
@@ -40,6 +39,7 @@ class EmbeddingsParams:
                                 LearningParams.device: self.device,
                                 LearningParams.dtype: self.dtype
                                 }
+        self.optimizer_params = None
         self.trained_model = None
         self.train_runtime = None
         self.train_error = None
@@ -49,6 +49,7 @@ class EmbeddingsParams:
         self.emb_params_stuck_statics = None
         self.test_routing_policy = None
         self.test_graph = None
+        self.network_structure = None
 
     def prepare_params_statistics(self):
         params_statistic_dict = {EmbeddingOutputs.root_path: self.embedding_output_root_path,
@@ -56,7 +57,7 @@ class EmbeddingsParams:
                                  EmbStas.id: datetime.datetime.now(),
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
-                                 EmbStas.embedding_dimensions: self.embedding_dimensions,
+                                 EmbStas.embd_dim: self.embedding_dimensions,
                                  EmbStas.rbc_target: self.expected_rbc,
                                  EmbStas.rbc_test: self.actual_rbc,
                                  EmbStas.train_error: self.train_error,
@@ -66,6 +67,7 @@ class EmbeddingsParams:
                                  EmbStas.learning_rate: self.hyper_params[EmbStas.learning_rate],
                                  EmbStas.epochs: self.hyper_params[EmbStas.epochs],
                                  EmbStas.batch_size: self.hyper_params[EmbStas.batch_size],
+                                 EmbStas.weight_decay: self.hyper_params[EmbStas.weight_decay],
                                  EmbStas.optimizer: self.hyper_params[EmbStas.optimizer],
                                  EmbStas.optimizer_params: self.optimizer_params,
                                  EmbStas.eigenvector_method: self.learning_params[LearningParams.eigenvector_method],
