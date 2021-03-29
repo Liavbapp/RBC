@@ -14,6 +14,8 @@ class EmbeddingOutputs:
     root_path = "Root Path"
     test_graph = 'Test graph'
     trained_model = "Model"
+    train_path_params = "Train path params"
+    test_path_params = "Test path params"
 
 
 class HyperParams:
@@ -34,8 +36,6 @@ class EmbeddingStatistics:
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
     embd_dim = "Embedding Dimensions"
-    train_path_params = "Train path params"
-    test_path_params = "Test path params"
     rbc_target = "RBC Target"
     rbc_test = "RBC Test"
     train_error = "Train Error"
@@ -56,7 +56,7 @@ class EmbeddingStatistics:
     dtype = "Torch Dtype"
     csv_save_path = "Saving Csv Path"
 
-    cols = [id, centrality, centrality_params, embd_dim, train_path_params, test_path_params, rbc_target, rbc_test,
+    cols = [id, centrality, centrality_params, embd_dim, rbc_target, rbc_test,
             train_error, error_type, network_structure, train_runtime, learning_rate, epochs, batch_size, weight_decay,
             optimizer, optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
 

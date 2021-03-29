@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import torch
 import networkx as nx
@@ -45,11 +47,13 @@ def save_info(**kwargs):
 def save_info_embeddings(**kwargs):
     test_r_policy = kwargs[EmbeddingOutputs.test_routing_policy]
     trained_model = kwargs[EmbeddingOutputs.trained_model]
-    test_graph = kwargs[EmbeddingOutputs.test_graph]
+    # test_graph = kwargs[EmbeddingOutputs.test_graph]
     root_embedding_outputs_path = kwargs[EmbeddingOutputs.root_path]
+    train_path_params = kwargs[EmbeddingOutputs.train_path_params]
+    test_path_params = kwargs[EmbeddingOutputs.test_path_params]
 
     saving_path = get_saving_embedding_matrices_path(kwargs[EmbStats.centrality], root_embedding_outputs_path)
-    save_embedding_outputs(test_r_policy, trained_model, test_graph, saving_path)
+    save_embedding_outputs(test_r_policy, trained_model, train_path_params, test_path_params, saving_path)
     kwargs.update({EmbStats.path: saving_path})
     if not kwargs['stuck']:
         save_statistics_embeddings(**kwargs)
@@ -149,8 +153,6 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.centrality: kwargs[EmbStats.centrality],
         EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
         EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
-        EmbStats.train_path_params: str(kwargs[EmbStats.train_path_params]),
-        EmbStats.test_path_params: str(kwargs[EmbStats.test_path_params]),
         EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
         EmbStats.rbc_test: str(kwargs[EmbStats.rbc_test]),
         EmbStats.train_error: kwargs[EmbStats.train_error],
@@ -193,8 +195,6 @@ def save_info_stuck_embeddings(**kwargs):
                       EmbStats.centrality_params: learning_params[EmbStats.centrality_params],
                       EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
                       EmbStats.rbc_target: str(kwargs[ParamsStats.target]),
-                      EmbStats.train_path_params: str(kwargs[EmbStats.train_path_params]),
-                      EmbStats.test_path_params: str(kwargs[EmbStats.test_path_params]),
                       EmbStats.rbc_test: None,
                       EmbStats.train_error: None,
                       EmbStats.error_type: None,
@@ -260,10 +260,14 @@ def save_matrices(adj_matrix, routing_policy, traffic_matrix, path):
     np.save(f'{path}\\traffic_mat', traffic_matrix_np)
 
 
-def save_embedding_outputs(test_routing_policy, trained_model, test_graph, path):
+def save_embedding_outputs(test_routing_policy, trained_model, train_path_params, test_path_params, path):
     test_routing_policy_np = test_routing_policy.detach().to(device=torch.device('cpu')).numpy()
     np.save(f'{path}\\test_routing_policy', test_routing_policy_np)
-    np.save(f'{path}\\test_graph', test_graph)
+    with open(f'{path}\\train_path_params.json', 'w') as f:
+        json.dump(str(train_path_params), f)
+    with open(f'{path}\\test_path_params.json', 'w') as f:
+        json.dump(str(test_path_params), f)
+    # np.save(f'{path}\\test_graph', test_graph)
     torch.save(trained_model.state_dict(), f'{path}\\trained_model.pt')
 
 

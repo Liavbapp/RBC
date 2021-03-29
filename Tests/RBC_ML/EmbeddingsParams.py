@@ -10,7 +10,7 @@ from Utils.CommonStr import TorchDevice, TorchDtype, HyperParams, LearningParams
 
 
 def get_centrality_params(centrality, device, dtype):
-    #TODO: get centrality params from csv
+    # TODO: get centrality params from csv
     return ""
 
 
@@ -31,7 +31,7 @@ class EmbeddingsParams:
                              HyperParams.pi_max_err: params_dict[HyperParams.pi_max_err],
                              HyperParams.error_type: params_dict[HyperParams.error_type],
                              HyperParams.batch_size: params_dict[HyperParams.batch_size],
-                             HyperParams.weight_decay:params_dict[HyperParams.weight_decay]
+                             HyperParams.weight_decay: params_dict[HyperParams.weight_decay]
                              }
         self.learning_params = {LearningParams.hyper_parameters: self.hyper_params,
                                 LearningParams.centrality_params: centrality_params,
@@ -56,17 +56,18 @@ class EmbeddingsParams:
 
     def prepare_params_statistics(self):
         params_statistic_dict = {EmbeddingOutputs.root_path: self.embedding_output_root_path,
+                                 EmbeddingOutputs.train_path_params: self.train_path_params,
+                                 EmbeddingOutputs.test_path_params: self.test_path_params,
                                  EmbStas.csv_save_path: self.csv_path,
                                  EmbStas.id: datetime.datetime.now(),
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
                                  EmbStas.embd_dim: self.embedding_dimensions,
-                                 EmbStas.train_path_params: self.train_path_params,
-                                 EmbStas.test_path_params: self.test_path_params,
                                  EmbStas.rbc_target: self.expected_rbc,
                                  EmbStas.rbc_test: self.actual_rbc,
                                  EmbStas.train_error: self.train_error,
-                                 EmbStas.error_type: self.learning_params[LearningParams.hyper_parameters][HyperParams.error_type],
+                                 EmbStas.error_type: self.learning_params[LearningParams.hyper_parameters][
+                                     HyperParams.error_type],
                                  EmbStas.train_runtime: self.train_runtime,
                                  EmbStas.network_structure: self.network_structure,
                                  EmbStas.learning_rate: self.hyper_params[EmbStas.learning_rate],
@@ -87,12 +88,12 @@ class EmbeddingsParams:
 
     def prepare_stuck_params_statistics(self, centrality, learning_target, learning_params, err_msg,
                                         optimizer_params):
-        stuck_params_statistic_dict = {EmbStas.id: datetime.datetime.now(),
+        stuck_params_statistic_dict = {EmbeddingOutputs.train_path_params: self.train_path_params,
+                                       EmbeddingOutputs.test_path_params: self.test_path_params,
+                                       EmbStas.id: datetime.datetime.now(),
                                        EmbStas.csv_save_path: self.csv_path,
                                        EmbStas.centrality: centrality,
                                        EmbStas.rbc_target: learning_target,
-                                       EmbStas.train_path_params: self.train_path_params,
-                                       EmbStas.test_path_params: self.test_path_params,
                                        LearningParams.name: learning_params,
                                        EmbStas.comments: err_msg,
                                        OptimizerTypes: optimizer_params
@@ -106,4 +107,3 @@ class EmbeddingsParams:
         else:
             self.emb_params_statistics.update({'stuck': True})
             Saver.save_info_embeddings(**self.emb_params_stuck_statics, stuck=True)
-
