@@ -76,7 +76,7 @@ class CentralityTester():
                             StatsParams.device: TorchDevice.cpu,
                             StatsParams.dtype: TorchDtype.float,
                             HyperParams.learning_rate: 1e-4,
-                            HyperParams.epochs: 1,
+                            HyperParams.epochs: 2800,
                             HyperParams.momentum: 0,
                             HyperParams.optimizer: OptimizerTypes.RmsProp,
                             HyperParams.pi_max_err: 0.00001,

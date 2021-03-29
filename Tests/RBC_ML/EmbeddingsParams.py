@@ -39,6 +39,9 @@ class EmbeddingsParams:
                                 LearningParams.device: self.device,
                                 LearningParams.dtype: self.dtype
                                 }
+
+        self.train_path_params = None
+        self.test_path_params = None
         self.optimizer_params = None
         self.trained_model = None
         self.train_runtime = None
@@ -58,6 +61,8 @@ class EmbeddingsParams:
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
                                  EmbStas.embd_dim: self.embedding_dimensions,
+                                 EmbStas.train_path_params: self.train_path_params,
+                                 EmbStas.test_path_params: self.test_path_params,
                                  EmbStas.rbc_target: self.expected_rbc,
                                  EmbStas.rbc_test: self.actual_rbc,
                                  EmbStas.train_error: self.train_error,
@@ -86,6 +91,8 @@ class EmbeddingsParams:
                                        EmbStas.csv_save_path: self.csv_path,
                                        EmbStas.centrality: centrality,
                                        EmbStas.rbc_target: learning_target,
+                                       EmbStas.train_path_params: self.train_path_params,
+                                       EmbStas.test_path_params: self.test_path_params,
                                        LearningParams.name: learning_params,
                                        EmbStas.comments: err_msg,
                                        OptimizerTypes: optimizer_params

@@ -26,14 +26,14 @@ class PreProcessor:
 
         return (samples, routing) if testing_mode else samples
 
-    def compute_embeddings(self, Gs):
+    def compute_embeddings(self, Gs, seeds):
         embeddings_lst = []
         row_sums = np.zeros(self.dimensions)
         dim_num_instances = np.zeros(self.dimensions)
         list_arrays = []
         i = 0
-        for g in Gs:
-            node2vec = Node2Vec(dimensions=self.dimensions, seed=random.randrange(100))
+        for g, seed in zip(Gs, seeds):
+            node2vec = Node2Vec(dimensions=self.dimensions, seed=seed)
             node2vec.fit(g)
             embedding = node2vec.get_embedding()
             row_sums += embedding.sum(axis=0)
