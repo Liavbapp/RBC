@@ -22,6 +22,7 @@ class EmbeddingsParams:
         self.embedding_dimensions = params_dict[EmbStas.embd_dim]
         self.device = params_dict[EmbStas.device]
         self.dtype = params_dict[EmbStas.dtype]
+        self.seed_range = params_dict['seed_range']
         centrality_params = get_centrality_params(self.centrality, self.device, self.dtype)
 
         self.hyper_params = {HyperParams.learning_rate: params_dict[HyperParams.learning_rate],

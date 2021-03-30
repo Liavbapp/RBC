@@ -32,8 +32,16 @@ class PreProcessor:
         for g, seed in zip(Gs, seeds):
             node2vec = Node2Vec(dimensions=self.dimensions, seed=seed)
             node2vec.fit(g)
+            # embedding = np.expand_dims(node2vec.get_embedding().flatten(), axis=1)
             embedding = node2vec.get_embedding()
             embeddings_lst.append(embedding)
+        # emeddings_arr = np.concatenate(embeddings_lst, axis=1)
+        # mu = np.average(emeddings_arr, axis=1)
+        # mu = np.expand_dims(mu, axis=1)
+        # variance = np.var(emeddings_arr, axis=1)
+        # variance = np.expand_dims(variance, axis=1)
+        # emeddings_arr_norm = (emeddings_arr - mu) / np.sqrt(variance)
+        # embeddings_lst_n = [flat_norm_embd.reshape(Gs[0].number_of_nodes(), self.dimensions) for flat_norm_embd in emeddings_arr_norm.T]
         return embeddings_lst
 
     def generate_samples_for_graph(self, embedding, R):

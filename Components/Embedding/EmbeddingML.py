@@ -5,7 +5,7 @@ from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import ErrorTypes, HyperParams
 
 
-def train_model(nn_model, samples, p_man: EmbeddingsParams, optimizer: Optimizer):
+def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams, optimizer: Optimizer):
     print(f'starting training')
     hyper_params = p_man.hyper_params
     loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])
@@ -13,20 +13,26 @@ def train_model(nn_model, samples, p_man: EmbeddingsParams, optimizer: Optimizer
     epochs = hyper_params[HyperParams.epochs]
     loss = None
 
-    random.shuffle(samples)
-    features = torch.stack([embedding for embedding, label in samples])
-    labels = torch.stack([label for embedding, label in samples])
+    random.shuffle(train_samples)
+    features_train = torch.stack([embedding for embedding, label in train_samples])
+    features_validation = torch.stack([embedding for embedding, label in validation_samples])
+    labels_train = torch.stack([label for embedding, label in train_samples])
+    labels_validation = torch.stack([label for embedding, label in validation_samples])
 
     for epoch in range(0, epochs):
-        for i in range(0, len(features), batch_size):
-            features_batch = features[i:i + batch_size]
-            labels_batch = labels[i: i + batch_size]
+        for i in range(0, len(features_train), batch_size):
+            features_batch = features_train[i:i + batch_size]
+            labels_batch = labels_train[i: i + batch_size]
             y_pred = nn_model(features_batch)
             loss = loss_fn(y_pred, labels_batch)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        print(epoch, loss.item()) if epoch % 50 == 0 else 1
+        if epoch % 50 == 0:
+            validation_pred = nn_model(features_validation)
+            validation_loss = loss_fn(validation_pred, labels_validation)
+            print(f'epoch: {epoch}, train loss: {loss.item()}')
+            print(f'epoch: {epoch}, validation loss: {validation_loss.item()}')
 
     return nn_model, loss.item()
 
