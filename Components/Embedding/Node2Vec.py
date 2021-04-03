@@ -85,8 +85,8 @@ class Node2Vec(Estimator):
 if __name__ == '__main__':
     pass
 
-    # graphs = GraphGenerator.generate_rand_graphs()
-    # union_graph = nx.disjoint_union_all(graphs)
+    # matrices = GraphGenerator.generate_rand_graphs()
+    # union_graph = nx.disjoint_union_all(matrices)
     # cc = list(nx.connected_components(union_graph))
     # rand_nodes_cc = [random.sample(nodes, 1)[0] for nodes in cc]
     # rand_edges = [(rand_nodes_cc[len(rand_nodes_cc) - 1], rand_nodes_cc[0])]

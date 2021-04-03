@@ -68,6 +68,29 @@ class GraphGenerator:
         edge_list = [(0, 1), (1, 2), (2, 0), (2, 3)]
         g = nx.Graph(edge_list)
         return [g]
-#
+
+    def graphs_for_embeddings_show(self):
+        lst = []
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3)]))
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]))
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 0)]))
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0)]))
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]))
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3)]))
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (3, 4)]))
+        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0), (5, 6)]))
+        lst.append(nx.Graph(nx.complete_graph(5)))
+        lst.append(nx.Graph(nx.complete_graph(10)))
+        lst.append(nx.complete_graph(15))
+        lst.append(nx.complete_graph(20))
+        lst.append(nx.complete_graph(25))
+        lst.append(nx.complete_graph(30))
+        lst.append(nx.complete_graph(35))
+        lst.append(nx.complete_graph(40))
+        lst.append(nx.complete_graph(45))
+        lst.append(nx.complete_graph(50))
+        return lst
+
+
 if __name__ == '__main__':
     GraphGenerator('bb').generate_rand_graphs(4, 1)

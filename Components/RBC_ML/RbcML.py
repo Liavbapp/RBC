@@ -19,7 +19,7 @@ def learn_models(model, g, learning_params, nodes_mapping_reverse, optimizer):
     for t in range(hyper_params[HyperParams.epochs]):
         y_pred = model(zero_mat, const_mat, traffic_paths)
         loss = loss_criterion(y_pred, learning_params[LearningParams.target])
-        print(t, loss.item()) if t % 100 == 0 else None
+        print(t, loss.item()) if t % 50 == 0 else None
         optimizer.zero_grad()
         loss.backward()  # backward unable handle 50 nodes
         optimizer.step()

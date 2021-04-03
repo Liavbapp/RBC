@@ -3,11 +3,12 @@ import datetime
 import json
 import os
 import sys
+
 from concurrent.futures.thread import ThreadPoolExecutor
 
 import torch
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
+cur_dir = os.path.dirname(os.path.dirname(os.path.abspath(os.curdir)))
+sys.path.append(cur_dir)
 from Components.RBC_ML.Optimizer import Optimizer
 from Components.RBC_ML.RbcNetwork import RbcNetwork
 from Utils.CommonStr import HyperParams, TorchDevice, TorchDtype, RbcMatrices, OptimizerTypes, ErrorTypes, \
@@ -18,6 +19,7 @@ from Utils.CommonStr import LearningParams
 from Utils.CommonStr import Centralities, StatisticsParams as StatsParams
 from Utils.GraphGenerator import GraphGenerator
 from Tests.RBC_ML.ParamsManager import ParamsManager
+from Utils import CustomTensors
 
 import sys
 
@@ -63,20 +65,19 @@ class CentralityTester():
 
     def __init__(self, centrality=Centralities.SPBC):
         self.centrality = centrality
-        csv_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv'
-        rbc_matrices_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\RBC_results'
-        fixed_t = torch.tensor([[0.0000, 0.5000, 0.5000, 0.5000],
-                                [0.5000, 0.0000, 0.5000, 0.5000],
-                                [0.5000, 0.5000, 0.0000, 0.5000],
-                                [0.5000, 0.5000, 0.5000, 0.0000]])
+        csv_path = cur_dir + f'\\results\\stats\\rbc_ml\\statistics.csv'
+        rbc_matrices_path = cur_dir + f'\\results\\matrices'
+        # csv_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv'
+        # rbc_matrices_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\RBC_results'
+        fixed_t = CustomTensors.tensor_20n
 
         self.params_dict = {RbcMatrices.root_path: rbc_matrices_path,
                             StatsParams.csv_save_path: csv_path,
                             StatsParams.centrality: centrality,
                             StatsParams.device: TorchDevice.cpu,
                             StatsParams.dtype: TorchDtype.float,
-                            HyperParams.learning_rate: 1e-4,
-                            HyperParams.epochs: 2800,
+                            HyperParams.learning_rate: 1e-3,
+                            HyperParams.epochs: 1,
                             HyperParams.momentum: 0,
                             HyperParams.optimizer: OptimizerTypes.RmsProp,
                             HyperParams.pi_max_err: 0.00001,
@@ -86,21 +87,21 @@ class CentralityTester():
                             LearningParams.target_col_zeros: False,
                             LearningParams.sigmoid: True,
                             LearningParams.consider_traffic_paths: True,
-                            LearningParams.fixed_T: fixed_t,
+                            LearningParams.fixed_T: None,
                             LearningParams.fixed_R: None,
                             LearningParams.eigenvector_method: EigenvectorMethod.power_iteration}
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
-        # graphs = self.graphs_generator.generate_n_nodes_graph(n=4, keep_rate=1)
-        graphs = self.graphs_generator.custom_graph()
+        # matrices = self.graphs_generator.generate_n_nodes_graph(n=4, keep_rate=1)
+        graphs = self.graphs_generator.generate_n_nodes_graph(20, 0.7)
         results = []
         for i in range(0, len(graphs)):
-            for j in range(1, 30):
+            for j in range(1, 10):
                 params_manager = self.load_params_statistics(graphs[i], j)
                 params_manager.save_params_statistics()
                 results.append(params_manager)
-                # results.append(self.load_params_statistics(graphs[i], i))
+                # results.append(self.load_params_statistics(matrices[i], i))
 
         return results
 

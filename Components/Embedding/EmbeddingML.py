@@ -32,7 +32,7 @@ def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsPa
             validation_pred = nn_model(features_validation)
             validation_loss = loss_fn(validation_pred, labels_validation)
             print(f'epoch: {epoch}, train loss: {loss.item()}')
-            print(f'epoch: {epoch}, validation loss: {validation_loss.item()}')
+            print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
 
     return nn_model, loss.item()
 
