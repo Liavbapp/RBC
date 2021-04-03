@@ -87,7 +87,7 @@ class CentralityTester():
                             LearningParams.target_col_zeros: False,
                             LearningParams.sigmoid: True,
                             LearningParams.consider_traffic_paths: True,
-                            LearningParams.fixed_T: None,
+                            LearningParams.fixed_T: fixed_t,
                             LearningParams.fixed_R: None,
                             LearningParams.eigenvector_method: EigenvectorMethod.power_iteration}
         self.graphs_generator = GraphGenerator(centrality)

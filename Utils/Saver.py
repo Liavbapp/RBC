@@ -279,6 +279,6 @@ def load_info(path):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\4_nodes\2_edges\9'
+    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\20_nodes\2_edges\6'
     adj_mat, routing_policy, traffic_mat = load_info(path)
     a = 1
