@@ -28,9 +28,18 @@ def draw_embeddings():
 
         plt.figure(len(gs) + i)
         plt.scatter(x=embeddings_lst[0]['x'], y=embeddings_lst[0]['y'], c='g', label=0)
+        for index, row in embeddings_lst[0].iterrows():
+            plt.annotate(index, (row['x'], row['y']))
         plt.scatter(x=embeddings_lst[1]['x'], y=embeddings_lst[1]['y'], c='b', label=1)
+        for index, row in embeddings_lst[1].iterrows():
+            plt.annotate(index, (row['x'], row['y']))
         plt.scatter(x=embeddings_lst[2]['x'], y=embeddings_lst[2]['y'], c='r', label=2)
+        for index, row in embeddings_lst[2].iterrows():
+            plt.annotate(index, (row['x'], row['y']))
         plt.scatter(x=embeddings_lst[3]['x'], y=embeddings_lst[3]['y'], c='y', label=3)
+        for index, row in embeddings_lst[3].iterrows():
+            plt.annotate(index, (row['x'], row['y']))
+
         # plt.scatter(x=embeddings_lst[4]['x'], y=embeddings_lst[4]['y'], c='k', label=4)
 
 
