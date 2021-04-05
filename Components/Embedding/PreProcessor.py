@@ -1,11 +1,12 @@
-import math
 import os
-import random
 import sys
 import numpy as np
+from Components.Embedding_Algorithms.DeepWalk import DeepWalk
+from Components.Embedding_Algorithms.GraphWave import GraphWave
+from Components.Embedding_Algorithms.Role2Vec import Role2Vec
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
-from Components.Embedding.Node2Vec import Node2Vec
+from Components.Embedding_Algorithms.Node2Vec import Node2Vec
 import torch
 
 
@@ -29,9 +30,12 @@ class PreProcessor:
 
     def compute_embeddings(self, Gs, seeds):
         embeddings_lst = []
-
+        p_prob = 10**100
         for g, seed in zip(Gs, seeds):
-            node2vec = Node2Vec(dimensions=self.dimensions, seed=seed)
+            # r2vec = GraphWave(seed=seed, sample_number=int(self.dimensions / 2))
+            # r2vec.fit(g)
+            # embedding = r2vec.get_embedding()
+            node2vec = Node2Vec(dimensions=self.dimensions, p=p_prob, q=1/p_prob, window_size=2)
             node2vec.fit(g)
             # embedding = np.expand_dims(node2vec.get_embedding().flatten(), axis=1)
             embedding = node2vec.get_embedding()

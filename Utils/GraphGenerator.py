@@ -1,5 +1,5 @@
 import random
-
+import matplotlib.pyplot as plt
 from Utils.CommonStr import Centralities
 import networkx as nx
 
@@ -71,24 +71,36 @@ class GraphGenerator:
 
     def graphs_for_embeddings_show(self):
         lst = []
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3)]))
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]))
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 0)]))
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0)]))
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]))
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3)]))
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (3, 4)]))
-        lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0), (5, 6)]))
-        lst.append(nx.Graph(nx.complete_graph(5)))
-        lst.append(nx.Graph(nx.complete_graph(10)))
-        lst.append(nx.complete_graph(15))
-        lst.append(nx.complete_graph(20))
-        lst.append(nx.complete_graph(25))
-        lst.append(nx.complete_graph(30))
-        lst.append(nx.complete_graph(35))
-        lst.append(nx.complete_graph(40))
-        lst.append(nx.complete_graph(45))
-        lst.append(nx.complete_graph(50))
+        c = nx.complete_graph(40)
+        d = nx.complete_graph(40)
+        a = nx.Graph([(0, 1), (1, 2)])
+        b = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8)])
+        h = nx.disjoint_union_all([a, b, c, d])
+        h.add_edge(11, 87)
+        h.add_edge(3, 18)
+        h.add_edge(0, 74)
+        h.add_edge(2, 19)
+        # nx.draw_networkx(h, with_labels=True, node_size=500)
+        # plt.show()
+        lst.append(h)
+        # lst.append(nx.Graph([(0, 1), (1, 2), (1, 3), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (3, 2)]))
+        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]))
+        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 0)]))
+        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0)]))
+        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]))
+        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3)]))
+        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (3, 4)]))
+        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0), (5, 6)]))
+        # lst.append(nx.Graph(nx.complete_graph(5)))
+        # lst.append(nx.Graph(nx.complete_graph(10)))
+        # lst.append(nx.complete_graph(15))
+        # lst.append(nx.complete_graph(20))
+        # lst.append(nx.complete_graph(25))
+        # lst.append(nx.complete_graph(30))
+        # lst.append(nx.complete_graph(35))
+        # lst.append(nx.complete_graph(40))
+        # lst.append(nx.complete_graph(45))
+        # lst.append(nx.complete_graph(50))
         return lst
 
 

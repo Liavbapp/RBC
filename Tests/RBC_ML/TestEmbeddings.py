@@ -2,11 +2,9 @@ import datetime
 import os
 import random
 import sys
-
 import torch
 import numpy as np
 import networkx as nx
-
 from Utils import Paths
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
@@ -25,30 +23,21 @@ def run_test(pr_st):
     optimizer = Optimizer(model=nn_model, name=pr_st[EmbStat.optimizer], learning_rate=pr_st[EmbStat.learning_rate],
                           momentum=pr_st[HyperParams.momentum], weight_decay=pr_st[HyperParams.weight_decay])
     params_man = EmbeddingsParams(pr_st)
-    train_data, validation_data, tests_data = split_to_train_validation_test(params_man)
+    train_data, validation_data, test_data = split_to_train_validation_test(params_man)
+    embed_train, embed_validation, embed_test = generate_embeddings(train_data, validation_data, test_data, params_man)
 
-    train_seeds = [list(param_info.values())[0][EmbeddingPathParams.seed] for param_info in train_data[3]]
-    validation_seeds = [list(param_info.values())[0][EmbeddingPathParams.seed] for param_info in validation_data[3]]
-    test_seeds = [list(param_info.values())[0][EmbeddingPathParams.seed] for param_info in tests_data[3]]
-
-    embeddings_train, embeddings_validation, embeddings_test = generate_embeddings(train_graphs=train_data[2],
-                                                                                   validation_graphs=validation_data[2],
-                                                                                   test_graphs=tests_data[2],
-                                                                                   train_seeds=train_seeds,
-                                                                                   validation_seeds=validation_seeds,
-                                                                                   test_seeds=test_seeds,
-                                                                                   prm_st=pr_st)
-    trained_model, train_time, train_err = train_model(nn_model=nn_model, train_info=train_data, p_man=params_man,
-                                                       optimizer=optimizer, embeddings_train=embeddings_train,
-                                                       validation_info=validation_data,
-                                                       embeddings_validation=embeddings_validation)
-    train_example = (train_data[0][0], train_data[1][0], train_data[2][0])
-    test_example = (tests_data[0][0], tests_data[1][0], tests_data[2][0])
+    trained_model, train_time, train_err = train_model(nn_model=nn_model, train_data=train_data,
+                                                       p_man=params_man, optimizer=optimizer,
+                                                       embeddings_train=embed_train,
+                                                       validation_data=validation_data,
+                                                       embeddings_validation=embed_validation)
+    train_example = (train_data['Rs'][0], train_data['Ts'][0], train_data['Gs'][0])
+    test_example = (test_data['Rs'][0], test_data['Ts'][0], test_data['Gs'][0])
     expected_rbc, actual_rbc, test_routing_policy = test_model(model=trained_model, train_example=train_example,
                                                                test_example=test_example, p_man=params_man,
-                                                               test_embeddings=embeddings_test[0])
-    params_man.train_path_params = train_data[3]
-    params_man.test_path_params = tests_data[3]
+                                                               test_embeddings=embed_test[0])
+    params_man.train_path_params = train_data['path_params']
+    params_man.test_path_params = test_data['path_params']
     params_man.trained_model = trained_model
     params_man.train_runtime = train_time
     params_man.train_error = train_err
@@ -62,33 +51,53 @@ def run_test(pr_st):
     params_man.save_params_statistics()
 
 
+def generate_seeds(train_data, validation_data, test_data):
+    train_seeds = [list(param_info.values())[0][EmbeddingPathParams.seed] for param_info in train_data['path_params']]
+    validation_seeds = [list(param_info.values())[0][EmbeddingPathParams.seed] for param_info in
+                        validation_data['path_params']]
+    test_seeds = [list(param_info.values())[0][EmbeddingPathParams.seed] for param_info in test_data['path_params']]
+    return train_seeds, validation_seeds, test_seeds
+
+
 def split_to_train_validation_test(p_man):
     graphs_paths = get_graphs_path()
     Rs, Ts, Gs, path_params = extract_info_from_path(graphs_paths, p_man)
-    train_data_lists = Rs[2:], Ts[2:], Gs[2:], path_params[2:]
-    validation_data_lists = [Rs[1]], [Ts[1]], [Gs[1]], [path_params[1]]
-    test_data_lists = [Rs[0]], [Ts[0]], [Gs[0]], [path_params[0]]
+    train_data_lists = {'Rs': Rs[2:], 'Ts': Ts[2:], 'Gs': Gs[2:], 'path_params': path_params[2:]}
+    validation_data_lists = {'Rs': [Rs[1]], 'Ts': [Ts[1]], 'Gs': [Gs[1]], 'path_params': [path_params[1]]}
+    test_data_lists = {'Rs': [Rs[0]], 'Ts': [Ts[0]], 'Gs': [Gs[0]], 'path_params': [path_params[0]]}
     return train_data_lists, validation_data_lists, test_data_lists
 
 
-def generate_embeddings(train_graphs, test_graphs, train_seeds, test_seeds, prm_st, validation_seeds,
-                        validation_graphs):
-    train_g_nbr = len(train_graphs)
-    validation_g_nbr = len(validation_graphs)
-    test_g_nbr = len(test_graphs)
+def generate_embeddings(train_data, validation_data, test_data, params_man):
+    combined_embed = get_combined_embeddings(train_data, validation_data, test_data, params_man)
+    embed_train, embed_validation, embed_test = split_embeddings(combined_embed,
+                                                                 len(train_data['Rs']),
+                                                                 len(validation_data['Rs']),
+                                                                 len(test_data['Rs']))
+    return embed_train, embed_validation, embed_test
+
+
+def get_combined_embeddings(train_data, validation_data, test_data, params_man):
+    train_seeds, validation_seeds, test_seeds = generate_seeds(train_data, validation_data, test_data)
+    train_graphs = train_data['Gs']
+    validation_graphs = validation_data['Gs']
+    test_graphs = test_data['Gs']
     all_graphs = train_graphs + validation_graphs + test_graphs
     all_seeds = train_seeds + validation_seeds + test_seeds
-    preprocessor = PreProcessor(dim=prm_st[EmbStat.embd_dim], device=prm_st[EmbStat.device],
-                                dtype=prm_st[EmbStat.dtype])
+    preprocessor = PreProcessor(dim=params_man.embedding_dimensions, device=params_man.device, dtype=params_man.dtype)
     embeddings = preprocessor.compute_embeddings(all_graphs, all_seeds)
-    embeddings_train = embeddings[0: train_g_nbr]
-    embeddings_validation = embeddings[train_g_nbr: train_g_nbr + validation_g_nbr]
-    embeddings_test = embeddings[train_g_nbr + validation_g_nbr: train_g_nbr + validation_g_nbr + test_g_nbr]
+    return embeddings
+
+
+def split_embeddings(embeddings, train_len, validation_len, test_len):
+    embeddings_train = embeddings[0: train_len]
+    embeddings_validation = embeddings[train_len: train_len + validation_len]
+    embeddings_test = embeddings[train_len + validation_len: train_len + validation_len + test_len]
     return embeddings_train, embeddings_validation, embeddings_test
 
 
 def get_graphs_path(num_nodes=4):
-    lst = Paths.train_same_R
+    lst = Paths.train_paths_7_nodes
     # random.shuffle(lst)
     return lst
 
@@ -112,15 +121,13 @@ def init_nn_model(param_embed):
     return model
 
 
-def train_model(nn_model, train_info, validation_info, p_man, optimizer, embeddings_train, embeddings_validation):
-    train_Rs, train_Ts, train_Gs, train_seeds = train_info
-    validation_Rs, validation_Ts, validation_Gs, validation_seeds = validation_info
+def train_model(nn_model, train_data, validation_data, p_man, optimizer, embeddings_train, embeddings_validation):
     device = p_man.device
     dtype = p_man.dtype
     dim = p_man.embedding_dimensions
     preprocessor = PreProcessor(dim=dim, device=device, dtype=dtype)
-    samples_train = preprocessor.generate_all_samples(embeddings=embeddings_train, Rs=train_Rs)
-    samples_validation = preprocessor.generate_all_samples(embeddings=embeddings_validation, Rs=validation_Rs)
+    samples_train = preprocessor.generate_all_samples(embeddings=embeddings_train, Rs=train_data['Rs'])
+    samples_validation = preprocessor.generate_all_samples(embeddings=embeddings_validation, Rs=validation_data['Rs'])
     start_time = datetime.datetime.now()
     model_trained, train_error = EmbeddingML.train_model(nn_model, samples_train, samples_validation, p_man, optimizer)
     train_time = datetime.datetime.now() - start_time
@@ -157,7 +164,7 @@ if __name__ == '__main__':
         EmbStat.centrality: Centralities.SPBC,
         EmbStat.device: TorchDevice.gpu,
         EmbStat.dtype: TorchDtype.float,
-        EmbStat.embd_dim: 5,
+        EmbStat.embd_dim: 32,
         'seed_range': 100,
         EmbStat.csv_save_path: csv_save_path,
         EmbeddingOutputs.root_path: embedding_outputs_root_path,
