@@ -1,15 +1,11 @@
-import concurrent
 import datetime
 import json
 import os
 import sys
 
-from concurrent.futures.thread import ThreadPoolExecutor
-
-import torch
 cur_dir = os.path.dirname(os.path.dirname(os.path.abspath(os.curdir)))
 sys.path.append(cur_dir)
-from Components.RBC_ML.Optimizer import Optimizer
+from Utils.Optimizer import Optimizer
 from Components.RBC_ML.RbcNetwork import RbcNetwork
 from Utils.CommonStr import HyperParams, TorchDevice, TorchDtype, RbcMatrices, OptimizerTypes, ErrorTypes, \
     EigenvectorMethod
@@ -20,8 +16,6 @@ from Utils.CommonStr import Centralities, StatisticsParams as StatsParams
 from Utils.GraphGenerator import GraphGenerator
 from Tests.RBC_ML.ParamsManager import ParamsManager
 from Utils import CustomTensors
-
-import sys
 
 
 #
@@ -76,8 +70,8 @@ class CentralityTester():
                             StatsParams.centrality: centrality,
                             StatsParams.device: TorchDevice.cpu,
                             StatsParams.dtype: TorchDtype.float,
-                            HyperParams.learning_rate: 1e-3,
-                            HyperParams.epochs: 1,
+                            HyperParams.learning_rate: 1e-4,
+                            HyperParams.epochs: 2000,
                             HyperParams.momentum: 0,
                             HyperParams.optimizer: OptimizerTypes.RmsProp,
                             HyperParams.pi_max_err: 0.00001,
@@ -87,17 +81,17 @@ class CentralityTester():
                             LearningParams.target_col_zeros: False,
                             LearningParams.sigmoid: True,
                             LearningParams.consider_traffic_paths: True,
-                            LearningParams.fixed_T: fixed_t,
+                            LearningParams.fixed_T: None,
                             LearningParams.fixed_R: None,
                             LearningParams.eigenvector_method: EigenvectorMethod.power_iteration}
         self.graphs_generator = GraphGenerator(centrality)
 
     def test_centrality(self):
         # matrices = self.graphs_generator.generate_n_nodes_graph(n=4, keep_rate=1)
-        graphs = self.graphs_generator.generate_n_nodes_graph(20, 0.7)
+        graphs = self.graphs_generator.custom_graph()
         results = []
         for i in range(0, len(graphs)):
-            for j in range(1, 10):
+            for j in range(1, 2):
                 params_manager = self.load_params_statistics(graphs[i], j)
                 params_manager.save_params_statistics()
                 results.append(params_manager)

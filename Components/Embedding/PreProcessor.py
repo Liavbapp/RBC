@@ -1,12 +1,9 @@
 import os
 import sys
 import numpy as np
-from Components.Embedding_Algorithms.DeepWalk import DeepWalk
-from Components.Embedding_Algorithms.GraphWave import GraphWave
-from Components.Embedding_Algorithms.Role2Vec import Role2Vec
-
+from karateclub import Diff2Vec, NodeSketch, NNSED, RandNE, GLEE, MNMF, SocioDim, NetMF, LaplacianEigenmaps
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
-from Components.Embedding_Algorithms.Node2Vec import Node2Vec
+
 import torch
 
 
@@ -28,25 +25,15 @@ class PreProcessor:
 
         return (samples, routing) if testing_mode else samples
 
-    def compute_embeddings(self, Gs, seeds):
+    def compute_embeddings(self, Gs, seeds, embedding_alg):
         embeddings_lst = []
-        p_prob = 10**100
+        # node2vec = Node2Vec(dimensions=self.dimensions, p= 50**100)
         for g, seed in zip(Gs, seeds):
-            # r2vec = GraphWave(seed=seed, sample_number=int(self.dimensions / 2))
-            # r2vec.fit(g)
-            # embedding = r2vec.get_embedding()
-            node2vec = Node2Vec(dimensions=self.dimensions, p=p_prob, q=1/p_prob, window_size=2)
-            node2vec.fit(g)
-            # embedding = np.expand_dims(node2vec.get_embedding().flatten(), axis=1)
-            embedding = node2vec.get_embedding()
+            # dif2vec.diffusion_cover = min(g.number_of_nodes(), 20)
+            embedding_alg.seed = seed
+            embedding_alg.fit(g)
+            embedding = embedding_alg.get_embedding()
             embeddings_lst.append(embedding)
-        # emeddings_arr = np.concatenate(embeddings_lst, axis=1)
-        # mu = np.average(emeddings_arr, axis=1)
-        # mu = np.expand_dims(mu, axis=1)
-        # variance = np.var(emeddings_arr, axis=1)
-        # variance = np.expand_dims(variance, axis=1)
-        # emeddings_arr_norm = (emeddings_arr - mu) / np.sqrt(variance)
-        # embeddings_lst_n = [flat_norm_embd.reshape(Gs[0].number_of_nodes(), self.dimensions) for flat_norm_embd in emeddings_arr_norm.T]
         return embeddings_lst
 
     def generate_samples_for_graph(self, embedding, R):

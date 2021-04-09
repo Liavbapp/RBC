@@ -6,16 +6,17 @@ import torch
 import numpy as np
 import networkx as nx
 from Utils import Paths
+from Utils.EmbeddingAlg import get_embedding_algo
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
 from Components.Embedding.NeuralNetwork import NeuralNetwork as EmbeddingNeuralNetwork
 from Components.Embedding import EmbeddingML
 from Components.Embedding.PreProcessor import PreProcessor
-from Components.RBC_ML.Optimizer import Optimizer
+from Utils.Optimizer import Optimizer
 from Components.RBC_REG.RBC import RBC
 from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import EigenvectorMethod, EmbeddingStatistics as EmbStat, Centralities, TorchDevice, TorchDtype, \
-    HyperParams, OptimizerTypes, ErrorTypes, EmbeddingOutputs, EmbeddingPathParams
+    HyperParams, OptimizerTypes, ErrorTypes, EmbeddingOutputs, EmbeddingPathParams, EmbeddingAlgorithms
 
 
 def run_test(pr_st):
@@ -60,8 +61,7 @@ def generate_seeds(train_data, validation_data, test_data):
 
 
 def split_to_train_validation_test(p_man):
-    graphs_paths = get_graphs_path()
-    Rs, Ts, Gs, path_params = extract_info_from_path(graphs_paths, p_man)
+    Rs, Ts, Gs, path_params = extract_info_from_path(p_man.graph_paths, p_man)
     train_data_lists = {'Rs': Rs[2:], 'Ts': Ts[2:], 'Gs': Gs[2:], 'path_params': path_params[2:]}
     validation_data_lists = {'Rs': [Rs[1]], 'Ts': [Ts[1]], 'Gs': [Gs[1]], 'path_params': [path_params[1]]}
     test_data_lists = {'Rs': [Rs[0]], 'Ts': [Ts[0]], 'Gs': [Gs[0]], 'path_params': [path_params[0]]}
@@ -85,7 +85,9 @@ def get_combined_embeddings(train_data, validation_data, test_data, params_man):
     all_graphs = train_graphs + validation_graphs + test_graphs
     all_seeds = train_seeds + validation_seeds + test_seeds
     preprocessor = PreProcessor(dim=params_man.embedding_dimensions, device=params_man.device, dtype=params_man.dtype)
-    embeddings = preprocessor.compute_embeddings(all_graphs, all_seeds)
+    embedding_alg = get_embedding_algo(alg_name=params_man.embedding_alg_name,
+                                       dimensions=params_man.embedding_dimensions)
+    embeddings = preprocessor.compute_embeddings(all_graphs, all_seeds, embedding_alg)
     return embeddings
 
 
@@ -96,9 +98,8 @@ def split_embeddings(embeddings, train_len, validation_len, test_len):
     return embeddings_train, embeddings_validation, embeddings_test
 
 
-def get_graphs_path(num_nodes=4):
-    lst = Paths.train_paths_7_nodes
-    # random.shuffle(lst)
+def get_graphs_path():
+    lst = Paths.train_path_4_nodes
     return lst
 
 
@@ -150,10 +151,16 @@ def test_model(model, train_example, test_example, p_man: EmbeddingsParams, test
     test_r_policy = EmbeddingML.predict_routing(model, test_embeddings, p_man)
     actual_rbc = rbc_test.compute_rbc(test_G, test_r_policy, test_T)
 
+    p_man.rbc_diff = calc_rbc_diff(expected_rbc, actual_rbc)
     print(f'expected rbc: {expected_rbc}')
     print(f'actual rbc: {actual_rbc}')
+    print(f'rbc diff: {p_man.rbc_diff}')
 
     return expected_rbc, actual_rbc, test_r_policy
+
+
+def calc_rbc_diff(expected_rbc, actual_rbc):
+    return torch.sum(torch.abs(expected_rbc - actual_rbc)).item()
 
 
 if __name__ == '__main__':
@@ -164,15 +171,17 @@ if __name__ == '__main__':
         EmbStat.centrality: Centralities.SPBC,
         EmbStat.device: TorchDevice.gpu,
         EmbStat.dtype: TorchDtype.float,
-        EmbStat.embd_dim: 32,
+        EmbStat.embd_dim: 3,
+        EmbStat.embedding_alg: EmbeddingAlgorithms.glee,
         'seed_range': 100,
+        'graph_paths': Paths.train_path_4_nodes,
         EmbStat.csv_save_path: csv_save_path,
         EmbeddingOutputs.root_path: embedding_outputs_root_path,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 1000,
-        HyperParams.batch_size: 1024,
-        HyperParams.weight_decay: 0,
+        HyperParams.epochs: 1,
+        HyperParams.batch_size: 256,
+        HyperParams.weight_decay: 0.01,
         HyperParams.momentum: 0,
         HyperParams.pi_max_err: 0.00001,
         HyperParams.error_type: ErrorTypes.mse,

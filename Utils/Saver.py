@@ -153,6 +153,7 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.centrality: kwargs[EmbStats.centrality],
         EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
         EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
+        EmbStats.embedding_alg: kwargs[EmbStats.embedding_alg],
         EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
         EmbStats.rbc_test: str(kwargs[EmbStats.rbc_test]),
         EmbStats.train_error: kwargs[EmbStats.train_error],
@@ -170,7 +171,8 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.comments: None,
         EmbStats.eigenvector_method: kwargs[EmbStats.eigenvector_method],
         EmbStats.device: kwargs[EmbStats.device],
-        EmbStats.dtype: kwargs[EmbStats.dtype]
+        EmbStats.dtype: kwargs[EmbStats.dtype],
+        EmbStats.rbc_diff: kwargs[EmbStats.rbc_diff]
     }
     df_new_embedding_statistics = pd.DataFrame(new_embed_statistics, index=[0])
     csv_path = kwargs[EmbStats.csv_save_path]

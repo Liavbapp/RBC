@@ -23,6 +23,8 @@ class EmbeddingsParams:
         self.device = params_dict[EmbStas.device]
         self.dtype = params_dict[EmbStas.dtype]
         self.seed_range = params_dict['seed_range']
+        self.graph_paths = params_dict['graph_paths']
+        self.embedding_alg_name = params_dict[EmbStas.embedding_alg]
         # self.graph_paths = params_dict['graph_paths']
         centrality_params = get_centrality_params(self.centrality, self.device, self.dtype)
 
@@ -55,6 +57,7 @@ class EmbeddingsParams:
         self.test_routing_policy = None
         self.test_graph = None
         self.network_structure = None
+        self.rbc_diff = None
 
     def prepare_params_statistics(self):
         params_statistic_dict = {EmbeddingOutputs.root_path: self.embedding_output_root_path,
@@ -64,12 +67,14 @@ class EmbeddingsParams:
                                  EmbStas.id: datetime.datetime.now(),
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
+                                 EmbStas.embedding_alg: self.embedding_alg_name,
                                  EmbStas.embd_dim: self.embedding_dimensions,
                                  EmbStas.rbc_target: self.expected_rbc,
                                  EmbStas.rbc_test: self.actual_rbc,
                                  EmbStas.train_error: self.train_error,
                                  EmbStas.error_type: self.learning_params[LearningParams.hyper_parameters][
                                      HyperParams.error_type],
+                                 EmbStas.rbc_diff: self.rbc_diff,
                                  EmbStas.train_runtime: self.train_runtime,
                                  EmbStas.network_structure: self.network_structure,
                                  EmbStas.learning_rate: self.hyper_params[EmbStas.learning_rate],
@@ -85,6 +90,7 @@ class EmbeddingsParams:
                                  EmbeddingOutputs.trained_model: self.trained_model,
                                  EmbeddingOutputs.test_routing_policy: self.test_routing_policy,
                                  EmbeddingOutputs.test_graph: self.test_graph
+
                                  }
         self.emb_params_statistics = params_statistic_dict
 

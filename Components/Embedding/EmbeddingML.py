@@ -1,6 +1,6 @@
 import random
 import torch
-from Components.RBC_ML.Optimizer import Optimizer
+from Utils.Optimizer import Optimizer
 from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import ErrorTypes, HyperParams
 
@@ -20,6 +20,7 @@ def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsPa
     labels_validation = torch.stack([label for embedding, label in validation_samples])
 
     for epoch in range(0, epochs):
+        # print(epoch)
         for i in range(0, len(features_train), batch_size):
             features_batch = features_train[i:i + batch_size]
             labels_batch = labels_train[i: i + batch_size]
@@ -28,7 +29,7 @@ def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsPa
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        if epoch % 50 == 0:
+        if epoch % 20 == 0:
             validation_pred = nn_model(features_validation)
             validation_loss = loss_fn(validation_pred, labels_validation)
             print(f'epoch: {epoch}, train loss: {loss.item()}')

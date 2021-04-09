@@ -37,11 +37,13 @@ class EmbeddingStatistics:
     centrality_params = "Centrality Params"
     embd_dim = "Embedding Dimensions"
     rbc_target = "RBC Target"
+    rbc_diff = "RBC Diff"
     rbc_test = "RBC Test"
     train_error = "Train Error"
     error_type = "Error Type"
     network_structure = "Network Structure"
     train_runtime = "Train RunTime"
+    embedding_alg = "Embedding Alg"
     learning_rate = HyperParams.learning_rate
     epochs = HyperParams.epochs
     weight_decay = HyperParams.weight_decay
@@ -55,9 +57,10 @@ class EmbeddingStatistics:
     device = "Torch Device"
     dtype = "Torch Dtype"
     csv_save_path = "Saving Csv Path"
+    graphs_desc = "Graph desc"
 
-    cols = [id, centrality, centrality_params, embd_dim, rbc_target, rbc_test,
-            train_error, error_type, network_structure, train_runtime, learning_rate, epochs, batch_size, weight_decay,
+    cols = [id, centrality, centrality_params, graphs_desc, embedding_alg, embd_dim, rbc_target, rbc_test,
+            rbc_diff, train_error, error_type, network_structure, train_runtime, learning_rate, epochs, batch_size, weight_decay,
             optimizer, optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
 
 
@@ -85,6 +88,7 @@ class StatisticsParams:
     momentum = HyperParams.momentum
     optimizer = HyperParams.optimizer
     pi_max_err = HyperParams.pi_max_err
+
     path = "Path"
     comments = "Comments"
     eigenvector_method = "Eigenvector Computing Method "
@@ -160,3 +164,30 @@ class ErrorTypes:
 
 class EmbeddingPathParams:
     seed = 'seed'
+
+
+class EmbeddingAlgorithms:
+    node2vec = "Node2Vec"
+    diff2vec = "Diff2Vec"
+    rand_ne = "RandNE"
+    glee = "GLEE"
+    net_mf = "NetMF"
+    nnsed = "NNSED"
+    danmf = "DANMF"
+    mnmf = "MNMF"
+    big_clam = "BigClam"
+    symm_nmf = "SymmNMF"
+    socio_dim = "SocioDim"
+    node_sketch = "NodeSketch"
+    boost_ne = "BoostNE"
+    walklets = "Walklets"
+    gra_rep = "GraRep"
+    nmfadmm = "NMFADMM"
+    laplacian_eigenmaps = "LaplacianEigenmaps"
+    feather_node = "FeatherNode"
+    ae = "AE"
+    deep_walk = "DeepWalk"
+    graph_wave = "GraphWave"
+    musae = "MUSAE"
+    role2vec = "Role2Vec"
+    gl2vec = "GL2Vec"

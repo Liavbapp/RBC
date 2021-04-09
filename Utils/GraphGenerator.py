@@ -2,6 +2,9 @@ import random
 import matplotlib.pyplot as plt
 from Utils.CommonStr import Centralities
 import networkx as nx
+from karateclub.dataset import GraphReader
+import numpy as np
+reader = GraphReader("twitch")
 
 
 class GraphGenerator:
@@ -65,9 +68,25 @@ class GraphGenerator:
     #     return [g]
 
     def custom_graph(self):
-        edge_list = [(0, 1), (1, 2), (2, 0), (2, 3)]
-        g = nx.Graph(edge_list)
-        return [g]
+        # edge_list = [(0, 1), (1, 2), (2, 0), (2, 3)]
+        # g = nx.Graph(edge_list)
+        # return [g]
+        # c = nx.complete_graph(4)
+        # d = nx.complete_graph(4)
+        # a = nx.Graph([(0, 1), (1, 2)])
+        # h = nx.disjoint_union_all([a, c, d])
+        # h.add_edge(0, 3)
+        # h.add_edge(2, 10)
+        # return [h]
+
+        c = nx.complete_graph(3)
+        d = nx.complete_graph(3)
+        a = nx.Graph([(0, 1), (1, 2)])
+        h = nx.disjoint_union_all([a, c, d])
+        h.add_edge(0, 3)
+        h.add_edge(2, 8)
+        return [h]
+
 
     def graphs_for_embeddings_show(self):
         lst = []
@@ -80,10 +99,16 @@ class GraphGenerator:
         h.add_edge(3, 18)
         h.add_edge(0, 74)
         h.add_edge(2, 19)
+        lst.append(h)
+        # path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\7_nodes\2_edges\15'
+        # lst.append(nx.convert_matrix.from_numpy_matrix(np.load(path + '\\adj_mat.npy')))
         # nx.draw_networkx(h, with_labels=True, node_size=500)
         # plt.show()
-        lst.append(h)
-        # lst.append(nx.Graph([(0, 1), (1, 2), (1, 3), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (3, 2)]))
+        #
+        # edge_list = [(0, 1), (1, 2), (2, 0), (2, 3)]
+        # g = nx.Graph(edge_list)
+        # lst.append(g)
+        # lst.append(nx.Graph([(0, 1), (1, 2), (1, 3), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1)]))
         # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]))
         # lst.append(nx.Graph([(0, 1), (1, 2), (2, 0)]))
         # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0)]))
