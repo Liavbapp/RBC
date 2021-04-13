@@ -7,7 +7,10 @@ from matplotlib.pyplot import plot, show
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-from Utils.CommonStr import StatisticsParams as ParamsStats, EmbeddingStatistics as EmbStats, EmbeddingOutputs
+
+from Components.RBC_REG.RBC import RBC
+from Utils.CommonStr import StatisticsParams as ParamsStats, EmbeddingStatistics as EmbStats, EmbeddingOutputs, \
+    EigenvectorMethod
 from Utils.CommonStr import RbcMatrices
 from Utils.CommonStr import LearningParams
 from Utils.CommonStr import HyperParams
@@ -152,6 +155,7 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.id: kwargs[EmbStats.id],
         EmbStats.centrality: kwargs[EmbStats.centrality],
         EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
+        EmbStats.graphs_desc: kwargs[EmbStats.graphs_desc],
         EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
         EmbStats.embedding_alg: kwargs[EmbStats.embedding_alg],
         EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
@@ -225,7 +229,7 @@ def save_info_stuck_embeddings(**kwargs):
 
 def get_saving_matrix_path(centrality, adj_matrix, rbc_matrices_root_path):
     num_nodes = len(adj_matrix[0])
-    num_edges = len(torch.nonzero(torch.triu(adj_matrix), as_tuple=True))
+    num_edges = int(torch.sum(adj_matrix).item() / 2)
     path = f'{rbc_matrices_root_path}\\{centrality}\\{str(num_nodes)}_nodes\\{str(num_edges)}_edges'
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -281,6 +285,10 @@ def load_info(path):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\20_nodes\2_edges\6'
+    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\Load\5_nodes\4_edges\0'
+    device = torch.device('cuda:0')
+    dtype = torch.float
     adj_mat, routing_policy, traffic_mat = load_info(path)
-    a = 1
+    routing_policy, traffic_mat = torch.tensor(routing_policy, device=device, dtype=dtype), torch.tensor(traffic_mat, device=device, dtype=dtype)
+    rbc_handler = RBC(eigenvector_method=EigenvectorMethod.torch_eig, pi_max_error=0.0000, device=device, dtype=dtype)
+    print(rbc_handler.compute_rbc(nx.convert_matrix.from_numpy_matrix(adj_mat), routing_policy, traffic_mat))

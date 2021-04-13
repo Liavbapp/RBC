@@ -56,6 +56,6 @@ def predict_routing(model, embeddings, p_man: EmbeddingsParams):
 
 def get_loss_fun(error_type):
     if error_type == ErrorTypes.mse:
-        return torch.nn.MSELoss(reduction='sum')
+        return torch.nn.MSELoss(reduction='mean')
     else:
         return torch.nn.MSELoss(reduction='mean')

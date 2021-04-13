@@ -37,6 +37,7 @@ def run_test(pr_st):
     expected_rbc, actual_rbc, test_routing_policy = test_model(model=trained_model, train_example=train_example,
                                                                test_example=test_example, p_man=params_man,
                                                                test_embeddings=embed_test[0])
+
     params_man.train_path_params = train_data['path_params']
     params_man.test_path_params = test_data['path_params']
     params_man.trained_model = trained_model
@@ -65,6 +66,7 @@ def split_to_train_validation_test(p_man):
     train_data_lists = {'Rs': Rs[2:], 'Ts': Ts[2:], 'Gs': Gs[2:], 'path_params': path_params[2:]}
     validation_data_lists = {'Rs': [Rs[1]], 'Ts': [Ts[1]], 'Gs': [Gs[1]], 'path_params': [path_params[1]]}
     test_data_lists = {'Rs': [Rs[0]], 'Ts': [Ts[0]], 'Gs': [Gs[0]], 'path_params': [path_params[0]]}
+    validation_data_lists = test_data_lists  # TODO: delete this, only for debugging
     return train_data_lists, validation_data_lists, test_data_lists
 
 
@@ -98,9 +100,10 @@ def split_embeddings(embeddings, train_len, validation_len, test_len):
     return embeddings_train, embeddings_validation, embeddings_test
 
 
-def get_graphs_path():
-    lst = Paths.train_path_4_nodes
-    return lst
+#
+# def get_graphs_path():
+#     lst = Paths.train_path_4_nodes
+#     return lst
 
 
 def extract_info_from_path(paths, p_man):
@@ -138,16 +141,17 @@ def train_model(nn_model, train_data, validation_data, p_man, optimizer, embeddi
 
 def test_model(model, train_example, test_example, p_man: EmbeddingsParams, test_embeddings):
     pi_max_err = p_man.hyper_params[HyperParams.pi_max_err]
+    eigine_vec_method = p_man.learning_params[EmbStat.eigenvector_method]
     device = p_man.device
     dtype = p_man.dtype
 
     test_R, test_T, test_G = test_example
-    train_R, train_T, train_G = train_example
+    # train_R, train_T, train_G = train_example
 
-    rbc_train = RBC(EigenvectorMethod.power_iteration, pi_max_error=pi_max_err, device=device, dtype=dtype)
-    rbc_test = RBC(EigenvectorMethod.power_iteration, pi_max_error=pi_max_err, device=device, dtype=dtype)
+    rbc_train = RBC(eigenvector_method=eigine_vec_method, pi_max_error=pi_max_err, device=device, dtype=dtype)
+    rbc_test = RBC(eigenvector_method=eigine_vec_method, pi_max_error=pi_max_err, device=device, dtype=dtype)
 
-    expected_rbc = rbc_train.compute_rbc(train_G, train_R, train_T)
+    expected_rbc = rbc_train.compute_rbc(test_G, test_R, test_T)
     test_r_policy = EmbeddingML.predict_routing(model, test_embeddings, p_man)
     actual_rbc = rbc_test.compute_rbc(test_G, test_r_policy, test_T)
 
@@ -160,7 +164,8 @@ def test_model(model, train_example, test_example, p_man: EmbeddingsParams, test
 
 
 def calc_rbc_diff(expected_rbc, actual_rbc):
-    return torch.sum(torch.abs(expected_rbc - actual_rbc)).item()
+    # return torch.sum(torch.abs(expected_rbc - actual_rbc)).item()
+    return ((expected_rbc - actual_rbc) ** 2).sum(axis=0).item()
 
 
 if __name__ == '__main__':
@@ -171,21 +176,21 @@ if __name__ == '__main__':
         EmbStat.centrality: Centralities.SPBC,
         EmbStat.device: TorchDevice.gpu,
         EmbStat.dtype: TorchDtype.float,
-        EmbStat.embd_dim: 3,
+        EmbStat.embd_dim: 4,
         EmbStat.embedding_alg: EmbeddingAlgorithms.glee,
-        'seed_range': 100,
-        'graph_paths': Paths.train_path_4_nodes,
+        'seed_range': 2000,
+        EmbStat.graphs_desc: Paths.LoadCentrality_Diffrent_Routing_4nodes_5nodes(),
         EmbStat.csv_save_path: csv_save_path,
         EmbeddingOutputs.root_path: embedding_outputs_root_path,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 1,
+        HyperParams.epochs: 100,
         HyperParams.batch_size: 256,
-        HyperParams.weight_decay: 0.01,
-        HyperParams.momentum: 0,
-        HyperParams.pi_max_err: 0.00001,
+        HyperParams.weight_decay: 0.001,
+        HyperParams.momentum: 0.0,
+        HyperParams.pi_max_err: 0.000,
         HyperParams.error_type: ErrorTypes.mse,
-        EmbStat.eigenvector_method: EigenvectorMethod.power_iteration
+        EmbStat.eigenvector_method: EigenvectorMethod.torch_eig
     }
     arr = [params_statistics1]
 

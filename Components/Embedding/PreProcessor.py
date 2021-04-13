@@ -27,9 +27,7 @@ class PreProcessor:
 
     def compute_embeddings(self, Gs, seeds, embedding_alg):
         embeddings_lst = []
-        # node2vec = Node2Vec(dimensions=self.dimensions, p= 50**100)
         for g, seed in zip(Gs, seeds):
-            # dif2vec.diffusion_cover = min(g.number_of_nodes(), 20)
             embedding_alg.seed = seed
             embedding_alg.fit(g)
             embedding = embedding_alg.get_embedding()

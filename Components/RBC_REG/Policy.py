@@ -9,6 +9,36 @@ class Policy(abc.ABC):
         pass
 
 
+class LoadCentralityPolicy():
+
+    def __init__(self, g: nx.Graph, nodes_mapping):
+        self.g = g
+        self.nodes_map = nodes_mapping
+        self.num_nodes = g.number_of_nodes()
+        self.load_centrality_tensor = torch.full(size=(self.num_nodes,) * 4, fill_value=0.0)
+
+    def get_policy_tensor(self):
+        for s in self.g.nodes():
+            for t in self.g.nodes():
+                s_map, t_map = self.nodes_map[s], self.nodes_map[t]
+                self.load_centrality_tensor[s_map, t_map, s_map, s_map] = 1.000
+                for u in self.g.nodes():
+                    self.compute_prob_u(s, u, t)
+        return self.load_centrality_tensor
+
+    def compute_prob_u(self, s, u, t):
+        v_nodes_in_shortest_path = []
+        for v in self.g.neighbors(u):
+            if nx.shortest_path_length(self.g, u, t) == nx.shortest_path_length(self.g, v, t) + 1:
+                v_nodes_in_shortest_path.append(v)
+
+        num_nodes_in_shortest_path = len(v_nodes_in_shortest_path)
+        transition_prob = 0 if num_nodes_in_shortest_path == 0 else 1 / num_nodes_in_shortest_path
+        for v in v_nodes_in_shortest_path:
+            s_map, t_map, u_map, v_map = self.nodes_map[s], self.nodes_map[t], self.nodes_map[u], self.nodes_map[v]
+            self.load_centrality_tensor[s_map][t_map][v_map][u_map] = transition_prob
+
+
 class DegreePolicy(Policy):
 
     def get_t_tensor(self, graph: nx.Graph):
@@ -61,7 +91,6 @@ class BetweennessPolicy(Policy):
 
         return betweenness_tensor
 
-
     def get_edges_probabilities(self, g, src, target, nodes_mapping):
         matrix_prob = torch.full(size=(g.number_of_nodes(), g.number_of_nodes()), fill_value=0.0)
         matrix_prob[nodes_mapping[src], nodes_mapping[src]] = 1.000
@@ -77,7 +106,7 @@ class BetweennessPolicy(Policy):
             else:
                 edges_src_count[edge[0]] += 1
         for edge in edges:
-            edge_prob = 1/edges_src_count[edge[0]]
+            edge_prob = 1 / edges_src_count[edge[0]]
             matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_prob
         # num_paths = len(all_shortest_path)
         # for edge in edges:

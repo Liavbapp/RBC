@@ -79,13 +79,18 @@ class GraphGenerator:
         # h.add_edge(2, 10)
         # return [h]
 
-        c = nx.complete_graph(3)
-        d = nx.complete_graph(3)
-        a = nx.Graph([(0, 1), (1, 2)])
-        h = nx.disjoint_union_all([a, c, d])
-        h.add_edge(0, 3)
-        h.add_edge(2, 8)
-        return [h]
+        g0 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4)])
+        g1 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)])
+        g2 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (0, 2)])
+        g3 = nx.complete_graph(5)
+        g4 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (4, 2), (4, 1)])
+        g5 = nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3), (3, 4)])
+        g6 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (3, 4)])
+        g7 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (0, 4)])
+        g8 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (1, 4)])
+        g9 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (2, 4)])
+
+        return [g0, g1, g2, g3, g4, g5, g6, g7, g8, g9]
 
 
     def graphs_for_embeddings_show(self):

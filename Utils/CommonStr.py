@@ -156,6 +156,7 @@ class Centralities:
     Degree = "Degree"
     Closeness = "Closeness"
     Eigenvector = "Eigenvector"
+    Load = "Load"
 
 
 class ErrorTypes:

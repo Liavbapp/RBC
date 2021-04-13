@@ -23,7 +23,8 @@ class EmbeddingsParams:
         self.device = params_dict[EmbStas.device]
         self.dtype = params_dict[EmbStas.dtype]
         self.seed_range = params_dict['seed_range']
-        self.graph_paths = params_dict['graph_paths']
+        self.graph_paths = params_dict[EmbStas.graphs_desc].paths
+        self.graphs_desc = params_dict[EmbStas.graphs_desc].graphs_desc
         self.embedding_alg_name = params_dict[EmbStas.embedding_alg]
         # self.graph_paths = params_dict['graph_paths']
         centrality_params = get_centrality_params(self.centrality, self.device, self.dtype)
@@ -67,6 +68,7 @@ class EmbeddingsParams:
                                  EmbStas.id: datetime.datetime.now(),
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
+                                 EmbStas.graphs_desc: self.graphs_desc,
                                  EmbStas.embedding_alg: self.embedding_alg_name,
                                  EmbStas.embd_dim: self.embedding_dimensions,
                                  EmbStas.rbc_target: self.expected_rbc,
