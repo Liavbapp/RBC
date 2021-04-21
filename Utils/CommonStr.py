@@ -35,6 +35,11 @@ class EmbeddingStatistics:
     id = "ID"
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
+    n_graphs = "num graphs"
+    n_seeds_graph = "num seeds graph"
+    routing_type = "Routing Type"
+    n_routing_graph = "num routing graph"
+    n_random_samples_graph = 'num random samples graph'
     embd_dim = "Embedding Dimensions"
     rbc_target = "RBC Target"
     rbc_diff = "RBC Diff"
@@ -59,9 +64,10 @@ class EmbeddingStatistics:
     csv_save_path = "Saving Csv Path"
     graphs_desc = "Graph desc"
 
-    cols = [id, centrality, centrality_params, graphs_desc, embedding_alg, embd_dim, rbc_target, rbc_test,
-            rbc_diff, train_error, error_type, network_structure, train_runtime, learning_rate, epochs, batch_size, weight_decay,
-            optimizer, optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
+    cols = [id, centrality, n_graphs, n_seeds_graph, routing_type, n_routing_graph, graphs_desc, n_random_samples_graph,
+            embedding_alg, embd_dim, rbc_target, rbc_test, rbc_diff, train_error, error_type, network_structure,
+            centrality_params, train_runtime, learning_rate, epochs, batch_size, weight_decay, optimizer,
+            optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
 
 
 class StatisticsParams:
@@ -161,6 +167,8 @@ class Centralities:
 
 class ErrorTypes:
     mse = "MSE"
+    L1 = "L1Loss"
+    SmoothL1 = "SmoothL1Loss"
 
 
 class EmbeddingPathParams:
@@ -192,3 +200,22 @@ class EmbeddingAlgorithms:
     musae = "MUSAE"
     role2vec = "Role2Vec"
     gl2vec = "GL2Vec"
+    graph_2_vec = "Graph2Vec"
+
+
+class Techniques:
+    node_embedding_to_value = "node_embededding_value"
+    node_embedding_s_t_routing = "node_embedding_s_t_routing"
+    graph_embedding_to_routing = "graph_embedding_routing"
+    node_embedding_to_routing = "node_embedding_routing"
+    graph_embedding_to_rbc = "graph_embedding_rbc"
+
+
+class RoutingTypes:
+    fixed = "Fixed"
+    similar = "Similar"
+
+
+class NumRandomSamples:
+    N = "O(N)"
+    N_power_2 = "O(N^2)"

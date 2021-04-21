@@ -16,15 +16,22 @@ def get_centrality_params(centrality, device, dtype):
 
 class EmbeddingsParams:
     def __init__(self, params_dict):
+        self.num_nodes = params_dict['num_nodes']
+        self.technique = params_dict['technique']
+        self.n_graphs = params_dict[EmbStas.n_graphs]
+        self.seeds_per_graph = params_dict[EmbStas.n_seeds_graph]
+        self.n_routing_per_graph = params_dict[EmbStas.n_routing_graph]
+        self.num_random_samples_graph = params_dict[EmbStas.n_random_samples_graph]
         self.centrality = params_dict[EmbStas.centrality]
         self.csv_path = params_dict[EmbStas.csv_save_path]
         self.embedding_output_root_path = params_dict[EmbeddingOutputs.root_path]
         self.embedding_dimensions = params_dict[EmbStas.embd_dim]
+        self.routing_type = params_dict[EmbStas.routing_type],
         self.device = params_dict[EmbStas.device]
         self.dtype = params_dict[EmbStas.dtype]
         self.seed_range = params_dict['seed_range']
-        self.graph_paths = params_dict[EmbStas.graphs_desc].paths
-        self.graphs_desc = params_dict[EmbStas.graphs_desc].graphs_desc
+        self.graph_paths = params_dict[EmbStas.graphs_desc].get_paths()
+        self.graphs_desc = params_dict[EmbStas.graphs_desc].get_description()
         self.embedding_alg_name = params_dict[EmbStas.embedding_alg]
         # self.graph_paths = params_dict['graph_paths']
         centrality_params = get_centrality_params(self.centrality, self.device, self.dtype)
@@ -68,6 +75,11 @@ class EmbeddingsParams:
                                  EmbStas.id: datetime.datetime.now(),
                                  EmbStas.centrality: self.centrality,
                                  EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
+                                 EmbStas.n_graphs: self.n_graphs,
+                                 EmbStas.n_seeds_graph: self.seeds_per_graph,
+                                 EmbStas.routing_type: self.routing_type,
+                                 EmbStas.n_routing_graph: self.n_routing_per_graph,
+                                 EmbStas.n_random_samples_graph: self.num_random_samples_graph,
                                  EmbStas.graphs_desc: self.graphs_desc,
                                  EmbStas.embedding_alg: self.embedding_alg_name,
                                  EmbStas.embd_dim: self.embedding_dimensions,
@@ -91,7 +103,8 @@ class EmbeddingsParams:
                                  EmbStas.dtype: self.learning_params[LearningParams.dtype],
                                  EmbeddingOutputs.trained_model: self.trained_model,
                                  EmbeddingOutputs.test_routing_policy: self.test_routing_policy,
-                                 EmbeddingOutputs.test_graph: self.test_graph
+                                 EmbeddingOutputs.test_graph: self.test_graph,
+
 
                                  }
         self.emb_params_statistics = params_statistic_dict

@@ -29,8 +29,11 @@ class LoadCentralityPolicy():
     def compute_prob_u(self, s, u, t):
         v_nodes_in_shortest_path = []
         for v in self.g.neighbors(u):
-            if nx.shortest_path_length(self.g, u, t) == nx.shortest_path_length(self.g, v, t) + 1:
-                v_nodes_in_shortest_path.append(v)
+            try:
+                if nx.shortest_path_length(self.g, u, t) == nx.shortest_path_length(self.g, v, t) + 1:
+                    v_nodes_in_shortest_path.append(v)
+            except nx.NetworkXNoPath:
+                pass
 
         num_nodes_in_shortest_path = len(v_nodes_in_shortest_path)
         transition_prob = 0 if num_nodes_in_shortest_path == 0 else 1 / num_nodes_in_shortest_path

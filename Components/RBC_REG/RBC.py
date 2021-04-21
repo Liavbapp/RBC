@@ -12,6 +12,10 @@ class RBC:
         self.dtype = dtype
         self.pi_handler = PowerIteration(device=self.device, dtype=self.dtype, max_error=pi_max_error)
 
+    def compute_rbcs(self, Gs, Rs, Ts):
+        return torch.stack([self.compute_rbc(g, R, T) for g, R, T in zip(Gs, Rs, Ts)])
+
+
     def compute_rbc(self, g, R, T):
         nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
         s_mapping = [nodes_map[node] for node in g.nodes()]

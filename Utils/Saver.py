@@ -155,6 +155,11 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.id: kwargs[EmbStats.id],
         EmbStats.centrality: kwargs[EmbStats.centrality],
         EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
+        EmbStats.n_graphs: kwargs[EmbStats.n_graphs],
+        EmbStats.n_seeds_graph: kwargs[EmbStats.n_seeds_graph],
+        EmbStats.routing_type: kwargs[EmbStats.routing_type],
+        EmbStats.n_routing_graph: kwargs[EmbStats.n_routing_graph],
+        EmbStats.n_random_samples_graph: kwargs[EmbStats.n_random_samples_graph],
         EmbStats.graphs_desc: kwargs[EmbStats.graphs_desc],
         EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
         EmbStats.embedding_alg: kwargs[EmbStats.embedding_alg],
@@ -186,7 +191,7 @@ def save_statistics_embeddings(**kwargs):
     except Exception as ex:
         df_statistics_old_embed = pd.DataFrame(columns=cols)
 
-    df_combined_statistics_embedding = pd.concat([df_statistics_old_embed, df_new_embedding_statistics])
+    df_combined_statistics_embedding = pd.concat([df_statistics_old_embed, df_new_embedding_statistics])[cols]
     df_combined_statistics_embedding.to_csv(csv_path, index=False)
 
 
