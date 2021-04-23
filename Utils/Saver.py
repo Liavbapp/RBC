@@ -62,6 +62,7 @@ def save_info_embeddings(**kwargs):
         save_statistics_embeddings(**kwargs)
     else:
         save_info_stuck_embeddings(**kwargs)
+    pass
 
 
 def save_statistics(**kwargs):
@@ -155,10 +156,10 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.id: kwargs[EmbStats.id],
         EmbStats.centrality: kwargs[EmbStats.centrality],
         EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
-        EmbStats.n_graphs: kwargs[EmbStats.n_graphs],
-        EmbStats.n_seeds_graph: kwargs[EmbStats.n_seeds_graph],
+        EmbStats.n_graphs_train: kwargs[EmbStats.n_graphs_train],
+        EmbStats.n_seeds_train_graph: kwargs[EmbStats.n_seeds_train_graph],
         EmbStats.routing_type: kwargs[EmbStats.routing_type],
-        EmbStats.n_routing_graph: kwargs[EmbStats.n_routing_graph],
+        EmbStats.n_routing_policy_graph: kwargs[EmbStats.n_routing_policy_graph],
         EmbStats.n_random_samples_graph: kwargs[EmbStats.n_random_samples_graph],
         EmbStats.graphs_desc: kwargs[EmbStats.graphs_desc],
         EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
@@ -181,7 +182,7 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.eigenvector_method: kwargs[EmbStats.eigenvector_method],
         EmbStats.device: kwargs[EmbStats.device],
         EmbStats.dtype: kwargs[EmbStats.dtype],
-        EmbStats.rbc_diff: kwargs[EmbStats.rbc_diff]
+        EmbStats.euclidean_distance_avg: kwargs[EmbStats.euclidean_distance_avg]
     }
     df_new_embedding_statistics = pd.DataFrame(new_embed_statistics, index=[0])
     csv_path = kwargs[EmbStats.csv_save_path]
@@ -290,10 +291,11 @@ def load_info(path):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\Load\5_nodes\4_edges\0'
+    path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\9_nodes_fixed_rbc\Raw_Data\SPBC\0'
     device = torch.device('cuda:0')
     dtype = torch.float
     adj_mat, routing_policy, traffic_mat = load_info(path)
-    routing_policy, traffic_mat = torch.tensor(routing_policy, device=device, dtype=dtype), torch.tensor(traffic_mat, device=device, dtype=dtype)
-    rbc_handler = RBC(eigenvector_method=EigenvectorMethod.torch_eig, pi_max_error=0.0000, device=device, dtype=dtype)
-    print(rbc_handler.compute_rbc(nx.convert_matrix.from_numpy_matrix(adj_mat), routing_policy, traffic_mat))
+    a = 1
+    # routing_policy, traffic_mat = torch.tensor(routing_policy, device=device, dtype=dtype), torch.tensor(traffic_mat, device=device, dtype=dtype)
+    # rbc_handler = RBC(eigenvector_method=EigenvectorMethod.torch_eig, pi_max_error=0.0000, device=device, dtype=dtype)
+    # print(rbc_handler.compute_rbc(nx.convert_matrix.from_numpy_matrix(adj_mat), routing_policy, traffic_mat))

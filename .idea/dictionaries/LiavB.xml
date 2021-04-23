@@ -4,6 +4,9 @@
       <w>betweenness</w>
       <w>eigenvector</w>
       <w>eigenvectors</w>
+      <w>pearsonr</w>
+      <w>rbcs</w>
+      <w>spearman</w>
     </words>
   </dictionary>
 </component>

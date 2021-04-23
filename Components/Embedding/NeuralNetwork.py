@@ -127,32 +127,27 @@ class NeuralNetworkNodesEmbeddingRouting(nn.Module):
 class NeuralNetwork(nn.Module):
     def __init__(self, dimensions, device, dtype):
         super(NeuralNetwork, self).__init__()
+        self.drop_out_rate = 0.00
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.BatchNorm1d(dimensions * 4),
-            nn.Linear(dimensions * 4, 1000),
+            nn.Conv2d(1, 100, 2),
             nn.ReLU(),
-            nn.Linear(1000, 900),
+            # nn.MaxPool2d(2, 2),
+            nn.Conv2d(100, 200, 2),
             nn.ReLU(),
-            nn.Linear(900, 800),
-            nn.ReLU(),
-            nn.Linear(800, 700),
-            nn.ReLU(),
-            nn.Linear(700, 600),
-            nn.ReLU(),
-            nn.Linear(600, 500),
-            nn.ReLU(),
-            nn.Linear(500, 400),
-            nn.ReLU(),
-            nn.Linear(400, 300),
-            nn.ReLU(),
-            nn.Linear(300, 100),
-            nn.ReLU(),
-            nn.Linear(100, 1),
-            # nn.Sigmoid()
+            # nn.MaxPool2d(2, 2),
+            nn.Flatten(),
+            nn.Linear(200 * 2 * (dimensions - 2), 2048),
+            nn.LeakyReLU(),
+            nn.Linear(2048, 2048),
+            nn.LeakyReLU(),
+            nn.Linear(2048, 1),
+            nn.LeakyReLU(),
         ).to(device=device, dtype=dtype)
 
     def forward(self, x):
-        x = self.flatten(x)
+        # x = self.flatten(x)
+        x = torch.unsqueeze(x, 1)
         prop_res = self.linear_relu_stack(x)
+
         return prop_res

@@ -48,15 +48,16 @@ def train_model_embed_to_rbc(nn_model, train_samples, validation_samples, p_man:
                 optimizer.step()
         if epoch % 1 == 0:
             print(loss.item())
-            pass
-
-            validation_pred = nn_model(features_validation)
-            rbc_validation = rbc.compute_rbcs(graphs_validation, list(validation_pred), Ts_validation)
-            validation_loss = loss_fn(rbc_validation, labels_validation)
-            print(f'epoch: {epoch}, train loss: {loss.item()}')
-            print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
-            print(labels_validation)
-            print(rbc_validation)
+            nn_model.eval()
+            with torch.no_grad():
+                validation_pred = nn_model(features_validation)
+                rbc_validation = rbc.compute_rbcs(graphs_validation, list(validation_pred), Ts_validation)
+                validation_loss = loss_fn(rbc_validation, labels_validation)
+                print(f'epoch: {epoch}, train loss: {loss.item()}')
+                print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+                print(labels_validation)
+                print(rbc_validation)
+            nn_model.train()
 
     return nn_model, loss.item()
 
@@ -89,10 +90,13 @@ def train_model_embed_to_routing(nn_model, train_samples, validation_samples, p_
             loss.backward()
             optimizer.step()
         if epoch % 10 == 0:
-            validation_pred = nn_model(features_validation)
-            validation_loss = loss_fn(validation_pred, labels_validation)
-            print(f'epoch: {epoch}, train loss: {loss.item()}')
-            print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+            nn_model.eval()
+            with torch.no_grad():
+                validation_pred = nn_model(features_validation)
+                validation_loss = loss_fn(validation_pred, labels_validation)
+                print(f'epoch: {epoch}, train loss: {loss.item()}')
+                print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+            nn_model.train()
 
     return nn_model, loss.item()
 
@@ -105,7 +109,6 @@ def train_model_s_t_routing(nn_model, train_samples, validation_samples, p_man: 
     epochs = hyper_params[HyperParams.epochs]
     nodes_pow2 = p_man.num_nodes ** 2
     loss = None
-
 
     features_validation = torch.stack([embedding for embedding, label in validation_samples])
     labels_validation = torch.stack([label.view(nodes_pow2) for embedding, label in validation_samples])
@@ -124,10 +127,13 @@ def train_model_s_t_routing(nn_model, train_samples, validation_samples, p_man: 
             loss.backward()
             optimizer.step()
         if epoch % 10 == 0:
-            validation_pred = nn_model(features_validation)
-            validation_loss = loss_fn(validation_pred, labels_validation)
-            print(f'epoch: {epoch}, train loss: {loss.item()}')
-            print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+            nn_model.eval()
+            with torch.no_grad():
+                validation_pred = nn_model(features_validation)
+                validation_loss = loss_fn(validation_pred, labels_validation)
+                print(f'epoch: {epoch}, train loss: {loss.item()}')
+                print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+            nn_model.train()
 
     return nn_model, loss.item()
 
@@ -142,9 +148,8 @@ def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsPa
 
     features_validation = torch.stack([embedding for embedding, label in validation_samples])
     labels_validation = torch.stack([label for embedding, label in validation_samples])
-    random.seed(1)
+
     for epoch in range(0, epochs):
-        # print(epoch)
         random.shuffle(train_samples)
         features_train = torch.stack([embedding for embedding, label in train_samples])
         labels_train = torch.stack([label for embedding, label in train_samples])
@@ -157,49 +162,65 @@ def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsPa
             loss.backward()
             optimizer.step()
         if epoch % 1 == 0:
-            validation_pred = nn_model(features_validation)
-            validation_loss = loss_fn(validation_pred, labels_validation)
-            print(f'epoch: {epoch}, train loss: {loss.item()}')
-            print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+            nn_model.eval()
+            with torch.no_grad():
+                validation_pred = nn_model(features_validation)
+                validation_loss = loss_fn(validation_pred, labels_validation)
+                print(f'epoch: {epoch}, train loss: {loss.item()}')
+                print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+            nn_model.train()
 
     return nn_model, loss.item()
 
 
 def predict_routing(model, embeddings, p_man: EmbeddingsParams):
-    num_nodes = len(embeddings)
-    embd_torch = torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype)
-    predicted_R = torch.full(size=(num_nodes,) * 4, fill_value=0.0, dtype=p_man.dtype, device=p_man.device)
-    start_time = datetime.datetime.now()
-    for s in range(0, num_nodes):
-        for t in range(0, num_nodes):
-            for u in range(0, num_nodes):
-                for v in range(0, num_nodes):
-                    features = torch.stack([embd_torch[s], embd_torch[u], embd_torch[v], embd_torch[t]]).unsqueeze(0)
-                    predicted_R[s, t][v, u] = model(features)
-    print(f'learn routing test takes {datetime.datetime.now() - start_time} time')
+    model.eval()  # set the model for testing
+    with torch.no_grad:
+        num_nodes = len(embeddings)
+        embd_torch = torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype)
+        predicted_R = torch.full(size=(num_nodes,) * 4, fill_value=0.0, dtype=p_man.dtype, device=p_man.device)
+        start_time = datetime.datetime.now()
+        for s in range(0, num_nodes):
+            for t in range(0, num_nodes):
+                for u in range(0, num_nodes):
+                    for v in range(0, num_nodes):
+                        features = torch.stack([embd_torch[s], embd_torch[u], embd_torch[v], embd_torch[t]]).unsqueeze(
+                            0)
+                        predicted_R[s, t][v, u] = model(features)
+        print(f'learn routing test takes {datetime.datetime.now() - start_time} time')
+    model.train()
     return predicted_R
 
 
 def predict_s_t_routing(model, embeddings, p_man: EmbeddingsParams):
-    num_nodes = p_man.num_nodes
-    predicted_R = torch.full(size=(num_nodes,) * 4, fill_value=0.0, dtype=p_man.dtype, device=p_man.device)
+    model.eval()
+    with torch.no_grad:
+        num_nodes = p_man.num_nodes
+        predicted_R = torch.full(size=(num_nodes,) * 4, fill_value=0.0, dtype=p_man.dtype, device=p_man.device)
 
-    for s in range(0, num_nodes):
-        for t in range(0, num_nodes):
-            features = torch.stack([torch.tensor([embeddings[s], embeddings[t]], device=p_man.device, dtype=p_man.dtype)])
-            predicted_R[s, t] = model(features).view(num_nodes, num_nodes)
-
+        for s in range(0, num_nodes):
+            for t in range(0, num_nodes):
+                features = torch.stack(
+                    [torch.tensor([embeddings[s], embeddings[t]], device=p_man.device, dtype=p_man.dtype)])
+                predicted_R[s, t] = model(features).view(num_nodes, num_nodes)
+    model.train()
     return predicted_R
 
 
 def predict_routing_all_nodes_embed(model, embeddings, p_man: EmbeddingsParams):
-    model_pred = model(torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).view(1, embeddings.shape[0],
-                                                                                             embeddings.shape[1]))
+    model.eval()
+    with torch.no_grad():
+        model_pred = model(torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).view(1, embeddings.shape[0],
+                                                                                                 embeddings.shape[1]))
+    model.trian()
     return model_pred.view((embeddings.shape[0],) * 4)
 
 
 def predict_graph_embedding(model, embeddings, p_man: EmbeddingsParams):
-    model_pred = model(torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).view(1, embeddings.shape[0]))
+    model.eval()
+    with torch.no_grad():
+        model_pred = model(torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).view(1, embeddings.shape[0]))
+    model.train()
     return model_pred.view((p_man.num_nodes,) * 4)
 
 

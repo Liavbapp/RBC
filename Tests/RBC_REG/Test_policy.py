@@ -24,7 +24,7 @@ class Tests(unittest.TestCase):
             print(f'{i} out of {len(graphs)}')
             i += 1
             adj_matx = torch.tensor(nx.adj_matrix(graph).todense(), dtype=torch.float)
-            root_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Experiments\\Experiments_1\\Data\\11_nodes_fixed_rbc\\Raw_Data\\SPBC'
+            root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Graphs\SPBC'
             save_path = Saver.get_saving_matrix_path(Centralities.SPBC, adj_matx, root_path)
             Saver.save_matrices(adj_matx, r, t, save_path)
 

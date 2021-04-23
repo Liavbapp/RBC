@@ -35,14 +35,18 @@ class EmbeddingStatistics:
     id = "ID"
     centrality = "Centrality Type"
     centrality_params = "Centrality Params"
-    n_graphs = "num graphs"
-    n_seeds_graph = "num seeds graph"
-    routing_type = "Routing Type"
-    n_routing_graph = "num routing graph"
+    n_graphs_train = "num graphs train"
+    n_graphs_validation = "num graphs validation"
+    n_graphs_test = "num graphs test"
+    n_seeds_train_graph = "num seeds per train graph"
+    n_routing_policy_graph = "num routing policy per train graph"
     n_random_samples_graph = 'num random samples graph'
     embd_dim = "Embedding Dimensions"
     rbc_target = "RBC Target"
-    rbc_diff = "RBC Diff"
+    euclidean_distance_avg = "Euclidean Distance Avg"
+    kendall_tau_b_avg = "KendallTau_b Avg"
+    pearson_avg = "Pearson Avg"
+    spearman_avg = "Spearman Avg"
     rbc_test = "RBC Test"
     train_error = "Train Error"
     error_type = "Error Type"
@@ -64,10 +68,11 @@ class EmbeddingStatistics:
     csv_save_path = "Saving Csv Path"
     graphs_desc = "Graph desc"
 
-    cols = [id, centrality, n_graphs, n_seeds_graph, routing_type, n_routing_graph, graphs_desc, n_random_samples_graph,
-            embedding_alg, embd_dim, rbc_target, rbc_test, rbc_diff, train_error, error_type, network_structure,
-            centrality_params, train_runtime, learning_rate, epochs, batch_size, weight_decay, optimizer,
-            optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
+    cols = [id, centrality, n_graphs_train, n_graphs_validation, n_graphs_test, n_seeds_train_graph,
+            n_routing_policy_graph, graphs_desc, n_random_samples_graph, embedding_alg, embd_dim, rbc_target, rbc_test,
+            euclidean_distance_avg, kendall_tau_b_avg, pearson_avg, spearman_avg, train_error, error_type,
+            network_structure, centrality_params, train_runtime, learning_rate, epochs, batch_size, weight_decay,
+            optimizer, optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
 
 
 class StatisticsParams:
@@ -107,7 +112,7 @@ class StatisticsParams:
     cols = [id, centrality, centrality_params, num_nodes, num_edges, epochs, learning_rate, weight_decay,
             optimizer, optimizer_params, eigenvector_method, pi_max_err, sigmoid, src_src_one, src_row_zeros,
             target_col_zeros, fixed_T, fixed_R, consider_traffic_paths, device, dtype, path, comments, target
-        , prediction, error, error_type, runtime]
+            , prediction, error, error_type, runtime]
 
 
 class LearningParams:

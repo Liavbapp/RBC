@@ -68,97 +68,22 @@ class GraphGenerator:
     #     return [g]
 
     def custom_graph(self):
-        edges = [(0, 9), (0, 8), (9, 2), (8, 2), (9, 10), (4, 10), (1, 10), (1, 3), (3, 5), (10, 5), (2, 5), (2, 10), (6, 5), (2, 6), (2, 7)]
-        g = nx.Graph()
-        g.add_nodes_from(range(0, 11))
-        g.add_edges_from(edges)
-        return [g]
 
-        # g = nx.Graph()
-        # g.add_nodes_from(list(range(13)))
-        # graphs = []
-        # prev_edges = []
-        # for i in range(100):
-        #     g = nx.complete_graph(13)
-        #     edge_lst = list(nx.edges(g))
-        #     rand_edges = random.sample(edge_lst, int(random.uniform(0.5, 1) * len(edge_lst)))
-        #     if rand_edges not in prev_edges:
-        #         prev_edges.append(rand_edges)
-        #         h = nx.Graph()
-        #         h.add_nodes_from(g)
-        #         h.add_edges_from(rand_edges)
-        #         # largest_cc = max(nx.connected_components(h), key=len)
-        #         # largest_cc_graph = h.subgraph(largest_cc).copy()
-        #         graphs.append(h)
-        # return graphs
-        graphs = []
-        # g1 = nx.complete_graph(5)
-        # g2 = nx.complete_graph(5)
-        # g3 = nx.Graph([(0, 1), (1, 2), (2, 3)])
-        # h = nx.disjoint_union_all([g1, g3, g2])
-        # h.add_edge(0, 5)
-        # h.add_edge(8, 9)
-        # nx.draw(h, with_labels=True)
-        # return [h]
+        lst_graphs = []
 
-
-        # prev_edges = []
-        # for i in range(10, 30):
-        #     g = nx.complete_graph(i)
-        #     edge_lst = list(nx.edges(g))
-        #     rand_edges = random.sample(edge_lst, int(random.uniform(0.65, 1) * len(edge_lst)))
-        #     h = nx.Graph()
-        #     h.add_nodes_from(g)
-        #     h.add_edges_from(rand_edges)
-        #     largest_cc = max(nx.connected_components(h), key=len)
-        #     largest_cc_graph = h.subgraph(largest_cc).copy()
-        #     graphs.append(largest_cc_graph)
-        # return graphs
-            # if rand_edges not in prev_edges:
-            #     prev_edges.append(rand_edges)
-            #     h = nx.Graph()
-            #     h.add_nodes_from(g)
-            #     h.add_edges_from(rand_edges)
-            #     # largest_cc = max(nx.connected_components(h), key=len)
-            #     # largest_cc_graph = h.subgraph(largest_cc).copy()
-            #     graphs.append(h)
-        # return graphs
-        # edge_list = [(0, 1), (1, 2), (2, 0), (2, 3)]
-        # g = nx.Graph(edge_list)
-        # return [g]
-        # c = nx.complete_graph(4)
-        # d = nx.complete_graph(4)
-        # a = nx.Graph([(0, 1), (1, 2)])
-        # h = nx.disjoint_union_all([a, c, d])
-        # h.add_edge(0, 3)
-        # h.add_edge(2, 10)
-        # return [h]
-        #
-        # for i
-        # g0 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4)])
-        # g1 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)])
-        # g2 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (0, 2)])
-        # g3 = nx.complete_graph(5)
-        #
-        # g4 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (4, 2), (4, 1)])
-        # g5 = nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3), (3, 4), (1, 4), (3, 0)])
-        # g6 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (3, 4)])
-        # g7 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (0, 4)])
-        # g8 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (1, 4)])
-        # g9 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (2, 4)])
-        # g10 = nx.Graph([(0, 1), (0, 2), (0, 3), (0, 4), (1, 2), (1, 3), (1, 4)])
-        # g11 = nx.Graph([(0, 1), (0, 2), (0, 3), (0, 4), (2, 1), (2, 0), (2, 4)])
-        # g12 = nx.Graph([(0, 1), (0, 2), (0, 3), (0, 4), (3, 1), (3, 2), (3, 4)])
-        # g13 = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (4, 2), (4, 1), (2, 3)])
-        # g14 = nx.Graph()
-        # g14.add_nodes_from([0, 1, 2, 3, 4])
-        # g14.add_edges_from([(0, 1), (0, 2), (2, 4)])
-        # g15 = nx.Graph()
-        # g15.add_nodes_from([0, 1, 2, 3, 4])
-        # g15.add_edges_from([(1, 2), (2, 4)])
-        # random.sample(list(set(itertools.permutations(lst))), 0.05)
-        #
-        # return [g0, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, g12, g13, g14, g15]
+        while len(lst_graphs) < 25:
+            g = nx.Graph()
+            g.add_nodes_from(range(0, 9))
+            while not nx.is_connected(g) or len(g.edges) < 15:
+                u, v = random.sample(range(0, 9), 2)
+                if not g.has_edge(u, v):
+                    g.add_edge(u, v)
+                if len(g.edges) == 15:
+                    break
+            if nx.is_connected(g):
+                if set(g.edges) not in [set(edges) for edges in lst_graphs]:
+                    lst_graphs.append(g)
+        return lst_graphs
 
 
     def graphs_for_embeddings_show(self):
@@ -173,35 +98,16 @@ class GraphGenerator:
         h.add_edge(0, 74)
         h.add_edge(2, 19)
         lst.append(h)
-        # path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\SPBC\7_nodes\2_edges\15'
-        # lst.append(nx.convert_matrix.from_numpy_matrix(np.load(path + '\\adj_mat.npy')))
-        # nx.draw_networkx(h, with_labels=True, node_size=500)
-        # plt.show()
-        #
-        # edge_list = [(0, 1), (1, 2), (2, 0), (2, 3)]
-        # g = nx.Graph(edge_list)
-        # lst.append(g)
-        # lst.append(nx.Graph([(0, 1), (1, 2), (1, 3), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1)]))
-        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]))
-        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 0)]))
-        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0)]))
-        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]))
-        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3)]))
-        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0), (3, 4)]))
-        # lst.append(nx.Graph([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0), (5, 6)]))
-        # lst.append(nx.Graph(nx.complete_graph(5)))
-        # lst.append(nx.Graph(nx.complete_graph(10)))
-        # lst.append(nx.complete_graph(15))
-        # lst.append(nx.complete_graph(20))
-        # lst.append(nx.complete_graph(25))
-        # lst.append(nx.complete_graph(30))
-        # lst.append(nx.complete_graph(35))
-        # lst.append(nx.complete_graph(40))
-        # lst.append(nx.complete_graph(45))
-        # lst.append(nx.complete_graph(50))
+
         return lst
 
 
 if __name__ == '__main__':
     # GraphGenerator('bb').generate_rand_graphs(4, 1)
-    GraphGenerator('bb').custom_graph()
+    # GraphGenerator('bb').custom_graph()
+
+
+    for res in GraphGenerator('bb').custom_graph():
+        nx.draw(res, with_labels=True)
+        plt.show()
+        # print(lst)
