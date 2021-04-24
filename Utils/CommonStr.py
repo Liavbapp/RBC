@@ -10,12 +10,9 @@ class RbcMatrices:
 
 
 class EmbeddingOutputs:
-    test_routing_policy = 'Test Routing Policy'
-    root_path = "Root Path"
-    test_graph = 'Test graph'
+    graphs_root_path = "Graphs Path"
+    trained_model_root_path = "Trained Model Path"
     trained_model = "Model"
-    train_path_params = "Train path params"
-    test_path_params = "Test path params"
 
 
 class HyperParams:
@@ -39,15 +36,15 @@ class EmbeddingStatistics:
     n_graphs_validation = "num graphs validation"
     n_graphs_test = "num graphs test"
     n_seeds_train_graph = "num seeds per train graph"
-    n_routing_policy_graph = "num routing policy per train graph"
-    n_random_samples_graph = 'num random samples graph'
+    n_routing_policy_per_graph = "num routing policy per train graph"
+    n_random_samples_per_graph = 'num random samples graph'
     embd_dim = "Embedding Dimensions"
-    rbc_target = "RBC Target"
-    euclidean_distance_avg = "Euclidean Distance Avg"
+    rbcs_expected = "RBCs Expected"
+    rbcs_actual = "RBCs Actual"
+    euclidean_distance_median = "Euclidean Distance Median"
     kendall_tau_b_avg = "KendallTau_b Avg"
     pearson_avg = "Pearson Avg"
     spearman_avg = "Spearman Avg"
-    rbc_test = "RBC Test"
     train_error = "Train Error"
     error_type = "Error Type"
     network_structure = "Network Structure"
@@ -61,7 +58,8 @@ class EmbeddingStatistics:
     optimizer_params = "optimizer params"
     eigenvector_method = "Eigenvector Computing Method "
     pi_max_err = HyperParams.pi_max_err
-    path = "Path"
+    trained_model_path = "Trained Model Path"
+    graphs_root_path = "Graphs Path"
     comments = "Comments"
     device = "Torch Device"
     dtype = "Torch Dtype"
@@ -69,10 +67,11 @@ class EmbeddingStatistics:
     graphs_desc = "Graph desc"
 
     cols = [id, centrality, n_graphs_train, n_graphs_validation, n_graphs_test, n_seeds_train_graph,
-            n_routing_policy_graph, graphs_desc, n_random_samples_graph, embedding_alg, embd_dim, rbc_target, rbc_test,
-            euclidean_distance_avg, kendall_tau_b_avg, pearson_avg, spearman_avg, train_error, error_type,
-            network_structure, centrality_params, train_runtime, learning_rate, epochs, batch_size, weight_decay,
-            optimizer, optimizer_params, eigenvector_method, pi_max_err, path, comments, device, dtype]
+            n_routing_policy_per_graph, graphs_desc, n_random_samples_per_graph, embedding_alg, embd_dim, rbcs_expected,
+            rbcs_actual, euclidean_distance_median, kendall_tau_b_avg, pearson_avg, spearman_avg, train_error,
+            error_type, network_structure, centrality_params, train_runtime, learning_rate, epochs, batch_size,
+            weight_decay, optimizer, optimizer_params, eigenvector_method, pi_max_err,
+            graphs_root_path, trained_model_path, comments, device, dtype]
 
 
 class StatisticsParams:

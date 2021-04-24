@@ -70,21 +70,18 @@ class Single_Graph_Fixed_Routing_SPBC_11_nodes:
         self.routing_type = RoutingTypes.similar
 
     def get_paths(self):
-        paths = [
-                    r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\11_nodes_fixed_rbc\Raw_Data\SPBC\0'] * self.n_seeds_per_routing
+        paths = [r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\11_nodes_fixed_rbc\Raw_Data\SPBC\0'] * self.n_seeds_per_routing
         return paths
 
     def get_description(self):
         return f'Single Graph {self.total_seeds_per_graph} seeds, Fixed Routing, 11 Nodes'
 
 
-class DifferentGraphs9Nodes15Edges:
+class DifferentGraphs_9Nodes_15Edges:
     def __init__(self):
         self.n_routing_per_graph = 1
-
-        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Graphs\SPBC'
-        self.train_graphs = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Graphs\SPBC\train'
-        self.validation_graphs = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Graphs\SPBC\validation'
-        self.test_graphs = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Graphs\SPBC\test'
-
-        self.description = r'Diffrent Graph with 9 Nodes, 15 Edges'
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1'
+        self.train_graphs_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1\train'
+        self.validation_graphs_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1\validation'
+        self.test_graphs_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1\test'
+        self.description = r'9 Nodes, 15 Edges, Different Graphs'

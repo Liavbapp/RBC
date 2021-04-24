@@ -48,16 +48,11 @@ def save_info(**kwargs):
 
 
 def save_info_embeddings(**kwargs):
-    test_r_policy = kwargs[EmbeddingOutputs.test_routing_policy]
     trained_model = kwargs[EmbeddingOutputs.trained_model]
-    # test_graph = kwargs[EmbeddingOutputs.test_graph]
-    root_embedding_outputs_path = kwargs[EmbeddingOutputs.root_path]
-    train_path_params = kwargs[EmbeddingOutputs.train_path_params]
-    test_path_params = kwargs[EmbeddingOutputs.test_path_params]
-
-    saving_path = get_saving_embedding_matrices_path(kwargs[EmbStats.centrality], root_embedding_outputs_path)
-    save_embedding_outputs(test_r_policy, trained_model, train_path_params, test_path_params, saving_path)
-    kwargs.update({EmbStats.path: saving_path})
+    trained_models_root_path = kwargs[EmbeddingOutputs.trained_model_root_path]
+    trained_model_path = get_saving_embedding_matrices_path(kwargs[EmbStats.centrality], trained_models_root_path)
+    save_trained_model(trained_model, trained_model_path)
+    kwargs.update({EmbStats.trained_model_path: trained_model_path})
     if not kwargs['stuck']:
         save_statistics_embeddings(**kwargs)
     else:
@@ -157,15 +152,20 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.centrality: kwargs[EmbStats.centrality],
         EmbStats.centrality_params: kwargs[EmbStats.centrality_params],
         EmbStats.n_graphs_train: kwargs[EmbStats.n_graphs_train],
+        EmbStats.n_graphs_validation: kwargs[EmbStats.n_graphs_validation],
+        EmbStats.n_graphs_test: kwargs[EmbStats.n_graphs_test],
         EmbStats.n_seeds_train_graph: kwargs[EmbStats.n_seeds_train_graph],
-        EmbStats.routing_type: kwargs[EmbStats.routing_type],
-        EmbStats.n_routing_policy_graph: kwargs[EmbStats.n_routing_policy_graph],
-        EmbStats.n_random_samples_graph: kwargs[EmbStats.n_random_samples_graph],
+        EmbStats.n_routing_policy_per_graph: kwargs[EmbStats.n_routing_policy_per_graph],
         EmbStats.graphs_desc: kwargs[EmbStats.graphs_desc],
+        EmbStats.n_random_samples_per_graph: kwargs[EmbStats.n_random_samples_per_graph],
         EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
         EmbStats.embedding_alg: kwargs[EmbStats.embedding_alg],
-        EmbStats.rbc_target: str(kwargs[EmbStats.rbc_target]),
-        EmbStats.rbc_test: str(kwargs[EmbStats.rbc_test]),
+        EmbStats.rbcs_expected: kwargs[EmbStats.rbcs_expected],
+        EmbStats.rbcs_actual: kwargs[EmbStats.rbcs_actual],
+        EmbStats.euclidean_distance_median: kwargs[EmbStats.euclidean_distance_median],
+        EmbStats.kendall_tau_b_avg: kwargs[EmbStats.kendall_tau_b_avg],
+        EmbStats.pearson_avg: kwargs[EmbStats.pearson_avg],
+        EmbStats.spearman_avg: kwargs[EmbStats.spearman_avg],
         EmbStats.train_error: kwargs[EmbStats.train_error],
         EmbStats.error_type: kwargs[EmbStats.error_type],
         EmbStats.network_structure: kwargs[EmbStats.network_structure],
@@ -177,12 +177,12 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.optimizer: kwargs[EmbStats.optimizer],
         EmbStats.optimizer_params: str(kwargs[EmbStats.optimizer_params]),
         EmbStats.pi_max_err: kwargs[EmbStats.pi_max_err],
-        EmbStats.path: kwargs[EmbStats.path],
+        EmbStats.graphs_root_path: kwargs[EmbStats.graphs_root_path],
+        EmbStats.trained_model_path: kwargs[EmbStats.trained_model_path],
         EmbStats.comments: None,
         EmbStats.eigenvector_method: kwargs[EmbStats.eigenvector_method],
         EmbStats.device: kwargs[EmbStats.device],
-        EmbStats.dtype: kwargs[EmbStats.dtype],
-        EmbStats.euclidean_distance_avg: kwargs[EmbStats.euclidean_distance_avg]
+        EmbStats.dtype: kwargs[EmbStats.dtype]
     }
     df_new_embedding_statistics = pd.DataFrame(new_embed_statistics, index=[0])
     csv_path = kwargs[EmbStats.csv_save_path]
@@ -206,8 +206,8 @@ def save_info_stuck_embeddings(**kwargs):
                       EmbStats.centrality: centrality,
                       EmbStats.centrality_params: learning_params[EmbStats.centrality_params],
                       EmbStats.embd_dim: kwargs[EmbStats.embd_dim],
-                      EmbStats.rbc_target: str(kwargs[ParamsStats.target]),
-                      EmbStats.rbc_test: None,
+                      EmbStats.rbcs_expected: str(kwargs[ParamsStats.target]),
+                      EmbStats.rbcs_actual: None,
                       EmbStats.train_error: None,
                       EmbStats.error_type: None,
                       EmbStats.network_structure: kwargs[EmbStats.network_structure],
@@ -218,7 +218,7 @@ def save_info_stuck_embeddings(**kwargs):
                       EmbStats.optimizer: learning_params[LearningParams.hyper_parameters][HyperParams.optimizer],
                       EmbStats.optimizer_params: kwargs[ParamsStats.optimizer_params],
                       EmbStats.pi_max_err: learning_params[LearningParams.hyper_parameters][HyperParams.pi_max_err],
-                      EmbStats.path: None,
+                      EmbStats.trained_model_path: None,
                       EmbStats.comments: kwargs[EmbStats.comments]}
 
     df_new_statistics = pd.DataFrame(new_statistics, index=[0])
@@ -272,14 +272,7 @@ def save_matrices(adj_matrix, routing_policy, traffic_matrix, path):
     np.save(f'{path}\\traffic_mat', traffic_matrix_np)
 
 
-def save_embedding_outputs(test_routing_policy, trained_model, train_path_params, test_path_params, path):
-    test_routing_policy_np = test_routing_policy.detach().to(device=torch.device('cpu')).numpy()
-    np.save(f'{path}\\test_routing_policy', test_routing_policy_np)
-    with open(f'{path}\\train_path_params.json', 'w') as f:
-        json.dump(str(train_path_params), f)
-    with open(f'{path}\\test_path_params.json', 'w') as f:
-        json.dump(str(test_path_params), f)
-    # np.save(f'{path}\\test_graph', test_graph)
+def save_trained_model(trained_model, path):
     torch.save(trained_model.state_dict(), f'{path}\\trained_model.pt')
 
 

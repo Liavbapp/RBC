@@ -101,7 +101,7 @@ def train_model_embed_to_routing(nn_model, train_samples, validation_samples, p_
     return nn_model, loss.item()
 
 
-def train_model_s_t_routing(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams, optimizer: Optimizer):
+def train_model_st_routing(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams, optimizer: Optimizer):
     print(f'starting training')
     hyper_params = p_man.hyper_params
     loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])
@@ -175,7 +175,7 @@ def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsPa
 
 def predict_routing(model, embeddings, p_man: EmbeddingsParams):
     model.eval()  # set the model for testing
-    with torch.no_grad:
+    with torch.no_grad():
         num_nodes = len(embeddings)
         embd_torch = torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype)
         predicted_R = torch.full(size=(num_nodes,) * 4, fill_value=0.0, dtype=p_man.dtype, device=p_man.device)
