@@ -59,6 +59,7 @@ class EmbeddingsParams:
         self.trained_model = None
         self.train_runtime = None
         self.train_error = None
+        self.validation_error = None
         self.expected_rbcs = None
         self.actual_rbcs = None
         self.emb_params_statistics = None
@@ -90,6 +91,7 @@ class EmbeddingsParams:
                                  EmbStas.rbcs_expected: self.expected_rbcs,
                                  EmbStas.rbcs_actual: self.actual_rbcs,
                                  EmbStas.train_error: self.train_error,
+                                 EmbStas.validation_error: self.validation_error,
                                  EmbStas.error_type: self.learning_params[LearningParams.hyper_parameters][HyperParams.error_type],
                                  EmbStas.euclidean_distance_median: self.euclidean_dis_median,
                                  EmbStas.kendall_tau_b_avg: self.kendall_tau_avg,

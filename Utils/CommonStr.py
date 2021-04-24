@@ -46,6 +46,7 @@ class EmbeddingStatistics:
     pearson_avg = "Pearson Avg"
     spearman_avg = "Spearman Avg"
     train_error = "Train Error"
+    validation_error = "Validation Error"
     error_type = "Error Type"
     network_structure = "Network Structure"
     train_runtime = "Train RunTime"
@@ -69,8 +70,8 @@ class EmbeddingStatistics:
     cols = [id, centrality, n_graphs_train, n_graphs_validation, n_graphs_test, n_seeds_train_graph,
             n_routing_policy_per_graph, graphs_desc, n_random_samples_per_graph, embedding_alg, embd_dim, rbcs_expected,
             rbcs_actual, euclidean_distance_median, kendall_tau_b_avg, pearson_avg, spearman_avg, train_error,
-            error_type, network_structure, centrality_params, train_runtime, learning_rate, epochs, batch_size,
-            weight_decay, optimizer, optimizer_params, eigenvector_method, pi_max_err,
+            validation_error, error_type, network_structure, centrality_params, train_runtime, learning_rate, epochs,
+            batch_size, weight_decay, optimizer, optimizer_params, eigenvector_method, pi_max_err,
             graphs_root_path, trained_model_path, comments, device, dtype]
 
 

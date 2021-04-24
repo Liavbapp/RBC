@@ -167,6 +167,7 @@ def save_statistics_embeddings(**kwargs):
         EmbStats.pearson_avg: kwargs[EmbStats.pearson_avg],
         EmbStats.spearman_avg: kwargs[EmbStats.spearman_avg],
         EmbStats.train_error: kwargs[EmbStats.train_error],
+        EmbStats.validation_error: kwargs[EmbStats.validation_error],
         EmbStats.error_type: kwargs[EmbStats.error_type],
         EmbStats.network_structure: kwargs[EmbStats.network_structure],
         EmbStats.train_runtime: str(kwargs[EmbStats.train_runtime]),

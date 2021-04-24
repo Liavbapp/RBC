@@ -127,21 +127,23 @@ class NeuralNetworkNodesEmbeddingRouting(nn.Module):
 class NeuralNetwork(nn.Module):
     def __init__(self, dimensions, device, dtype):
         super(NeuralNetwork, self).__init__()
-        self.drop_out_rate = 0.00
+        self.drop_out_rate = 0.0
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
             nn.Conv2d(1, 100, 2),
             nn.ReLU(),
-            # nn.MaxPool2d(2, 2),
+            # nn.Dropout(self.drop_out_rate),
             nn.Conv2d(100, 200, 2),
             nn.ReLU(),
-            # nn.MaxPool2d(2, 2),
+            # nn.Dropout(self.drop_out_rate),
             nn.Flatten(),
-            nn.Linear(200 * 2 * (dimensions - 2), 2048),
+            nn.Linear(200 * 2 * (dimensions - 2), 4096),
             nn.LeakyReLU(),
-            nn.Linear(2048, 2048),
+            # nn.Dropout(self.drop_out_rate),
+            nn.Linear(4096, 4096),
             nn.LeakyReLU(),
-            nn.Linear(2048, 1),
+            # nn.Dropout(self.drop_out_rate),
+            nn.Linear(4096, 1),
             nn.LeakyReLU(),
         ).to(device=device, dtype=dtype)
 

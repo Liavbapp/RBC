@@ -44,7 +44,7 @@ def run_test(pr_st):
 
     # training
     train_res = train_model(nn_model, optimizer, params_man, train_data, embed_train, validation_data, embed_validation)
-    trained_model, train_time, train_err = train_res
+    trained_model, train_err, validation_err, train_time = train_res
 
     # testing
     test_res = test_model(trained_model, params_man, test_data, embed_test)
@@ -178,19 +178,6 @@ def init_nn_model(param_embed):
 
 
 def train_model(nn_model, optimizer, p_man, train_data, embeddings_train, val_data, embeddings_validation):
-    """
-    training the nn_model
-    :param nn_model:
-    :param optimizer:
-    :param p_man:
-    :param train_data:
-    :param embeddings_train:
-    :param val_data:
-    :param embeddings_validation:
-    :return model_trained: the model after training
-    :return total_train_time: the total time to train the model
-    :return train_error: the error of the model on the train data
-    """
     # init preprocessor
     device, dtype, dim = p_man.device, p_man.dtype, p_man.embedding_dimensions
     preprocessor = PreProcessor(dim=dim, device=device, dtype=dtype)
@@ -201,11 +188,12 @@ def train_model(nn_model, optimizer, p_man, train_data, embeddings_train, val_da
 
     # training the model
     start_train_time = datetime.datetime.now()
-    model_trained, train_error = train_model_by_technique(nn_model, p_man, optimizer, samples_train, samples_validation)
+    train_result = train_model_by_technique(nn_model, p_man, optimizer, samples_train, samples_validation)
+    model_trained, train_error, validation_error = train_result
     total_train_time = datetime.datetime.now() - start_train_time
     print(f'train time: {total_train_time}')
 
-    return model_trained, total_train_time, train_error
+    return model_trained, train_error, validation_error, total_train_time
 
 
 def generate_samples_by_technique(p_man, preprocessor, embeddings, data):
@@ -227,18 +215,15 @@ def train_model_by_technique(model, p_man, optimizer, samples_train, samples_val
     technique = p_man.technique
 
     if technique == Techniques.node_embedding_to_value:
-        model_trained, train_error = EmbeddingML.train_model(model, samples_train, samples_val, p_man, optimizer)
+        train_res = EmbeddingML.train_model(model, samples_train, samples_val, p_man, optimizer)
     if technique == Techniques.node_embedding_s_t_routing:
-        model_trained, train_error = EmbeddingML.train_model_st_routing(model, samples_train, samples_val, p_man,
-                                                                        optimizer)
+        train_res = EmbeddingML.train_model_st_routing(model, samples_train, samples_val, p_man, optimizer)
     if technique == Techniques.node_embedding_to_routing or technique == Techniques.graph_embedding_to_routing:
-        model_trained, train_error = EmbeddingML.train_model_embed_to_routing(model, samples_train, samples_val, p_man,
-                                                                              optimizer)
+        train_res = EmbeddingML.train_model_embed_to_routing(model, samples_train, samples_val, p_man, optimizer)
     if technique == Techniques.graph_embedding_to_rbc:
-        model_trained, train_error = EmbeddingML.train_model_embed_to_rbc(model, samples_train, samples_val, p_man,
-                                                                          optimizer)
+        train_res = EmbeddingML.train_model_embed_to_rbc(model, samples_train, samples_val, p_man, optimizer)
 
-    return model_trained, train_error
+    return train_res
 
 
 def test_model(model, p_man: EmbeddingsParams, test_data, test_embeddings):
@@ -258,7 +243,12 @@ def compute_rbcs(model, p_man: EmbeddingsParams, test_data, test_embeddings):
 
     expected_rbcs = []
     actual_rbcs = []
+    print(f'predicting routing policy and compute rbcs')
+    num_gs = len(test_data['Gs'])
+    i = 0
     for R, T, g, test_embedding in zip(test_data['Rs'], test_data['Ts'], test_data['Gs'], test_embeddings):
+        i += 1
+        print(f'{i} out of {num_gs}')
         predicted_r_policy = predict_routing_policy(p_man.technique, model, test_embedding, p_man)
         expected_rbc = rbc_handler.compute_rbc(g, R, T).cpu().detach().numpy()
         expected_rbcs.append(expected_rbc)
@@ -291,7 +281,7 @@ def calc_test_statistics(expected_rbcs, actual_rbcs):
 
     euclidean_median = np.median(euclidean_arr)
     kendall_avg, spearman_avg, pearsonr_avg = kendall_arr.mean(), spearman_arr.mean(), pearsonr_arr.mean()
-    print(f'euclidean dist median: {euclidean_median} \n kendall avg: {kendall_avg} \n spearman avg: {spearman_avg} \n'
+    print(f'euclidean dist median: {euclidean_median} \nkendall avg:{kendall_avg} \nspearman avg: {spearman_avg} \n'
           f'pearson avg: {pearsonr_avg}')
 
     return euclidean_median, kendall_avg, spearman_avg, pearsonr_avg
@@ -299,7 +289,7 @@ def calc_test_statistics(expected_rbcs, actual_rbcs):
 
 def update_params_man(params_man, train_val_test, train_res, test_res, optimizer):
     train_data, validation_data, test_data = train_val_test
-    trained_model, train_time, train_err = train_res
+    trained_model, train_err, validation_err, train_time,  = train_res
     expected_rbcs, actual_rbcs, euclidean_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = test_res
 
     params_man.n_graphs_train = int(len(train_data['Gs']) / params_man.seeds_per_train_graph)
@@ -308,6 +298,7 @@ def update_params_man(params_man, train_val_test, train_res, test_res, optimizer
     params_man.trained_model = trained_model
     params_man.train_runtime = train_time
     params_man.train_error = train_err
+    params_man.validation_error = validation_err
     params_man.expected_rbcs = str(expected_rbcs)
     params_man.actual_rbcs = str(actual_rbcs)
     params_man.euclidean_dis_median = euclidean_dist_median
@@ -335,9 +326,9 @@ if __name__ == '__main__':
         'technique': Techniques.node_embedding_to_value,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 50,
+        HyperParams.epochs: 25,
         HyperParams.batch_size: 256,
-        HyperParams.weight_decay: 0.000,
+        HyperParams.weight_decay: 0.0001,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
         EmbStat.n_random_samples_per_graph: NumRandomSamples.N_power_2,
@@ -353,42 +344,12 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-    run_test(pr_st=params_statistics1)
 
-    # num_nodes_arr = [11]
-    # # , EmbeddingAlgorithms.node2vec
-    # embd_algs_lst = [EmbeddingAlgorithms.glee, EmbeddingAlgorithms.laplacian_eigenmaps, EmbeddingAlgorithms.socio_dim]
-    # embd_algs_lst = [EmbeddingAlgorithms.glee]
-    # n_seeds_routing_lst = [600]
-    #
-    # combinations = list(itertools.product(num_nodes_arr, embd_algs_lst, n_seeds_routing_lst))
-    # num_combinations = len(combinations)
-    # i = 0
-    # for num_nodes_i, embd_alg_i, n_seed_routing_i in combinations:
-    #     i += 1
-    #     print(f'{i} out of {num_combinations}')
-    #
-    #     num_nodes = num_nodes_i
-    #     if num_nodes_i == 11:
-    #         embedding_outputs_root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\11_nodes_fixed_rbc\Embeddings_Results'
-    #         graph_desc = Paths.Single_Graph_Fixed_Routing_SPBC_11_nodes(n_seed_routing_i)
-    #     # if num_nodes_i == 9:
-    #     #     embedding_outputs_root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\9_nodes_fixed_rbc\Embeddings_Results'
-    #     #     graph_desc = Paths.Single_Graph_Fixed_Routing_SPBC_9_nodes(n_seed_routing_i)
-    #     # if num_nodes_i == 4:
-    #     #     embedding_outputs_root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\4_nodes_fixed_rbc\Embeddings_Results'
-    #     #     graph_desc = Paths.Single_Graph_Fixed_Routing_SPBC_4_nodes(n_seed_routing_i)
-    #     # if num_nodes_i == 7:
-    #     #     embedding_outputs_root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\7_nodes_similar_rbc\Embeddings_Results'
-    #     #     graph_desc = Paths.Single_Graph_Similar_Routing_SPBC_7_nodes(n_seed_routing_i)
-    #
-    #     params_statistics1[EmbeddingOutputs.root_path] = embedding_outputs_root_path
-    #     params_statistics1[EmbStat.embd_dim] = num_nodes_i - 1
-    #     params_statistics1[EmbStat.embedding_alg] = embd_alg_i
-    #     params_statistics1[EmbStat.n_graphs] = graph_desc.n_graphs
-    #     params_statistics1[EmbStat.n_seeds_graph] = graph_desc.total_seeds_per_graph
-    #     params_statistics1[EmbStat.n_routing_graph] = graph_desc.n_routing_per_graph
-    #     params_statistics1[EmbStat.routing_type] = graph_desc.routing_type
-    #     params_statistics1[EmbStat.graphs_desc] = graph_desc
-    #     run_test(pr_st=params_statistics1)
-    #
+    n_seeds_lst = [5, 10]
+    for train_seeds in n_seeds_lst:
+        params_statistics1[EmbStat.n_seeds_train_graph] = n_seeds_train_graph
+        run_test(pr_st=params_statistics1)
+
+
+
+
