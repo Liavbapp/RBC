@@ -4,84 +4,51 @@ from Utils.CommonStr import RoutingTypes
 
 
 class Single_Graph_Fixed_Routing_SPBC_4_nodes:
-    def __init__(self, num_seeds_routing):
-        self.num_seeds_per_routing = num_seeds_routing
+
+    def __init__(self):
         self.n_routing_per_graph = 1
-        self.total_seeds_per_graph = self.num_seeds_per_routing * self.n_routing_per_graph
-        self.n_graphs = 1
-        self.n_seeds_graph = num_seeds_routing
-        self.routing_type = RoutingTypes.fixed
-
-    def get_paths(self):
-        paths = [
-                    r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\4_nodes_fixed_rbc\Raw_Data\SPBC\0'] * self.num_seeds_per_routing
-        return paths
-
-    def get_description(self):
-        return f'Single Graph {self.total_seeds_per_graph} seeds, Fixed Routing, 4 Nodes'
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\4_nodes_fixed_rbc\SPBC'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = f'Single Graph, , 4 Nodes, Fixed Routing'
 
 
 class Single_Graph_Similar_Routing_SPBC_7_nodes:
-    def __init__(self, num_seeds_routing):
-        self.n_seeds_per_routing = num_seeds_routing
-        self.n_graphs = 1
-        self.n_routing_per_graph = 10
-        self.total_seeds_per_graph = self.n_seeds_per_routing * self.n_routing_per_graph
-        self.num_seeds_graph_routing = num_seeds_routing
-        self.n_seeds_graph = num_seeds_routing
-        self.routing_type = RoutingTypes.similar
-
-    def get_paths(self):
-        paths = [f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Experiments\\Experiments_1\\Data' \
-                 f'\\7_nodes_similar_rbc\\Raw_Data\\SPBC\\{str(i)}' for i in range(0, 11)] * self.n_seeds_per_routing
-        return paths
-
-    def get_description(self):
-        return f'Single Graph {self.total_seeds_per_graph} seeds, Similar Routing, 7 Nodes'
+    def __init__(self):
+        self.n_routing_per_graph = 8
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\7_nodes_similar_rbc\SPBC'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = f'Single Graph, , 7 Nodes, Similar Routing'
 
 
 class Single_Graph_Fixed_Routing_SPBC_9_nodes:
-    def __init__(self, num_seeds_routing):
-        self.n_seeds_per_routing = num_seeds_routing
-        self.n_graphs = 1
+    def __init__(self):
         self.n_routing_per_graph = 1
-        self.total_seeds_per_graph = self.n_seeds_per_routing * self.n_routing_per_graph
-        self.num_seeds_graph_routing = num_seeds_routing
-        self.n_seeds_graph = num_seeds_routing
-        self.routing_type = RoutingTypes.similar
-
-    def get_paths(self):
-        paths = [
-                    r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\9_nodes_fixed_rbc\Raw_Data\SPBC\0'] * self.n_seeds_per_routing
-        return paths
-
-    def get_description(self):
-        return f'Single Graph {self.total_seeds_per_graph} seeds, Fixed Routing, 9 Nodes'
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\9_nodes_fixed_rbc\SPBC'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = f'Single Graph, , 9 Nodes, Fixed Routing'
 
 
 class Single_Graph_Fixed_Routing_SPBC_11_nodes:
-    def __init__(self, num_seeds_routing):
-        self.n_seeds_per_routing = num_seeds_routing
-        self.n_graphs = 1
+    def __init__(self):
         self.n_routing_per_graph = 1
-        self.total_seeds_per_graph = self.n_seeds_per_routing * self.n_routing_per_graph
-        self.num_seeds_graph_routing = num_seeds_routing
-        self.n_seeds_graph = num_seeds_routing
-        self.routing_type = RoutingTypes.similar
-
-    def get_paths(self):
-        paths = [r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\11_nodes_fixed_rbc\Raw_Data\SPBC\0'] * self.n_seeds_per_routing
-        return paths
-
-    def get_description(self):
-        return f'Single Graph {self.total_seeds_per_graph} seeds, Fixed Routing, 11 Nodes'
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Data\11_nodes_fixed_rbc\SPBC'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = f'Single Graph, , 11 Nodes, Fixed Routing'
 
 
 class DifferentGraphs_9Nodes_15Edges:
     def __init__(self):
         self.n_routing_per_graph = 1
         self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1'
-        self.train_graphs_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1\train'
-        self.validation_graphs_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1\validation'
-        self.test_graphs_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1\test'
-        self.description = r'9 Nodes, 15 Edges, Different Graphs'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = r'Different Graphs, 9 Nodes, 15 Edges'
