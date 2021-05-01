@@ -182,7 +182,7 @@ def train_model(nn_model, optimizer, p_man, train_data, embeddings_train, val_da
     device, dtype, dim = p_man.device, p_man.dtype, p_man.embedding_dimensions
     preprocessor = PreProcessor(dim=dim, device=device, dtype=dtype)
 
-    # generate [feature, label] samples by technique (by default [[s,u,v,t], prob] samples)
+    # generate samples by technique (by default [[s,u,v,t], prob] samples)
     samples_train = generate_samples_by_technique(p_man, preprocessor, embeddings_train, train_data)
     samples_validation = generate_samples_by_technique(p_man, preprocessor, embeddings_validation, val_data)
 
@@ -311,24 +311,24 @@ def update_params_man(params_man, train_val_test, train_res, test_res, optimizer
 
 if __name__ == '__main__':
     random.seed(42)
-    csv_save_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\Statistics\statistics.csv'
-    trained_models_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_1\TrainedModels'
+    csv_save_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Statistics\statistics.csv'
+    trained_models_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\TrainedModels'
 
-    num_nodes = 11
+    num_nodes = 10
     n_seeds_train_graph = 1
-    path_obj = Paths.Single_Graph_Fixed_Routing_SPBC_11_nodes()
+    path_obj = Paths.SameNumberNodes_DifferentNumberEdges()
 
     params_statistics1 = {
         EmbStat.centrality: Centralities.SPBC,
         EmbStat.embd_dim: num_nodes - 1,
         EmbStat.embedding_alg: EmbeddingAlgorithms.glee,
-        'seed_range': 10000,
+        'seed_range': 100000,
         'technique': Techniques.node_embedding_to_value,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 80,
+        HyperParams.epochs: 50,
         HyperParams.batch_size: 2048,
-        HyperParams.weight_decay: 0.0001,
+        HyperParams.weight_decay: 0.00001,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
         EmbStat.n_random_samples_per_graph: NumRandomSamples.N_power_2,
@@ -345,7 +345,7 @@ if __name__ == '__main__':
     }
 
 
-    n_seeds_lst = [1, 10, 30, 70, 100]
+    n_seeds_lst = [1]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)

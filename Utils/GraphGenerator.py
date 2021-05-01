@@ -1,3 +1,4 @@
+import os
 import random
 import matplotlib.pyplot as plt
 from Utils.CommonStr import Centralities
@@ -6,6 +7,7 @@ from karateclub.dataset import GraphReader
 import numpy as np
 reader = GraphReader("twitch")
 import itertools
+import shutil
 
 class GraphGenerator:
 
@@ -67,23 +69,43 @@ class GraphGenerator:
     #     g = nx.Graph(edge_list)
     #     return [g]
 
-    def custom_graph(self):
 
+    def same_num_nodes_same_num_edges_diffrent_graphs(self, num_nodes, num_edges):
         lst_graphs = []
-
         while len(lst_graphs) < 25:
             g = nx.Graph()
-            g.add_nodes_from(range(0, 9))
-            while not nx.is_connected(g) or len(g.edges) < 15:
-                u, v = random.sample(range(0, 9), 2)
+            g.add_nodes_from(range(0, num_nodes))
+            while not nx.is_connected(g) or len(g.edges) < num_edges:
+                u, v = random.sample(range(0, num_nodes), 2)
                 if not g.has_edge(u, v):
                     g.add_edge(u, v)
-                if len(g.edges) == 15:
+                if len(g.edges) == num_edges:
                     break
             if nx.is_connected(g):
                 if set(g.edges) not in [set(edges) for edges in lst_graphs]:
                     lst_graphs.append(g)
         return lst_graphs
+
+    def same_num_nodes_different_num_edges_graphs(self, num_nodes):
+        lst_graphs = []
+        edges_range = range(num_nodes + 5, num_nodes + 25)
+        for num_edges in edges_range:
+            g = nx.Graph()
+            g.add_nodes_from(range(0, num_nodes))
+            while not nx.is_connected(g) or len(g.edges) < num_edges:
+                u, v = random.sample(range(0, num_nodes), 2)
+                if not g.has_edge(u, v):
+                    g.add_edge(u, v)
+                if len(g.edges) == num_edges:
+                    break
+            if nx.is_connected(g):
+                if set(g.edges) not in [set(edges) for edges in lst_graphs]:
+                    lst_graphs.append(g)
+        return lst_graphs
+
+    def custom_graph(self):
+        pass
+
 
 
     def graphs_for_embeddings_show(self):
@@ -101,13 +123,26 @@ class GraphGenerator:
 
         return lst
 
+    def all_graphs_to_single_folder(self, path, root_folder):
+        immediate_sub = [f.path for f in os.scandir(path) if f.is_dir()]
+        all_sub_dir = []
+        for immediate_dir in immediate_sub:
+            all_sub_dir += [f.path for f in os.scandir(immediate_dir) if f.is_dir()]
+        for i, path in enumerate(all_sub_dir):
+            new_path = path[:-1] + str(i)
+            os.rename(path, new_path)
+            shutil.move(new_path, root_folder + f'\\{str(i)}')
+
+
+
 
 if __name__ == '__main__':
     # GraphGenerator('bb').generate_rand_graphs(4, 1)
     # GraphGenerator('bb').custom_graph()
 
-
-    for res in GraphGenerator('bb').custom_graph():
-        nx.draw(res, with_labels=True)
-        plt.show()
-        # print(lst)
+    GraphGenerator('bb').all_graphs_to_single_folder(r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Data\SPBC\SPBC\10_nodes',
+                                                     r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Data\SPBC\SPBC')
+    # for res in GraphGenerator('bb').same_num_nodes_different_num_edges_graphs(10):
+    #     nx.draw(res, with_labels=True)
+    #     plt.show()
+    #     # print(lst)

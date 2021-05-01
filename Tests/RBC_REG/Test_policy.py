@@ -12,7 +12,7 @@ from Utils.GraphGenerator import GraphGenerator
 class Tests(unittest.TestCase):
 
     def test_betweeness_policy(self):
-        graphs = GraphGenerator('SPBC').custom_graph()
+        graphs = GraphGenerator('SPBC').same_num_nodes_different_num_edges_graphs(10)
         nodes_map_gs = [{k: v for v, k in enumerate(list(graph.nodes()))} for graph in graphs]
         betweenness_policy = BetweennessPolicy()
         Ts = [self.create_default_t_matrix(g.number_of_nodes()) for g in graphs]
@@ -24,7 +24,7 @@ class Tests(unittest.TestCase):
             print(f'{i} out of {len(graphs)}')
             i += 1
             adj_matx = torch.tensor(nx.adj_matrix(graph).todense(), dtype=torch.float)
-            root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Graphs\SPBC'
+            root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Data\SPBC'
             save_path = Saver.get_saving_matrix_path(Centralities.SPBC, adj_matx, root_path)
             Saver.save_matrices(adj_matx, r, t, save_path)
 

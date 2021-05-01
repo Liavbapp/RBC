@@ -64,6 +64,7 @@ class PreProcessor:
         for i in range(0, num_embeddings):
             new_samples = self.generate_random_samples_for_graph(embeddings[i], Rs[i], num_rand_samples)
             samples += new_samples
+        samples = torch.stack([sample for sample in samples])
         return samples
 
 
@@ -119,9 +120,10 @@ class PreProcessor:
 
         for i in range(0, num_samples):
                 s, u, v, t = np.random.choice(range(num_nodes), 4)
-                sample_features = torch.stack([embd_torch[s], embd_torch[u], embd_torch[v], embd_torch[t]])
+                sample_features = torch.stack([embd_torch[s], embd_torch[u], embd_torch[v], embd_torch[t]]).flatten()
                 sample_label = torch.stack([R[s, t][v, u]])
-                samples.append((sample_features, sample_label))
+                samples.append(torch.cat((sample_features, sample_label), dim=0))
+                # samples.append((sample_features, sample_label))
         return samples
 
 

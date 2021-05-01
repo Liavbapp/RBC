@@ -44,7 +44,7 @@ class Single_Graph_Fixed_Routing_SPBC_11_nodes:
         self.description = f'Single Graph, , 11 Nodes, Fixed Routing'
 
 
-class DifferentGraphs_9Nodes_15Edges:
+class SameNumberNodes_SameNumberEdges_DifferentGraphs:
     def __init__(self):
         self.n_routing_per_graph = 1
         self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Data\SPBC\graphs_1'
@@ -52,3 +52,13 @@ class DifferentGraphs_9Nodes_15Edges:
         self.validation_graphs_path = f'{self.root_path}\\validation'
         self.test_graphs_path = f'{self.root_path}\\test'
         self.description = r'Different Graphs, 9 Nodes, 15 Edges'
+
+
+class SameNumberNodes_DifferentNumberEdges:
+    def __init__(self):
+        self.n_routing_per_graph = 1
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Data\SPBC\graphs_1'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = r'Different Number Edges, 10 Nodes'

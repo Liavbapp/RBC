@@ -124,54 +124,55 @@ class NeuralNetworkNodesEmbeddingRouting(nn.Module):
         return prop_res
 
 
-# class NeuralNetwork(nn.Module):
-#     def __init__(self, dimensions, device, dtype):
-#         super(NeuralNetwork, self).__init__()
-#         self.drop_out_rate = 0.0
-#         self.flatten = nn.Flatten()
-#         self.linear_relu_stack = nn.Sequential(
-#             nn.Conv2d(1, 100, 2),
-#             nn.ReLU(),
-#             # nn.Dropout(self.drop_out_rate),
-#             nn.Conv2d(100, 200, 2),
-#             nn.ReLU(),
-#             # nn.Dropout(self.drop_out_rate),
-#             nn.Flatten(),
-#             nn.Linear(200 * 2 * (dimensions - 2), 4096),
-#             nn.LeakyReLU(),
-#             # nn.Dropout(self.drop_out_rate),
-#             nn.Linear(4096, 4096),
-#             nn.LeakyReLU(),
-#             # nn.Dropout(self.drop_out_rate),
-#             nn.Linear(4096, 1),
-#             nn.LeakyReLU(),
-#         ).to(device=device, dtype=dtype)
-#
-#     def forward(self, x):
-#         # x = self.flatten(x)
-#         x = torch.unsqueeze(x, 1)
-#         prop_res = self.linear_relu_stack(x)
-#
-#         return prop_res
-
-
-
 class NeuralNetwork(nn.Module):
     def __init__(self, dimensions, device, dtype):
         super(NeuralNetwork, self).__init__()
+        self.dim = dimensions
+        self.drop_out_rate = 0.0
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(dimensions * 4, 4096),
+            nn.Conv2d(1, 100, 2),
+            nn.ReLU(),
+            # nn.Dropout(self.drop_out_rate),
+            nn.Conv2d(100, 200, 2),
+            nn.ReLU(),
+            # nn.Dropout(self.drop_out_rate),
+            nn.Flatten(),
+            nn.Linear(200 * 2 * (dimensions - 2), 4096),
             nn.LeakyReLU(),
+            # nn.Dropout(self.drop_out_rate),
             nn.Linear(4096, 4096),
             nn.LeakyReLU(),
-            nn.Linear(4096, 4096),
-            nn.LeakyReLU(),
+            # nn.Dropout(self.drop_out_rate),
             nn.Linear(4096, 1),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
         ).to(device=device, dtype=dtype)
 
     def forward(self, x):
-        x = self.flatten(x)
-        prop_res = self.linear_relu_stack(x)
+        x = x.view(x.shape[0], 4, self.dim)
+        x = torch.unsqueeze(x, 1)
+        prop_res = self.linear_relu_stack(x).flatten()
+
         return prop_res
+
+
+
+# class NeuralNetwork(nn.Module):
+#     def __init__(self, dimensions, device, dtype):
+#         super(NeuralNetwork, self).__init__()
+#         self.flatten = nn.Flatten()
+#         self.linear_relu_stack = nn.Sequential(
+#             nn.Linear(dimensions * 4, 4096),
+#             nn.LeakyReLU(),
+#             nn.Linear(4096, 4096),
+#             nn.LeakyReLU(),
+#             nn.Linear(4096, 4096),
+#             nn.LeakyReLU(),
+#             nn.Linear(4096, 1),
+#             nn.LeakyReLU()
+#         ).to(device=device, dtype=dtype)
+#
+#     def forward(self, x):
+#         x = self.flatten(x)
+#         prop_res = self.linear_relu_stack(x)
+#         return prop_res

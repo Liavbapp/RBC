@@ -6,6 +6,7 @@ from Components.RBC_REG.RBC import RBC
 from Utils.Optimizer import Optimizer
 from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import ErrorTypes, HyperParams, EigenvectorMethod
+import torch.utils.data
 
 
 def train_model_embed_to_rbc(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams,
@@ -141,33 +142,40 @@ def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsPa
     hyper_params = p_man.hyper_params
     loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])
     batch_size, epochs = hyper_params[HyperParams.batch_size], hyper_params[HyperParams.epochs]
-    train_loss, validation_loss = np.inf, np.inf
 
-    features_validation = torch.stack([embedding for embedding, label in validation_samples])
-    labels_validation = torch.stack([label for embedding, label in validation_samples])
+    train_loader = torch.utils.data.DataLoader(train_samples, batch_size=batch_size, shuffle=True)
+    validation_loader = torch.utils.data.DataLoader(validation_samples, batch_size=batch_size, shuffle=True)
 
     for epoch in range(0, epochs):
-        random.shuffle(train_samples)
-        features_train = torch.stack([embedding for embedding, label in train_samples])
-        labels_train = torch.stack([label for embedding, label in train_samples])
-        for i in range(0, len(features_train), batch_size):
-            features_batch = features_train[i:i + batch_size]
-            labels_batch = labels_train[i: i + batch_size]
-            y_pred = nn_model(features_batch)
-            train_loss = loss_fn(y_pred, labels_batch)
+        train_running_loss = 0.0
+        for i, inputs in enumerate(train_loader):
+            train_loss = compute_loss(inputs, nn_model, loss_fn)
+            train_running_loss += train_loss.item() * (i + 1) ** -1
             optimizer.zero_grad()
             train_loss.backward()
             optimizer.step()
-        if epoch % 1 == 0:
+
+        if epoch % 5 == 0:
             nn_model.eval()
             with torch.no_grad():
-                validation_pred = nn_model(features_validation)
-                validation_loss = loss_fn(validation_pred, labels_validation)
-                print(f'epoch: {epoch}, train loss: {train_loss.item()}')
-                print(f'epoch: {epoch}, validation loss: {validation_loss.item()}\n')
+                val_running_loss = 0.0
+                for i, inputs in enumerate(validation_loader):
+                    val_loss = compute_loss(inputs, nn_model, loss_fn)
+                    val_running_loss += val_loss.item() * (i + 1) ** -1
             nn_model.train()
 
-    return nn_model, train_loss.item(), validation_loss.item()
+            print(f'epoch: {epoch}, train loss: %.6f' % train_running_loss)
+            print(f'epoch: {epoch}, validation loss %.6f \n' % val_running_loss)
+
+    return nn_model, train_running_loss, val_running_loss
+
+
+def compute_loss(inputs, model, loss_fn):
+    features_batch, labels_batch = inputs[:, :-1], inputs[:, -1]
+    y_pred = model(features_batch)
+    train_loss = loss_fn(y_pred, labels_batch)
+
+    return train_loss
 
 
 def predict_routing(model, embeddings, p_man: EmbeddingsParams):
@@ -216,7 +224,8 @@ def predict_routing_all_nodes_embed(model, embeddings, p_man: EmbeddingsParams):
 def predict_graph_embedding(model, embeddings, p_man: EmbeddingsParams):
     model.eval()
     with torch.no_grad():
-        model_pred = model(torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).view(1, embeddings.shape[0]))
+        model_pred = model(
+            torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).view(1, embeddings.shape[0]))
     model.train()
     return model_pred.view((p_man.num_nodes,) * 4)
 
