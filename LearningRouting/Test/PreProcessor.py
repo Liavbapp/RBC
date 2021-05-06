@@ -1,13 +1,11 @@
 import os
-import random
+
 import sys
 
-import networkx as nx
-import numpy as np
-from karateclub import Diff2Vec, NodeSketch, NNSED, RandNE, GLEE, MNMF, SocioDim, NetMF, LaplacianEigenmaps
 
-from Components.RBC_REG.RBC import RBC
-from Utils.CommonStr import EigenvectorMethod, NumRandomSamples
+import numpy as np
+
+from Utils.CommonStr import NumRandomSamples
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
 
@@ -21,10 +19,21 @@ class PreProcessor:
         self.dtype = dtype
         self.dimensions = dim
 
+    def generate_samples_to_centrality_optim(self, embeddings, Ts):
+
+        nodes_embed_lst, graphs_embed_lst = [], []
+        for node_embedding, graph_embedding in embeddings:
+            nodes_embed_lst.append(torch.tensor(node_embedding, device=self.device, dtype=self.dtype))
+            graphs_embed_lst.append(torch.tensor(graph_embedding, device=self.device, dtype=self.dtype))
+
+        return list(map(lambda lst: torch.stack(lst), [nodes_embed_lst, graphs_embed_lst, Ts]))
+
     def generate_all_samples_embeddings_to_rbc(self, embeddings, Rs, testing_mode=False):
 
         return [(torch.tensor(embedding, device=self.device, dtype=self.dtype), graph, R, T, rbc) for
                 embedding, graph, R, T, rbc in embeddings]
+
+
 
     def generate_all_samples_embeddings_to_routing(self, embeddings, Rs, testing_mode=False):
         samples = []
@@ -44,10 +53,7 @@ class PreProcessor:
             routing.append(new_routing)
         return samples
 
-    def generate_all_samples(self, embeddings, Rs, testing_mode=False , path=None):
-        if path is not None:
-            samples = self.load_samples(path)
-            return samples
+    def generate_all_samples(self, embeddings, Rs, testing_mode=False, path=None):
         samples = []
         routing = []
         num_embeddings = len(embeddings)
@@ -67,6 +73,10 @@ class PreProcessor:
         samples = torch.stack([sample for sample in samples])
         return samples
 
+    def compute_embeddings_for_centrality_optim(self, Gs, seeds, embedding_alg_nodes, embedding_alg_graph):
+        nodes_embeddings = self.compute_node_embeddings(Gs, seeds, embedding_alg_nodes)
+        graphs_embeddings = self.compute_graphs_embeddings(Gs, seeds, embedding_alg_graph)
+        return list(zip(nodes_embeddings, graphs_embeddings))
 
     def compute_graphs_embeddings(self, Gs, seeds, embedding_alg):
         embedding_alg.fit(Gs)
@@ -127,16 +137,3 @@ class PreProcessor:
         return samples
 
 
-
-    def save_samples(self, samples):
-        a = torch.stack([sample[0] for sample in samples])
-        b = torch.stack([sample[1] for sample in samples])
-        torch.save(a, r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\Data\features.pt')
-        torch.save(b, r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\RBC_results\Data\labels.pt')
-
-    def load_samples(self, path):
-        features = torch.load(f'{path}\\features.pt')
-        labels = torch.load(f'{path}\\labels.pt')
-        features = list(torch.unbind(features))
-        labels = list(torch.unbind(labels))
-        return list(zip(features, labels))

@@ -2,8 +2,8 @@ import unittest
 import networkx as nx
 import torch
 
-from Components.RBC_REG.Policy import LoadCentralityPolicy, BetweennessPolicy
-from Components.RBC_REG.RBC import RBC
+from RBC.Policy import BetweennessPolicy
+from RBC.RBC import RBC
 from Utils import Saver
 from Utils.CommonStr import EigenvectorMethod, Centralities
 from Utils.GraphGenerator import GraphGenerator

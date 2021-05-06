@@ -7,21 +7,21 @@ import numpy as np
 import networkx as nx
 import scipy.stats
 import scipy.spatial.distance
-from Utils import Paths
-import itertools
-from Utils.EmbeddingAlg import get_embedding_algo
+from LearningRouting.Test.EmbeddingAlg import get_embedding_algo
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
-from Components.Embedding.NeuralNetwork import NeuralNetwork as EmbeddingNeuralNetwork, \
+from LearningRouting.NeuralNetwork import EmbeddingNeuralNetwork, \
     NeuralNetworkNodesEmbeddingRouting, \
-    NeuralNetworkGraphEmbeddingRouting, NeuralNetworkGraphEmbeddingRbc, NeuralNetworkNodeEmbeddingSourceTargetRouting
-from Components.Embedding import EmbeddingML
-from Components.Embedding.PreProcessor import PreProcessor
+    NeuralNetworkGraphEmbeddingRouting, NeuralNetworkGraphEmbeddingRbc, NeuralNetworkNodeEmbeddingSourceTargetRouting, \
+    NisuyNN
+from LearningRouting import EmbeddingML
+from LearningRouting.Test import Paths
+from LearningRouting.Test.PreProcessor import PreProcessor
 from Utils.Optimizer import Optimizer
-from Components.RBC_REG.RBC import RBC
-from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
+from RBC.RBC import RBC
+from LearningRouting.Test.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import EigenvectorMethod, EmbeddingStatistics as EmbStat, Centralities, TorchDevice, TorchDtype, \
-    HyperParams, OptimizerTypes, ErrorTypes, EmbeddingOutputs, EmbeddingPathParams, EmbeddingAlgorithms, Techniques, \
+    HyperParams, OptimizerTypes, ErrorTypes, EmbeddingOutputs, EmbeddingAlgorithms, Techniques, \
     NumRandomSamples
 
 
@@ -123,7 +123,7 @@ def get_combined_embeddings(train_data, validation_data, test_data, params_man):
     all_graphs = train_graphs + validation_graphs + test_graphs
     all_seeds = train_seeds + validation_seeds + test_seeds
     preprocessor = PreProcessor(dim=params_man.embedding_dimensions, device=params_man.device, dtype=params_man.dtype)
-    embedding_alg = get_embedding_algo(alg_name=params_man.embedding_alg_name, dim=params_man.embedding_dimensions)
+    embedding_alg = get_embedding_algo(alg_lst=params_man.embedding_alg_name, dim=params_man.embedding_dimensions)
     embeddings = get_embeddings_by_technique(params_man.technique, preprocessor, all_graphs, all_seeds, embedding_alg)
 
     return embeddings
@@ -135,6 +135,9 @@ def get_embeddings_by_technique(technique, preprocessor, all_graphs, all_seeds, 
         embeddings = preprocessor.compute_node_embeddings(all_graphs, all_seeds, embedding_alg)
     if technique == Techniques.graph_embedding_to_routing:
         embeddings = preprocessor.compute_graphs_embeddings(all_graphs, all_seeds, embedding_alg)
+    if technique == Techniques.optimize_centrality:
+        embedding_alg_nodes, embedding_alg_graphs = embedding_alg[0], embedding_alg[1]
+        embeddings = preprocessor.compute_embeddings_for_centrality_optim(all_graphs, all_seeds, embedding_alg_nodes, embedding_alg_graphs)
 
     return embeddings
     # if technique == Techniques.graph_embedding_to_rbc:
@@ -173,6 +176,8 @@ def init_nn_model(param_embed):
         model = NeuralNetworkGraphEmbeddingRouting(embed_dimension, param_embed['num_nodes'], device, dtype)
     if technique == Techniques.graph_embedding_to_rbc:
         model = NeuralNetworkGraphEmbeddingRbc(embed_dimension, param_embed['num_nodes'], device, dtype)
+    if technique == Techniques.optimize_centrality:
+        model = NisuyNN(embed_dimension, param_embed['num_nodes'], device, dtype)
 
     return model
 
@@ -207,6 +212,8 @@ def generate_samples_by_technique(p_man, preprocessor, embeddings, data):
         samples = preprocessor.generate_all_samples_embeddings_to_routing(embeddings, data['Rs'])
     if technique == Techniques.graph_embedding_to_rbc:
         samples = preprocessor.generate_all_samples_embeddings_to_rbc(embeddings, data['Rs'])
+    if technique == Techniques.optimize_centrality:
+        samples = preprocessor.generate_samples_to_centrality_optim(embeddings,  data['Ts'])
 
     return samples
 
@@ -215,13 +222,15 @@ def train_model_by_technique(model, p_man, optimizer, samples_train, samples_val
     technique = p_man.technique
 
     if technique == Techniques.node_embedding_to_value:
-        train_res = EmbeddingML.train_model(model, samples_train, samples_val, p_man, optimizer)
+        train_res = EmbeddingML.train_model_4_embeddings(model, samples_train, samples_val, p_man, optimizer)
     if technique == Techniques.node_embedding_s_t_routing:
         train_res = EmbeddingML.train_model_st_routing(model, samples_train, samples_val, p_man, optimizer)
     if technique == Techniques.node_embedding_to_routing or technique == Techniques.graph_embedding_to_routing:
         train_res = EmbeddingML.train_model_embed_to_routing(model, samples_train, samples_val, p_man, optimizer)
     if technique == Techniques.graph_embedding_to_rbc:
         train_res = EmbeddingML.train_model_embed_to_rbc(model, samples_train, samples_val, p_man, optimizer)
+    if technique == Techniques.optimize_centrality:
+        train_res = EmbeddingML.train_model_optimize_centrality(model, samples_train, samples_val, p_man, optimizer)
 
     return train_res
 
@@ -289,7 +298,7 @@ def calc_test_statistics(expected_rbcs, actual_rbcs):
 
 def update_params_man(params_man, train_val_test, train_res, test_res, optimizer):
     train_data, validation_data, test_data = train_val_test
-    trained_model, train_err, validation_err, train_time,  = train_res
+    trained_model, train_err, validation_err, train_time, = train_res
     expected_rbcs, actual_rbcs, euclidean_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = test_res
 
     params_man.n_graphs_train = int(len(train_data['Gs']) / params_man.seeds_per_train_graph)
@@ -314,21 +323,21 @@ if __name__ == '__main__':
     csv_save_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Statistics\statistics.csv'
     trained_models_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\TrainedModels'
 
-    num_nodes = 10
+    num_nodes = 9
     n_seeds_train_graph = 1
-    path_obj = Paths.SameNumberNodes_DifferentNumberEdges()
+    path_obj = Paths.SameNumberNodes_SameNumberEdges_DifferentGraphs()
 
     params_statistics1 = {
         EmbStat.centrality: Centralities.SPBC,
         EmbStat.embd_dim: num_nodes - 1,
-        EmbStat.embedding_alg: EmbeddingAlgorithms.glee,
+        EmbStat.embedding_alg: [EmbeddingAlgorithms.glee, EmbeddingAlgorithms.graph_2_vec],
         'seed_range': 100000,
-        'technique': Techniques.node_embedding_to_value,
+        'technique': Techniques.optimize_centrality,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 50,
-        HyperParams.batch_size: 2048,
-        HyperParams.weight_decay: 0.00001,
+        HyperParams.epochs: 25,
+        HyperParams.batch_size: 40,
+        HyperParams.weight_decay: 0.0001,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
         EmbStat.n_random_samples_per_graph: NumRandomSamples.N_power_2,
@@ -344,12 +353,7 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-
-    n_seeds_lst = [1]
+    n_seeds_lst = [1, 3, 5, 7, 10, 25]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)
-
-
-
-

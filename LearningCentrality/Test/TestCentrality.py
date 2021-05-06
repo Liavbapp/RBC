@@ -6,16 +6,15 @@ import sys
 cur_dir = os.path.dirname(os.path.dirname(os.path.abspath(os.curdir)))
 sys.path.append(cur_dir)
 from Utils.Optimizer import Optimizer
-from Components.RBC_ML.RbcNetwork import RbcNetwork
+from LearningCentrality.RbcNetwork import RbcNetwork
 from Utils.CommonStr import HyperParams, TorchDevice, TorchDtype, RbcMatrices, OptimizerTypes, ErrorTypes, \
     EigenvectorMethod
-from Components.RBC_ML.RbcML import learn_models
-from Components.RBC_REG.RBC import RBC
+from LearningCentrality.RbcML import learn_models
+from RBC.RBC import RBC
 from Utils.CommonStr import LearningParams
 from Utils.CommonStr import Centralities, StatisticsParams as StatsParams
 from Utils.GraphGenerator import GraphGenerator
-from Tests.RBC_ML.ParamsManager import ParamsManager
-from Utils import CustomTensors
+from LearningCentrality.Test.ParamsManager import ParamsManager
 
 
 #
@@ -63,7 +62,7 @@ class CentralityTester():
         rbc_matrices_path = cur_dir + f'\\results\\matrices'
         # csv_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\Combined_Results\\Without_Embedding\\statistics.csv'
         # rbc_matrices_path = f'C:\\Users\\LiavB\\OneDrive\\Desktop\\Msc\\Thesis\\Code\\RBC_results'
-        fixed_t = CustomTensors.tensor_20n
+        fixed_t = None
 
         self.params_dict = {RbcMatrices.root_path: rbc_matrices_path,
                             StatsParams.csv_save_path: csv_path,

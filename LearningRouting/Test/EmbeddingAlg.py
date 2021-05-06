@@ -5,7 +5,13 @@ from karateclub import GLEE, Node2Vec, GraphWave, AE, BigClam, BoostNE, DANMF, D
 from Utils.CommonStr import EmbeddingAlgorithms
 
 
-def get_embedding_algo(alg_name, dim, args=None):
+def get_embedding_algo(alg_lst, dim, args=None):
+    if len(alg_lst) > 1:
+        alg_nodes_name = alg_lst[0]
+        alg_graphs_name = alg_lst[1]
+        return get_embedding_algo([alg_nodes_name], dim, args), get_embedding_algo([alg_graphs_name], dim, args)
+
+    alg_name = alg_lst[0]
     if alg_name == EmbeddingAlgorithms.glee:
         return GLEE(dimensions=dim - 1)
     if alg_name == EmbeddingAlgorithms.graph_wave:

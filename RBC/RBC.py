@@ -1,7 +1,7 @@
 import networkx as nx
 import torch
-import Components.RBC_REG.Policy as Policy
-from Components.RBC_ML.PowerIteration import PowerIteration
+import RBC.Policy as Policy
+from RBC.PowerIteration import PowerIteration
 from Utils.CommonStr import EigenvectorMethod
 
 

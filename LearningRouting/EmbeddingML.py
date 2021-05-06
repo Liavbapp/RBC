@@ -2,11 +2,36 @@ import datetime
 import random
 import torch
 import numpy as np
-from Components.RBC_REG.RBC import RBC
+from RBC.RBC import RBC
 from Utils.Optimizer import Optimizer
-from Tests.RBC_ML.EmbeddingsParams import EmbeddingsParams
+from LearningRouting.Test.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import ErrorTypes, HyperParams, EigenvectorMethod
 import torch.utils.data
+
+
+def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man, optimizer):
+    print(f'starting training')
+    hyper_params = p_man.hyper_params
+    loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])
+    batch_size, epochs = hyper_params[HyperParams.batch_size], hyper_params[HyperParams.epochs]
+    train_loss, validation_loss = np.inf, np.inf
+
+    nodes_embeddings_train, graphs_embeddings_train, Ts_train = samples_train[0], samples_train[1], samples_train[2]
+    # labels_train = torch.stack([label for _, _, _, _, label in train_samples])
+
+    for epoch in range(0, epochs):
+        for i in range(0, len(samples_train), batch_size):
+            nodes_embeddings_batch = nodes_embeddings_train[i: i + batch_size]
+            graphs_embeddings_batch = graphs_embeddings_train[i: i + batch_size]
+            Ts_batch = Ts_train[i: i + batch_size]
+            predicted_rbc = nn_model(nodes_embeddings_batch, graphs_embeddings_batch, Ts_batch)
+            expected_val = torch.rand(size=(5, 9), device=torch.device('cuda:0'), dtype=torch.float)
+            train_loss = loss_fn(predicted_rbc, expected_val)
+            optimizer.zero_grad()
+            train_loss.backward()
+            optimizer.step()
+
+    return nn_model, train_loss.item(), validation_loss.item()
 
 
 def train_model_embed_to_rbc(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams,
@@ -137,7 +162,8 @@ def train_model_st_routing(nn_model, train_samples, validation_samples, p_man: E
     return nn_model, train_loss.item(), validation_loss.item()
 
 
-def train_model(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams, optimizer: Optimizer):
+def train_model_4_embeddings(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams,
+                             optimizer: Optimizer):
     print(f'starting training')
     hyper_params = p_man.hyper_params
     loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])

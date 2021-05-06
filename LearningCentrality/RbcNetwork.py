@@ -1,5 +1,5 @@
 import torch
-from Components.RBC_ML.PowerIteration import PowerIteration
+from RBC.PowerIteration import PowerIteration
 from Utils.CommonStr import EigenvectorMethod
 
 

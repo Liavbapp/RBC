@@ -1,7 +1,7 @@
 import unittest
 import networkx as nx
-from Components.RBC_REG.RBC import RBC
-import Components.RBC_REG.Policy as Policy
+from RBC.RBC import RBC
+import RBC.Policy as Policy
 import torch
 from Utils.CommonStr import EigenvectorMethod
 

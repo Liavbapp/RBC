@@ -1,12 +1,9 @@
 import os
 import random
-import matplotlib.pyplot as plt
 from Utils.CommonStr import Centralities
 import networkx as nx
 from karateclub.dataset import GraphReader
-import numpy as np
 reader = GraphReader("twitch")
-import itertools
 import shutil
 
 class GraphGenerator:

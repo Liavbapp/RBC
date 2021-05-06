@@ -111,11 +111,6 @@ class BetweennessPolicy(Policy):
         for edge in edges:
             edge_prob = 1 / edges_src_count[edge[0]]
             matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_prob
-        # num_paths = len(all_shortest_path)
-        # for edge in edges:
-        #     c_e = self.count_edge(all_shortest_path, edge)
-        #     edge_probability = c_e / num_paths
-        #     matrix_prob[nodes_mapping[edge[1]]][nodes_mapping[edge[0]]] = edge_probability
 
         return matrix_prob
 
