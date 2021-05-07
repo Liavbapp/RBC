@@ -16,21 +16,26 @@ def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man,
     batch_size, epochs = hyper_params[HyperParams.batch_size], hyper_params[HyperParams.epochs]
     train_loss, validation_loss = np.inf, np.inf
 
-    nodes_embeddings_train, graphs_embeddings_train, Ts_train = samples_train[0], samples_train[1], samples_train[2]
-    # labels_train = torch.stack([label for _, _, _, _, label in train_samples])
+    nodes_embed_train, graphs_embed_train, Ts_train = samples_train[0], samples_train[1], samples_train[2]
+    Rbcs_train = samples_train[3]
 
     for epoch in range(0, epochs):
+        running_loss = 0
+        nbatches = 0
         for i in range(0, len(samples_train), batch_size):
-            nodes_embeddings_batch = nodes_embeddings_train[i: i + batch_size]
-            graphs_embeddings_batch = graphs_embeddings_train[i: i + batch_size]
+            nbatches += 1
+            nodes_embeddings_batch = nodes_embed_train[i: i + batch_size]
+            graphs_embeddings_batch = graphs_embed_train[i: i + batch_size]
             Ts_batch = Ts_train[i: i + batch_size]
+            Rbcs_batch = Rbcs_train[i: i + batch_size]
             predicted_rbc = nn_model(nodes_embeddings_batch, graphs_embeddings_batch, Ts_batch)
-            expected_val = torch.rand(size=(5, 9), device=torch.device('cuda:0'), dtype=torch.float)
-            train_loss = loss_fn(predicted_rbc, expected_val)
+            train_loss = loss_fn(predicted_rbc, Rbcs_batch)
+            running_loss += train_loss.item()
             optimizer.zero_grad()
             train_loss.backward()
             optimizer.step()
 
+        print(f'[{epoch}] {running_loss / nbatches }')
     return nn_model, train_loss.item(), validation_loss.item()
 
 

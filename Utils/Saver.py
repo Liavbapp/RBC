@@ -259,14 +259,20 @@ def get_saving_embedding_matrices_path(centrality, root_path):
     return final_path
 
 
-def save_matrices(adj_matrix, routing_policy, traffic_matrix, path):
-    adj_matrix_np = adj_matrix.detach().to(device=torch.device('cpu')).numpy()
-    routing_policy_np = routing_policy.detach().to(device=torch.device('cpu')).numpy()
-    traffic_matrix_np = traffic_matrix.detach().to(device=torch.device('cpu')).numpy()
+def save_matrices(adj_matrix, routing_policy, traffic_matrix, rbc_vector, path):
 
-    np.save(f'{path}\\adj_mat', adj_matrix_np)
-    np.save(f'{path}\\routing_policy', routing_policy_np)
-    np.save(f'{path}\\traffic_mat', traffic_matrix_np)
+    if adj_matrix is not None:
+        adj_matrix_np = adj_matrix.detach().to(device=torch.device('cpu')).numpy()
+        np.save(f'{path}\\adj_mat', adj_matrix_np)
+    if routing_policy is not None:
+        routing_policy_np = routing_policy.detach().to(device=torch.device('cpu')).numpy()
+        np.save(f'{path}\\routing_policy', routing_policy_np)
+    if traffic_matrix is not None:
+        traffic_matrix_np = traffic_matrix.detach().to(device=torch.device('cpu')).numpy()
+        np.save(f'{path}\\traffic_mat', traffic_matrix_np)
+    if rbc_vector is not None:
+        rbc_vector_np = rbc_vector.detach().to(device=torch.device('cpu')).numpy()
+        np.save(f'{path}\\rbc_vec', rbc_vector_np)
 
 
 def save_trained_model(trained_model, path):

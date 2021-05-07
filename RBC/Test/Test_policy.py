@@ -12,7 +12,7 @@ from Utils.GraphGenerator import GraphGenerator
 class Tests(unittest.TestCase):
 
     def test_betweeness_policy(self):
-        graphs = GraphGenerator('SPBC').same_num_nodes_different_num_edges_graphs(10)
+        graphs = GraphGenerator('SPBC').same_num_nodes_same_num_edges_diffrent_graphs(9, 15)
         nodes_map_gs = [{k: v for v, k in enumerate(list(graph.nodes()))} for graph in graphs]
         betweenness_policy = BetweennessPolicy()
         Ts = [self.create_default_t_matrix(g.number_of_nodes()) for g in graphs]
@@ -20,13 +20,13 @@ class Tests(unittest.TestCase):
         rbc_hanlder = RBC(EigenvectorMethod.power_iteration, 0.00001, torch.device('cpu'), torch.float)
         RBCs = [rbc_hanlder.compute_rbc(graph, r, t) for graph, r, t in zip(graphs, Rs, Ts)]
         i=0
-        for graph, r, t in zip(graphs, Rs, Ts):
+        for graph, r, t, rbc in zip(graphs, Rs, Ts, RBCs):
             print(f'{i} out of {len(graphs)}')
             i += 1
             adj_matx = torch.tensor(nx.adj_matrix(graph).todense(), dtype=torch.float)
-            root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Data\SPBC'
+            root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_10\Data\SPBC'
             save_path = Saver.get_saving_matrix_path(Centralities.SPBC, adj_matx, root_path)
-            Saver.save_matrices(adj_matx, r, t, save_path)
+            Saver.save_matrices(adj_matrix=adj_matx, routing_policy=None, traffic_matrix=t, rbc_vector=rbc, path=save_path)
 
         print(RBCs)
 

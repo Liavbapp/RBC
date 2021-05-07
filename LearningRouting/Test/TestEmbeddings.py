@@ -69,16 +69,16 @@ def init_optimizer(pr_st, nn_model):
 def split_to_train_validation_test(p_man):
     train_paths, validation_paths, test_paths = get_tvt_paths(p_man)
 
-    Rs_train, Ts_train, Gs_train = load_rtg_from_paths(train_paths, p_man)
-    Rs_val, Ts_val, Gs_val = load_rtg_from_paths(validation_paths, p_man)
-    Rs_test, Ts_test, Gs_test = load_rtg_from_paths(test_paths, p_man)
+    Rs_train, Ts_train, Gs_train, Rbcs_train = load_rtg_from_paths(train_paths, p_man)
+    Rs_val, Ts_val, Gs_val, Rbcs_val = load_rtg_from_paths(validation_paths, p_man)
+    Rs_test, Ts_test, Gs_test, Rbcs_test = load_rtg_from_paths(test_paths, p_man)
 
     len_train, len_val, len_test = len(train_paths), len(validation_paths), len(test_paths)
     train_seeds, validation_seeds, test_seeds = get_seeds(len_train, len_val, len_test, p_man.seed_range)
 
-    train_data_lists = {'Rs': Rs_train, 'Ts': Ts_train, 'Gs': Gs_train, 'seeds': train_seeds}
-    validation_data_lists = {'Rs': Rs_val, 'Ts': Ts_val, 'Gs': Gs_val, 'seeds': validation_seeds}
-    test_data_lists = {'Rs': Rs_test, 'Ts': Ts_test, 'Gs': Gs_test, 'seeds': test_seeds}
+    train_data_lists = {'Rs': Rs_train, 'Ts': Ts_train, 'Gs': Gs_train, 'Rbcs': Rbcs_train, 'seeds': train_seeds, 'size': len_train}
+    validation_data_lists = {'Rs': Rs_val, 'Ts': Ts_val, 'Gs': Gs_val, 'Rbcs': Rbcs_val, 'seeds': validation_seeds, 'size': len_val}
+    test_data_lists = {'Rs': Rs_test, 'Ts': Ts_test, 'Gs': Gs_test, 'Rbcs': Rbcs_test, 'seeds': test_seeds, 'size': len_test}
 
     return train_data_lists, validation_data_lists, test_data_lists
 
@@ -91,11 +91,19 @@ def get_tvt_paths(p_man):
 
 
 def load_rtg_from_paths(paths, p_man):
-    routing_np, traffic_np, adj_np = 'routing_policy.npy', 'traffic_mat.npy', 'adj_mat.npy'
-    Rs = [torch.tensor(np.load(f'{path}\\{routing_np}'), dtype=p_man.dtype, device=p_man.device) for path in paths]
+    routing_np, traffic_np, adj_np, rbc_np = 'routing_policy.npy', 'traffic_mat.npy', 'adj_mat.npy', 'rbc_vec.npy'
+
     Ts = [torch.tensor(np.load(f'{path}\\{traffic_np}'), dtype=p_man.dtype, device=p_man.device) for path in paths]
     Gs = [nx.convert_matrix.from_numpy_matrix(np.load(f'{path}\\{adj_np}')) for path in paths]
-    return Rs, Ts, Gs
+
+    if p_man.technique == Techniques.optimize_centrality:
+        Rs = []
+        Rbcs = [torch.tensor(np.load(f'{path}\\{rbc_np}'), dtype=p_man.dtype, device=p_man.device) for path in paths]
+    else:
+        Rs = [torch.tensor(np.load(f'{path}\\{routing_np}'), dtype=p_man.dtype, device=p_man.device) for path in paths]
+        Rbcs = []
+
+    return Rs, Ts, Gs, Rbcs
 
 
 def get_seeds(len_train_paths, len_val_paths, len_test_paths, seed_range):
@@ -110,7 +118,7 @@ def get_seeds(len_train_paths, len_val_paths, len_test_paths, seed_range):
 
 
 def generate_embeddings(train_data, validation_data, test_data, params_man):
-    train_rs_len, val_rs_len, test_rs_len = len(train_data['Rs']), len(validation_data['Rs']), len(test_data['Rs'])
+    train_rs_len, val_rs_len, test_rs_len = train_data['size'], validation_data['size'], test_data['size']
     combined_embed = get_combined_embeddings(train_data, validation_data, test_data, params_man)
     embed_train, embed_validation, embed_test = split_embeddings(combined_embed, train_rs_len, val_rs_len, test_rs_len)
 
@@ -213,7 +221,7 @@ def generate_samples_by_technique(p_man, preprocessor, embeddings, data):
     if technique == Techniques.graph_embedding_to_rbc:
         samples = preprocessor.generate_all_samples_embeddings_to_rbc(embeddings, data['Rs'])
     if technique == Techniques.optimize_centrality:
-        samples = preprocessor.generate_samples_to_centrality_optim(embeddings,  data['Ts'])
+        samples = preprocessor.generate_samples_to_centrality_optim(embeddings,  data['Ts'], data['Rbcs'])
 
     return samples
 
@@ -325,7 +333,7 @@ if __name__ == '__main__':
 
     num_nodes = 9
     n_seeds_train_graph = 1
-    path_obj = Paths.SameNumberNodes_SameNumberEdges_DifferentGraphs()
+    path_obj = Paths.SameNumNodes_SameNumEdges_DifferentGraph_OptimCentrality()
 
     params_statistics1 = {
         EmbStat.centrality: Centralities.SPBC,
@@ -333,10 +341,10 @@ if __name__ == '__main__':
         EmbStat.embedding_alg: [EmbeddingAlgorithms.glee, EmbeddingAlgorithms.graph_2_vec],
         'seed_range': 100000,
         'technique': Techniques.optimize_centrality,
-        HyperParams.optimizer: OptimizerTypes.Adam,
+        HyperParams.optimizer: OptimizerTypes.RmsProp,
         HyperParams.learning_rate: 1e-4,
         HyperParams.epochs: 25,
-        HyperParams.batch_size: 40,
+        HyperParams.batch_size: 5,
         HyperParams.weight_decay: 0.0001,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
@@ -353,7 +361,7 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-    n_seeds_lst = [1, 3, 5, 7, 10, 25]
+    n_seeds_lst = [10, 15, 25]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)

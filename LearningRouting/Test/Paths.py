@@ -1,4 +1,3 @@
-
 class Single_Graph_Fixed_Routing_SPBC_4_nodes:
 
     def __init__(self):
@@ -58,3 +57,13 @@ class SameNumberNodes_DifferentNumberEdges:
         self.validation_graphs_path = f'{self.root_path}\\validation'
         self.test_graphs_path = f'{self.root_path}\\test'
         self.description = r'Different Number Edges, 10 Nodes'
+
+
+class SameNumNodes_SameNumEdges_DifferentGraph_OptimCentrality:
+    def __init__(self):
+        self.n_routing_per_graph = 1
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_10\Data\SPBC\graphs'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = r'Optimize Centrality, 9 Nodes, 15 Edges, Different Graphs'
