@@ -129,35 +129,60 @@ class NeuralNetworkNodesEmbeddingRouting(nn.Module):
         return prop_res
 
 
+# class EmbeddingNeuralNetwork(nn.Module):
+#     def __init__(self, dimensions, device, dtype):
+#         super(EmbeddingNeuralNetwork, self).__init__()
+#         self.dim = dimensions
+#         self.drop_out_rate = 0.0
+#         self.flatten = nn.Flatten()
+#         self.linear_relu_stack = nn.Sequential(
+#             nn.Conv2d(1, 100, 2),
+#             nn.ReLU(),
+#             # nn.Dropout(self.drop_out_rate),
+#             nn.Conv2d(100, 200, 2),
+#             nn.ReLU(),
+#             # nn.Dropout(self.drop_out_rate),
+#             nn.Flatten(),
+#             nn.Linear(200 * 2 * (dimensions - 2), 4096),
+#             nn.LeakyReLU(),
+#             # nn.Dropout(self.drop_out_rate),
+#             nn.Linear(4096, 4096),
+#             nn.LeakyReLU(),
+#             # nn.Dropout(self.drop_out_rate),
+#             nn.Linear(4096, 1),
+#             nn.LeakyReLU(),
+#         ).to(device=device, dtype=dtype)
+#
+#     def forward(self, x):
+#         x = x.view(x.shape[0], 4, self.dim)
+#         x = torch.unsqueeze(x, 1)
+#         prop_res = self.linear_relu_stack(x).flatten()
+#
+#         return prop_res
+#
+
 class EmbeddingNeuralNetwork(nn.Module):
     def __init__(self, dimensions, device, dtype):
         super(EmbeddingNeuralNetwork, self).__init__()
-        self.dim = dimensions
-        self.drop_out_rate = 0.0
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Conv2d(1, 100, 2),
-            nn.ReLU(),
-            # nn.Dropout(self.drop_out_rate),
-            nn.Conv2d(100, 200, 2),
-            nn.ReLU(),
-            # nn.Dropout(self.drop_out_rate),
-            nn.Flatten(),
-            nn.Linear(200 * 2 * (dimensions - 2), 4096),
+            nn.Linear(dimensions * 4, dimensions * 2 * 100),
             nn.LeakyReLU(),
-            # nn.Dropout(self.drop_out_rate),
+            nn.Linear(dimensions * 2 * 100, (dimensions * 2 * 100) * 200),
+            nn.LeakyReLU(),
+            nn.Linear((dimensions * 2 * 100) * 200, 4096),
+            nn.LeakyReLU(),
             nn.Linear(4096, 4096),
             nn.LeakyReLU(),
-            # nn.Dropout(self.drop_out_rate),
-            nn.Linear(4096, 1),
+            nn.Linear(4096, 4096),
             nn.LeakyReLU(),
+            nn.Linear(4096, 1),
+            nn.LeakyReLU()
         ).to(device=device, dtype=dtype)
 
     def forward(self, x):
-        x = x.view(x.shape[0], 4, self.dim)
-        x = torch.unsqueeze(x, 1)
+        x = self.flatten(x)
         prop_res = self.linear_relu_stack(x).flatten()
-
         return prop_res
 
 
@@ -172,13 +197,10 @@ class NisuyNN(nn.Module):
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(dim * 2, 4096),
             nn.LeakyReLU(),
-            nn.Dropout(0.5),
             nn.Linear(4096, 4096),
             nn.LeakyReLU(),
-            nn.Dropout(0.5),
             nn.Linear(4096, 4096),
             nn.LeakyReLU(),
-            nn.Dropout(0.5),
             nn.Linear(4096, self.num_nodes ** 2),
             nn.LeakyReLU(),
             nn.Sigmoid()
@@ -191,21 +213,30 @@ class NisuyNN(nn.Module):
         for s in (range(self.num_nodes)):
             for t in (range(self.num_nodes)):
                 Cs += self.compute_rbc_batch(nodes_embeddings[:, s], nodes_embeddings[:, t], s, graphs_embeddings,
-                                             Ts[:, s, t], batch_size)
+                                             Ts[:, s, t], batch_size, nodes_embeddings)
         return Cs
 
-    def compute_rbc_batch(self, s_embed, t_embed, s_idx, graph_embed, T_vals, batch_size):
-        r_policies = self.predicted_policy(s_embed, t_embed, graph_embed, batch_size)
+    def compute_rbc_batch(self, s_embed, t_embed, s_idx, graph_embed, T_vals, batch_size, nodes_embeddings):
+        r_policies = self.predicted_policy(s_embed, t_embed, graph_embed, nodes_embeddings, batch_size)
         cs = map(lambda r_policy, t_val: self.accumulate_delta(s_idx, r_policy.squeeze(), t_val), r_policies, T_vals)
         cs = torch.stack(list(cs))
         return cs
 
-    def predicted_policy(self, s, t, graph_embed, batch_size):
+    def predicted_policy(self, s, t, graph_embed, node_embeddings_batch, batch_size):
         # x = torch.stack([s, t, graph_embed]).view(batch_size, self.embed_dim * 3)
+        uv = map(lambda node_embeddings: self.create_uv_matrix(node_embeddings), node_embeddings_batch)
+        uv = torch.stack(list(uv))
+
         x = torch.stack([s, t]).view(batch_size, self.embed_dim * 2)
         out = self.linear_relu_stack(x).view(batch_size, self.num_nodes, self.num_nodes).split(1)
 
         return out
+
+    def create_uv_matrix(self, node_embeddings):
+        uv = [torch.cartesian_prod(node_embeddings.T[i], node_embeddings.T[i]) for i in range(0, self.embed_dim)]
+        uv = torch.stack(uv).transpose(0, 2).reshape(self.num_nodes, self.num_nodes, 2 * self.embed_dim)
+        return uv
+
 
     def accumulate_delta(self, src, predecessor_prob_matrix, T_val):
         new_eigenvalue, eigenvector = self.pi_handler.power_iteration(A=predecessor_prob_matrix)
@@ -220,23 +251,3 @@ class NisuyNN(nn.Module):
 
         return n_eigenvector
 
-#
-# class EmbeddingNeuralNetwork(nn.Module):
-#     def __init__(self, dimensions, device, dtype):
-#         super(EmbeddingNeuralNetwork, self).__init__()
-#         self.flatten = nn.Flatten()
-#         self.linear_relu_stack = nn.Sequential(
-#             nn.Linear(dimensions * 4, 4096),
-#             nn.LeakyReLU(),
-#             nn.Linear(4096, 4096),
-#             nn.LeakyReLU(),
-#             nn.Linear(4096, 4096),
-#             nn.LeakyReLU(),
-#             nn.Linear(4096, 1),
-#             nn.LeakyReLU()
-#         ).to(device=device, dtype=dtype)
-#
-#     def forward(self, x):
-#         x = self.flatten(x)
-#         prop_res = self.linear_relu_stack(x).flatten()
-#         return prop_res

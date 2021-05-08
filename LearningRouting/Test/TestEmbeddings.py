@@ -328,8 +328,8 @@ def update_params_man(params_man, train_val_test, train_res, test_res, optimizer
 
 if __name__ == '__main__':
     random.seed(42)
-    csv_save_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Statistics\statistics.csv'
-    trained_models_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\TrainedModels'
+    csv_save_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Statistics\statistics.csv'
+    trained_models_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\TrainedModels'
 
     num_nodes = 9
     n_seeds_train_graph = 1
@@ -341,10 +341,10 @@ if __name__ == '__main__':
         EmbStat.embedding_alg: [EmbeddingAlgorithms.glee, EmbeddingAlgorithms.graph_2_vec],
         'seed_range': 100000,
         'technique': Techniques.optimize_centrality,
-        HyperParams.optimizer: OptimizerTypes.RmsProp,
+        HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
         HyperParams.epochs: 25,
-        HyperParams.batch_size: 5,
+        HyperParams.batch_size: 1024,
         HyperParams.weight_decay: 0.0001,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
@@ -361,7 +361,7 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-    n_seeds_lst = [10, 15, 25]
+    n_seeds_lst = [5, 10, 15]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)
