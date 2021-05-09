@@ -34,7 +34,7 @@ def draw_embeddings():
 
     gs = GraphGenerator('SPBC').graphs_for_embeddings_show()
     WITH_ORIG = True
-    node2vec = LaplacianEigenmaps(dimensions=2)
+    node2vec = GLEE(dimensions=1)
     num_seeds = 7
     color_map = {0: 'g', 1: 'b', 2: 'r', 3: 'y', 4: 'k', 5: 'c', 6: 'm'}
     # graph_wave = GraphWave(dimensions=2)
@@ -46,8 +46,8 @@ def draw_embeddings():
             node2vec.seed = seed
             node2vec.fit(gs[i])
             actual_embeddings = node2vec.get_embedding()
-            embeddings_norm = actual_embeddings + (seed * 0.5)
-            embedding = actual_embeddings + 3.6
+            embeddings_norm = actual_embeddings + (seed * 1.5)
+            embedding = actual_embeddings + 12
             embeddings_lst_norm.append(pd.DataFrame(data=embeddings_norm, columns=['x', 'y']))
             embedding_lst.append(pd.DataFrame(data=embedding, columns=['x', 'y']))
 

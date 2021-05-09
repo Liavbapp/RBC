@@ -35,8 +35,8 @@ def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man,
             train_loss.backward()
             optimizer.step()
 
-        print(f'[{epoch}] {running_loss / nbatches }')
-    return nn_model, train_loss.item(), validation_loss.item()
+        print(f'[{epoch}] {running_loss / nbatches}')
+    return nn_model, train_loss.item(), validation_loss
 
 
 def train_model_embed_to_rbc(nn_model, train_samples, validation_samples, p_man: EmbeddingsParams,
@@ -207,6 +207,14 @@ def compute_loss(inputs, model, loss_fn):
     train_loss = loss_fn(y_pred, labels_batch)
 
     return train_loss
+
+
+def predict_centrality_direct(model, nodes_embed, T):
+    model.eval()
+    with torch.no_grad():
+        predicted_rbc = model(nodes_embed, None, T)
+    model.train()
+    return predicted_rbc
 
 
 def predict_routing(model, embeddings, p_man: EmbeddingsParams):

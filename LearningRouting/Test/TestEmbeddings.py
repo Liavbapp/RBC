@@ -54,8 +54,8 @@ def run_test(pr_st):
     update_params_man(params_man, split_data_res, train_res, test_res, optimizer)
 
     # save results to csv
-    params_man.prepare_params_statistics()
-    params_man.save_params_statistics()
+    # params_man.prepare_params_statistics()
+    # params_man.save_params_statistics()
 
 
 def init_optimizer(pr_st, nn_model):
@@ -76,9 +76,12 @@ def split_to_train_validation_test(p_man):
     len_train, len_val, len_test = len(train_paths), len(validation_paths), len(test_paths)
     train_seeds, validation_seeds, test_seeds = get_seeds(len_train, len_val, len_test, p_man.seed_range)
 
-    train_data_lists = {'Rs': Rs_train, 'Ts': Ts_train, 'Gs': Gs_train, 'Rbcs': Rbcs_train, 'seeds': train_seeds, 'size': len_train}
-    validation_data_lists = {'Rs': Rs_val, 'Ts': Ts_val, 'Gs': Gs_val, 'Rbcs': Rbcs_val, 'seeds': validation_seeds, 'size': len_val}
-    test_data_lists = {'Rs': Rs_test, 'Ts': Ts_test, 'Gs': Gs_test, 'Rbcs': Rbcs_test, 'seeds': test_seeds, 'size': len_test}
+    train_data_lists = {'Rs': Rs_train, 'Ts': Ts_train, 'Gs': Gs_train, 'Rbcs': Rbcs_train, 'seeds': train_seeds,
+                        'size': len_train}
+    validation_data_lists = {'Rs': Rs_val, 'Ts': Ts_val, 'Gs': Gs_val, 'Rbcs': Rbcs_val, 'seeds': validation_seeds,
+                             'size': len_val}
+    test_data_lists = {'Rs': Rs_test, 'Ts': Ts_test, 'Gs': Gs_test, 'Rbcs': Rbcs_test, 'seeds': test_seeds,
+                       'size': len_test}
 
     return train_data_lists, validation_data_lists, test_data_lists
 
@@ -145,7 +148,8 @@ def get_embeddings_by_technique(technique, preprocessor, all_graphs, all_seeds, 
         embeddings = preprocessor.compute_graphs_embeddings(all_graphs, all_seeds, embedding_alg)
     if technique == Techniques.optimize_centrality:
         embedding_alg_nodes, embedding_alg_graphs = embedding_alg[0], embedding_alg[1]
-        embeddings = preprocessor.compute_embeddings_for_centrality_optim(all_graphs, all_seeds, embedding_alg_nodes, embedding_alg_graphs)
+        embeddings = preprocessor.compute_embeddings_for_centrality_optim(all_graphs, all_seeds, embedding_alg_nodes,
+                                                                          embedding_alg_graphs)
 
     return embeddings
     # if technique == Techniques.graph_embedding_to_rbc:
@@ -221,7 +225,7 @@ def generate_samples_by_technique(p_man, preprocessor, embeddings, data):
     if technique == Techniques.graph_embedding_to_rbc:
         samples = preprocessor.generate_all_samples_embeddings_to_rbc(embeddings, data['Rs'])
     if technique == Techniques.optimize_centrality:
-        samples = preprocessor.generate_samples_to_centrality_optim(embeddings,  data['Ts'], data['Rbcs'])
+        samples = preprocessor.generate_samples_to_centrality_optim(embeddings, data['Ts'], data['Rbcs'])
 
     return samples
 
@@ -245,15 +249,33 @@ def train_model_by_technique(model, p_man, optimizer, samples_train, samples_val
 
 def test_model(model, p_man: EmbeddingsParams, test_data, test_embeddings):
     expected_rbcs, actual_rbcs = compute_rbcs(model, p_man, test_data, test_embeddings)
-    euclidean_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = calc_test_statistics(expected_rbcs,
-                                                                                              actual_rbcs)
+    euclid_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = calc_test_statistics(expected_rbcs, actual_rbcs)
     np.set_printoptions(precision=3)
     # print(f'expected rbcs: {expected_rbcs}\n actual rbcs: {actual_rbcs}')
 
-    return expected_rbcs, actual_rbcs, euclidean_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg
+    return expected_rbcs, actual_rbcs, euclid_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg
 
 
 def compute_rbcs(model, p_man: EmbeddingsParams, test_data, test_embeddings):
+    if p_man.technique == Techniques.optimize_centrality:
+        expected_rbc, actual_rbcs = compute_rbcs_direct(model, p_man, test_data, test_embeddings)
+    else:
+        expected_rbc, actual_rbcs = compute_rbcs_via_routing_prediction(model, p_man, test_data, test_embeddings)
+
+    return expected_rbc, actual_rbcs
+
+
+def compute_rbcs_direct(model, p_man, test_data, test_embeddings):
+
+    device, dtype = p_man.device, p_man.dtype
+    nodes_embeddings_batch = torch.stack([torch.tensor(embeddings[0], device=device, dtype=dtype) for embeddings in test_embeddings])
+    Ts_batch = torch.stack(test_data['Ts'])
+    expected_rbcs = [actual_rbc.cpu().detach().numpy() for actual_rbc in test_data['Rbcs']]
+    actual_rbcs = list(EmbeddingML.predict_centrality_direct(model, nodes_embeddings_batch, Ts_batch).cpu().detach().numpy())
+    return expected_rbcs, actual_rbcs
+
+
+def compute_rbcs_via_routing_prediction(model, p_man: EmbeddingsParams, test_data, test_embeddings):
     pi_err, eig_vec_mt = p_man.hyper_params[HyperParams.pi_max_err], p_man.learning_params[EmbStat.eigenvector_method]
     device, dtype = p_man.device, p_man.dtype
     rbc_handler = RBC(eigenvector_method=eig_vec_mt, pi_max_error=pi_err, device=device, dtype=dtype)
@@ -341,11 +363,11 @@ if __name__ == '__main__':
         EmbStat.embedding_alg: [EmbeddingAlgorithms.glee, EmbeddingAlgorithms.graph_2_vec],
         'seed_range': 100000,
         'technique': Techniques.optimize_centrality,
-        HyperParams.optimizer: OptimizerTypes.Adam,
-        HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 25,
-        HyperParams.batch_size: 1024,
-        HyperParams.weight_decay: 0.0001,
+        HyperParams.optimizer: OptimizerTypes.SGD,
+        HyperParams.learning_rate: 1e-3,
+        HyperParams.epochs: 10,
+        HyperParams.batch_size: 5,
+        HyperParams.weight_decay: 0.0000,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
         EmbStat.n_random_samples_per_graph: NumRandomSamples.N_power_2,
@@ -361,7 +383,7 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-    n_seeds_lst = [5, 10, 15]
+    n_seeds_lst = [2]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)
