@@ -164,6 +164,7 @@ class NeuralNetworkNodesEmbeddingRouting(nn.Module):
 class EmbeddingNeuralNetwork(nn.Module):
     def __init__(self, dimensions, device, dtype):
         super(EmbeddingNeuralNetwork, self).__init__()
+
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(dimensions * 4, dimensions * 2 * 100),
@@ -185,27 +186,29 @@ class EmbeddingNeuralNetwork(nn.Module):
         prop_res = self.linear_relu_stack(x).flatten()
         return prop_res
 
- # def __init__(self, dim, num_nodes, device, dtype):
- #        super(NisuyNN, self).__init__()
- #        self.device, self.dtype = device, dtype
- #        self.flatten = nn.Flatten()
- #        self.num_nodes = num_nodes
- #        self.embed_dim = dim
- #        self.pi_handler = PowerIteration.PowerIteration(device=device, dtype=dtype, max_error=0.00001)
- #        self.linear_relu_stack = nn.Sequential(
- #            nn.Conv2d(1, 100, 2),
- #            nn.ReLU(),
- #            nn.Flatten(),
- #            nn.Linear((dim - 1) * 100, 4096),
- #            nn.LeakyReLU(),
- #            nn.Linear(4096, 4096),
- #            nn.LeakyReLU(),
- #            nn.Linear(4096, 4096),
- #            nn.LeakyReLU(),
- #            nn.Linear(4096, self.num_nodes ** 2),
- #            nn.LeakyReLU(),
- #            nn.Sigmoid()
- #        ).to(device=device, dtype=dtype)
+
+# class NisuyNN(nn.Module):
+#     def __init__(self, dim, num_nodes, device, dtype):
+#         super(NisuyNN, self).__init__()
+#         self.device, self.dtype = device, dtype
+#         self.flatten = nn.Flatten()
+#         self.num_nodes = num_nodes
+#         self.embed_dim = dim
+#         self.pi_handler = PowerIteration.PowerIteration(device=device, dtype=dtype, max_error=0.00001)
+#         self.linear_relu_stack = nn.Sequential(
+#             nn.Conv2d(1, 100, 2),
+#             nn.ReLU(),
+#             nn.Flatten(),
+#             nn.Linear((dim - 1) * 100, 4096),
+#             nn.LeakyReLU(),
+#             nn.Linear(4096, 4096),
+#             nn.LeakyReLU(),
+#             nn.Linear(4096, 4096),
+#             nn.LeakyReLU(),
+#             nn.Linear(4096, self.num_nodes ** 2),
+#             nn.LeakyReLU(),
+#             nn.Sigmoid()
+#         ).to(device=device, dtype=dtype)
 
 class NisuyNN(nn.Module):
     def __init__(self, dim, num_nodes, device, dtype):
@@ -216,19 +219,22 @@ class NisuyNN(nn.Module):
         self.embed_dim = dim
         self.pi_handler = PowerIteration.PowerIteration(device=device, dtype=dtype, max_error=0.00001)
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(2 * self.embed_dim, 4096),
-            nn.ReLU(),
+            nn.Linear(dim * 2, 4096),
+            nn.LeakyReLU(),
             nn.Linear(4096, 4096),
-            nn.ReLU(),
-            # nn.Linear(4096, 4096),
-            # nn.LeakyReLU(),
+            nn.LeakyReLU(),
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(),
             nn.Linear(4096, self.num_nodes ** 2),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Sigmoid()
         ).to(device=device, dtype=dtype)
 
-
-    def forward(self, batch_node_embeddings, batch_graphs_embeddings, batch_Ts):
+    def forward(self, batch_node_embeddings, batch_graphs_embeddings, batch_Ts, mult_const_batch, add_const_batch):
         """
         The forward pass of the network
         :param batch_node_embeddings: nodes embeddings tensor, dimensions: batch_size x nodes x nodes x node_embed_dim
@@ -236,6 +242,7 @@ class NisuyNN(nn.Module):
         :param batch_Ts: Traffic matrix for each graph in the batch, dimensions: batch_size x nodes x nodes
         :return rbcs_prediction: the predicted values of the rbcs, dimensions: batch_size x nodes
         """
+        self.mult_const, self.add_const = mult_const_batch, add_const_batch
         uv_tensor = self.create_uv_tensor(batch_node_embeddings)
         rbcs_prediction = self.rbc_prediction(uv_tensor, batch_node_embeddings, batch_Ts, batch_size=len(batch_Ts))
 
@@ -276,13 +283,13 @@ class NisuyNN(nn.Module):
             for t in (range(self.num_nodes)):
                 embedding_s, embedding_t, s_idx = node_embeddings_batch[:, s], node_embeddings_batch[:, t], s
                 uv_st, Ts_st = uv_batch[:, s, t], Ts_batch[:, s, t]
-                deltas += self.compute_delta_st(uv_st, embedding_s, embedding_t, s_idx, Ts_st, batch_size)
+                deltas += self.compute_delta_st(uv_batch, embedding_s, embedding_t, s_idx, Ts_st, batch_size)
         return deltas
 
-    def compute_delta_st(self, uv_st, s_embed, t_embed, s_idx, T_st, batch_size):
+    def compute_delta_st(self, uv_batch, s_embed, t_embed, s_idx, T_st, batch_size):
         """
         compute the delta vector of the [source, target] pair, of the whole batch
-        :param uv_st: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
+        :param uv_batch: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
         :param s_embed: source node embedding vector of the whole batch, dimensions: batch_size x embed_dim
         :param t_embed: target node embedding vector of the whole batch, dimensions: batch_size x embed_dim
         :param s_idx: index of the source node
@@ -290,25 +297,28 @@ class NisuyNN(nn.Module):
         :param batch_size:
         :return delta: the delta vector for the source,target pair, dimensions: batch_size x nodes
         """
-        r_policies = self.predict_st_policy(uv_st, s_embed, t_embed, batch_size)
+        r_policies = self.predict_st_policy(uv_batch, s_embed, t_embed, batch_size)
         delta = map(lambda r_policy, t_val: self.accumulate_delta(s_idx, r_policy.squeeze(), t_val), r_policies, T_st)
         delta = torch.stack(list(delta))
         return delta
 
-    def predict_st_policy(self, uv_st, embed_s, embed_t, batch_size):
+    def predict_st_policy(self, uv_batch, embed_s, embed_t, batch_size):
         """
         predicting the routing policy of the [source, target] pair
-        :param uv_st: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
+        :param uv_batch: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
         :param embed_s: embedding vector of source node, of the whole batch, dimensions: batch_size x embed_dim
         :param embed_t:  embedding vector of target node, of the whole batch, dimensions: batch_size x embed_dim
         :param batch_size:
         :return:
         """
         x = torch.stack([embed_s, embed_t]).view(batch_size, self.embed_dim * 2)
-        # x = torch.stack([embed_s, embed_t]).view(batch_size,  2, self.embed_dim).unsqueeze(dim=1)
-        out = self.linear_relu_stack(x).view(batch_size, self.num_nodes, self.num_nodes).split(1)
+        # x = torch.stack([embed_s, embed_t]).view(batch_size, 2, self.embed_dim).unsqueeze(dim=1)  # conv_layers
+        # out = self.linear_relu_stack(x).view(batch_size, self.num_nodes, self.num_nodes).split(1)
+        # return out
 
-        return out
+        out = self.linear_relu_stack(x).view(batch_size, self.num_nodes, self.num_nodes)
+
+        return (torch.mul(out, self.mult_const) + self.add_const).split(1)
 
     def accumulate_delta(self, src, predecessor_prob_matrix, T_val):
         new_eigenvalue, eigenvector = self.pi_handler.power_iteration(A=predecessor_prob_matrix)

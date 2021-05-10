@@ -4,7 +4,7 @@ import sys
 
 
 import numpy as np
-
+import networkx as nx
 from Utils.CommonStr import NumRandomSamples
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
@@ -19,14 +19,17 @@ class PreProcessor:
         self.dtype = dtype
         self.dimensions = dim
 
-    def generate_samples_to_centrality_optim(self, embeddings, Ts, Rbcs):
+    def generate_samples_to_centrality_optim(self, embeddings, Ts, Gs, Rbcs):
 
         nodes_embed_lst, graphs_embed_lst = [], []
+        mult_const = [torch.tensor(nx.to_numpy_matrix(G), device=self.device, dtype=self.dtype).fill_diagonal_(0) for G in Gs]
+        add_const = [torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=self.device, dtype=self.dtype).fill_diagonal_(1) for G in Gs]
+
         for node_embedding, graph_embedding in embeddings:
             nodes_embed_lst.append(torch.tensor(node_embedding, device=self.device, dtype=self.dtype))
             graphs_embed_lst.append(torch.tensor(graph_embedding, device=self.device, dtype=self.dtype))
 
-        return list(map(lambda lst: torch.stack(lst), [nodes_embed_lst, graphs_embed_lst, Ts, Rbcs]))
+        return list(map(lambda lst: torch.stack(lst), [nodes_embed_lst, graphs_embed_lst, Ts, mult_const, add_const, Rbcs]))
 
     def generate_all_samples_embeddings_to_rbc(self, embeddings, Rs, testing_mode=False):
 

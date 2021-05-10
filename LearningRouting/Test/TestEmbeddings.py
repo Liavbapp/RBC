@@ -225,7 +225,7 @@ def generate_samples_by_technique(p_man, preprocessor, embeddings, data):
     if technique == Techniques.graph_embedding_to_rbc:
         samples = preprocessor.generate_all_samples_embeddings_to_rbc(embeddings, data['Rs'])
     if technique == Techniques.optimize_centrality:
-        samples = preprocessor.generate_samples_to_centrality_optim(embeddings, data['Ts'], data['Rbcs'])
+        samples = preprocessor.generate_samples_to_centrality_optim(embeddings, data['Ts'], data['Gs'], data['Rbcs'])
 
     return samples
 
@@ -270,8 +270,10 @@ def compute_rbcs_direct(model, p_man, test_data, test_embeddings):
     device, dtype = p_man.device, p_man.dtype
     nodes_embeddings_batch = torch.stack([torch.tensor(embeddings[0], device=device, dtype=dtype) for embeddings in test_embeddings])
     Ts_batch = torch.stack(test_data['Ts'])
+    mult_const = torch.stack([torch.tensor(nx.to_numpy_matrix(G), device=device, dtype=dtype).fill_diagonal_(0) for G in test_data['Gs']])
+    add_const = torch.stack([torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=device, dtype=dtype).fill_diagonal_(1) for G in test_data['Gs']])
     expected_rbcs = [actual_rbc.cpu().detach().numpy() for actual_rbc in test_data['Rbcs']]
-    actual_rbcs = list(EmbeddingML.predict_centrality_direct(model, nodes_embeddings_batch, Ts_batch).cpu().detach().numpy())
+    actual_rbcs = list(EmbeddingML.predict_centrality_direct(model, nodes_embeddings_batch, Ts_batch, mult_const, add_const).cpu().detach().numpy())
     return expected_rbcs, actual_rbcs
 
 
@@ -363,10 +365,10 @@ if __name__ == '__main__':
         EmbStat.embedding_alg: [EmbeddingAlgorithms.glee, EmbeddingAlgorithms.graph_2_vec],
         'seed_range': 100000,
         'technique': Techniques.optimize_centrality,
-        HyperParams.optimizer: OptimizerTypes.SGD,
+        HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-3,
-        HyperParams.epochs: 10,
-        HyperParams.batch_size: 5,
+        HyperParams.epochs: 5,
+        HyperParams.batch_size: 16,
         HyperParams.weight_decay: 0.0000,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
@@ -383,7 +385,7 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-    n_seeds_lst = [2]
+    n_seeds_lst = [5]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)

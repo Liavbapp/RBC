@@ -17,7 +17,7 @@ def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man,
     train_loss, validation_loss = np.inf, np.inf
 
     nodes_embed_train, graphs_embed_train, Ts_train = samples_train[0], samples_train[1], samples_train[2]
-    Rbcs_train = samples_train[3]
+    mult_const, add_const, Rbcs_train = samples_train[3], samples_train[4], samples_train[5]
 
     for epoch in range(0, epochs):
         running_loss = 0
@@ -27,8 +27,10 @@ def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man,
             nodes_embeddings_batch = nodes_embed_train[i: i + batch_size]
             graphs_embeddings_batch = graphs_embed_train[i: i + batch_size]
             Ts_batch = Ts_train[i: i + batch_size]
+            const_mult_batch = mult_const[i: i + batch_size]
+            const_add_batch = add_const[i: i + batch_size]
             Rbcs_batch = Rbcs_train[i: i + batch_size]
-            predicted_rbc = nn_model(nodes_embeddings_batch, graphs_embeddings_batch, Ts_batch)
+            predicted_rbc = nn_model(nodes_embeddings_batch, graphs_embeddings_batch, Ts_batch, const_mult_batch, const_add_batch)
             train_loss = loss_fn(predicted_rbc, Rbcs_batch)
             running_loss += train_loss.item()
             optimizer.zero_grad()
@@ -209,10 +211,10 @@ def compute_loss(inputs, model, loss_fn):
     return train_loss
 
 
-def predict_centrality_direct(model, nodes_embed, T):
+def predict_centrality_direct(model, nodes_embed, T, mult_const, add_const):
     model.eval()
     with torch.no_grad():
-        predicted_rbc = model(nodes_embed, None, T)
+        predicted_rbc = model(nodes_embed, None, T, mult_const, add_const)
     model.train()
     return predicted_rbc
 
