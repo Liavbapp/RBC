@@ -2,7 +2,6 @@ import os
 
 import sys
 
-
 import numpy as np
 import networkx as nx
 from Utils.CommonStr import NumRandomSamples
@@ -19,24 +18,38 @@ class PreProcessor:
         self.dtype = dtype
         self.dimensions = dim
 
+    def generate_samples_to_st_routing_optim(self, embeddings, Gs, Rs):
+        nodes_embed_lst = []
+        mult_const = [torch.tensor(nx.to_numpy_matrix(G), device=self.device, dtype=self.dtype).fill_diagonal_(0) for G
+                      in Gs]
+        add_const = [torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=self.device,
+                                 dtype=self.dtype).fill_diagonal_(1) for G in Gs]
+
+        for node_embedding in embeddings:
+            nodes_embed_lst.append(torch.tensor(node_embedding, device=self.device, dtype=self.dtype))
+
+        return list(
+            map(lambda lst: torch.stack(lst), [nodes_embed_lst, mult_const, add_const, Rs]))
+
     def generate_samples_to_centrality_optim(self, embeddings, Ts, Gs, Rbcs):
 
         nodes_embed_lst, graphs_embed_lst = [], []
-        mult_const = [torch.tensor(nx.to_numpy_matrix(G), device=self.device, dtype=self.dtype).fill_diagonal_(0) for G in Gs]
-        add_const = [torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=self.device, dtype=self.dtype).fill_diagonal_(1) for G in Gs]
+        mult_const = [torch.tensor(nx.to_numpy_matrix(G), device=self.device, dtype=self.dtype).fill_diagonal_(0) for G
+                      in Gs]
+        add_const = [torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=self.device,
+                                 dtype=self.dtype).fill_diagonal_(1) for G in Gs]
 
         for node_embedding, graph_embedding in embeddings:
             nodes_embed_lst.append(torch.tensor(node_embedding, device=self.device, dtype=self.dtype))
             graphs_embed_lst.append(torch.tensor(graph_embedding, device=self.device, dtype=self.dtype))
 
-        return list(map(lambda lst: torch.stack(lst), [nodes_embed_lst, graphs_embed_lst, Ts, mult_const, add_const, Rbcs]))
+        return list(
+            map(lambda lst: torch.stack(lst), [nodes_embed_lst, graphs_embed_lst, Ts, mult_const, add_const, Rbcs]))
 
     def generate_all_samples_embeddings_to_rbc(self, embeddings, Rs, testing_mode=False):
 
         return [(torch.tensor(embedding, device=self.device, dtype=self.dtype), graph, R, T, rbc) for
                 embedding, graph, R, T, rbc in embeddings]
-
-
 
     def generate_all_samples_embeddings_to_routing(self, embeddings, Rs, testing_mode=False):
         samples = []
@@ -132,11 +145,9 @@ class PreProcessor:
             num_samples = num_nodes
 
         for i in range(0, num_samples):
-                s, u, v, t = np.random.choice(range(num_nodes), 4)
-                sample_features = torch.stack([embd_torch[s], embd_torch[u], embd_torch[v], embd_torch[t]]).flatten()
-                sample_label = torch.stack([R[s, t][v, u]])
-                samples.append(torch.cat((sample_features, sample_label), dim=0))
-                # samples.append((sample_features, sample_label))
+            s, u, v, t = np.random.choice(range(num_nodes), 4)
+            sample_features = torch.stack([embd_torch[s], embd_torch[u], embd_torch[v], embd_torch[t]]).flatten()
+            sample_label = torch.stack([R[s, t][v, u]])
+            samples.append(torch.cat((sample_features, sample_label), dim=0))
+            # samples.append((sample_features, sample_label))
         return samples
-
-

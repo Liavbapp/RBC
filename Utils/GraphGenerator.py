@@ -1,10 +1,14 @@
 import os
 import random
+import numpy as np
 from Utils.CommonStr import Centralities
 import networkx as nx
 from karateclub.dataset import GraphReader
+import errno, os, stat, shutil
+
 reader = GraphReader("twitch")
 import shutil
+
 
 class GraphGenerator:
 
@@ -66,6 +70,22 @@ class GraphGenerator:
     #     g = nx.Graph(edge_list)
     #     return [g]
 
+    def small_world_gxef_graph(self, path):
+        graphs = [f.path for f in os.scandir(path)]
+        graphs = [nx.read_gexf(g) for g in graphs]
+        return graphs
+
+    def small_world_graphs(self, num_nodes_lst, k_lst, p_lst):
+        lst_graphs = []
+        for i in range(0, 6):
+            for num_nodes in num_nodes_lst:
+                for k in k_lst:
+                    for p in p_lst:
+                        g = nx.newman_watts_strogatz_graph(num_nodes, k, p, seed=None)
+                        if nx.is_connected(g):
+                            if set(g.edges) not in [set(edges) for edges in lst_graphs]:
+                                lst_graphs.append(g)
+        return lst_graphs
 
     def same_num_nodes_same_num_edges_diffrent_graphs(self, num_nodes, num_edges):
         lst_graphs = []
@@ -103,8 +123,6 @@ class GraphGenerator:
     def custom_graph(self):
         pass
 
-
-
     def graphs_for_embeddings_show(self):
         lst = []
         c = nx.complete_graph(40)
@@ -120,25 +138,48 @@ class GraphGenerator:
 
         return lst
 
-    def all_graphs_to_single_folder(self, path, root_folder):
-        immediate_sub = [f.path for f in os.scandir(path) if f.is_dir()]
+    def split_graphs_train_val_test(self, path, root_folder):
         all_sub_dir = []
-        for immediate_dir in immediate_sub:
-            all_sub_dir += [f.path for f in os.scandir(immediate_dir) if f.is_dir()]
-        for i, path in enumerate(all_sub_dir):
-            new_path = path[:-1] + str(i)
-            os.rename(path, new_path)
-            shutil.move(new_path, root_folder + f'\\{str(i)}')
+        for dirpath, dirnames, filenames in os.walk(path):
+            if not dirnames:
+                all_sub_dir.append(dirpath)
+        # immediate_sub = [f.path for f in os.scandir(path) if f.is_dir()]
+        # for immediate_sub_dir in immediate_sub:
+        #     all_sub_dir += [f.path for f in os.scandir(immediate_sub_dir)]
 
+        num_sub_dir = len(all_sub_dir)
+        indices = list(range(0, num_sub_dir))
+        random.shuffle(indices)
+        n_train, n_val, n_test = int(0.7 * num_sub_dir), int(0.1 * num_sub_dir), int(0.2 * num_sub_dir)
+        train_indices, val_indices, test_indices = indices[:n_train], indices[n_train: n_train + n_val], indices[
+                                                                                                         n_train + n_val:]
 
+        for i, train_index in enumerate(train_indices):
+            old_path = all_sub_dir[train_index]
+            shutil.move(old_path, root_folder + f'\\train\\{str(i)}')
+
+        for i, val_index in enumerate(val_indices):
+            old_path = all_sub_dir[val_index]
+            shutil.move(old_path, root_folder + f'\\validation\\{str(i + n_train)}')
+
+        for i, test_index in enumerate(test_indices):
+            old_path = all_sub_dir[test_index]
+            shutil.move(old_path, root_folder + f'\\test\\{str(i + n_train + n_val)}')
+
+        #
+        # for i, path in enumerate(all_sub_dir):
+        #     new_path = path[:-1] + str(i)
+        #     os.rename(path, new_path)
+        #     shutil.move(new_path, root_folder + f'\\{str(i)}')
 
 
 if __name__ == '__main__':
     # GraphGenerator('bb').generate_rand_graphs(4, 1)
     # GraphGenerator('bb').custom_graph()
-
-    GraphGenerator('bb').all_graphs_to_single_folder(r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Data\SPBC\SPBC\10_nodes',
-                                                     r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_3\Data\SPBC\SPBC')
+    # GraphGenerator('bb').read_gxef(path=r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\NCA-GE\Graphs\Train')
+    GraphGenerator('bb').split_graphs_train_val_test(
+        r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_4\Data\SPBC',
+        r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_4\Data\SPBC')
     # for res in GraphGenerator('bb').same_num_nodes_different_num_edges_graphs(10):
     #     nx.draw(res, with_labels=True)
     #     plt.show()

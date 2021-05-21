@@ -215,6 +215,7 @@ class Techniques:
     node_embedding_to_routing = "node_embedding_routing"
     graph_embedding_to_rbc = "graph_embedding_rbc"
     optimize_centrality = "Optimize Centrality"
+    optimize_st_routing = "Optimize st Routing"
 
 
 class RoutingTypes:

@@ -35,8 +35,10 @@ def draw_embeddings():
     gs = GraphGenerator('SPBC').graphs_for_embeddings_show()
     WITH_ORIG = True
     node2vec = GLEE(dimensions=1)
-    num_seeds = 7
-    color_map = {0: 'g', 1: 'b', 2: 'r', 3: 'y', 4: 'k', 5: 'c', 6: 'm'}
+    num_seeds = 20
+    color_map = {0: 'g', 1: 'b', 2: 'r', 3: 'y', 4: 'k', 5: 'c', 6: 'm', 7: 'm', 8: 'm'}
+    for i in range(9, 21):
+        color_map.update({i: 'm'})
     # graph_wave = GraphWave(dimensions=2)
     for i in range(0, len(gs)):
         plot_orig_graph(gs[i], i)

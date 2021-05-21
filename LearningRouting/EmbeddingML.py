@@ -7,6 +7,48 @@ from Utils.Optimizer import Optimizer
 from LearningRouting.Test.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import ErrorTypes, HyperParams, EigenvectorMethod
 import torch.utils.data
+import networkx as nx
+
+
+def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man, optimizer):
+    print(f'starting training')
+    hyper_params = p_man.hyper_params
+    loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])
+    batch_size, epochs = hyper_params[HyperParams.batch_size], hyper_params[HyperParams.epochs]
+    train_loss, validation_loss = np.inf, np.inf
+
+    nodes_embed_train = samples_train[0]
+    mult_const, add_const, Rs_train = samples_train[1], samples_train[2], samples_train[3]
+
+    for epoch in range(0, epochs):
+        running_loss = 0
+        nbatches = 0
+        start = datetime.datetime.now()
+        if batch_size == 1:
+            nbatches = 1
+            predicted_routing = nn_model(nodes_embed_train, mult_const, add_const)
+            train_loss = loss_fn(predicted_routing, Rs_train)
+            running_loss += train_loss.item()
+            optimizer.zero_grad()
+            train_loss.backward()
+            optimizer.step()
+        else:
+            for i in range(0, len(samples_train), batch_size):
+                nbatches += 1
+                nodes_embeddings_batch = nodes_embed_train[i: i + batch_size]
+                const_mult_batch = mult_const[i: i + batch_size]
+                const_add_batch = add_const[i: i + batch_size]
+                Rs_batch = Rs_train[i: i + batch_size]
+                predicted_routing = nn_model(nodes_embeddings_batch, const_mult_batch, const_add_batch)
+                train_loss = loss_fn(predicted_routing, Rs_batch)
+                running_loss += train_loss.item()
+                optimizer.zero_grad()
+                train_loss.backward()
+                optimizer.step()
+
+        print(f'[{epoch}] {running_loss / nbatches}, time: {datetime.datetime.now() - start}')
+
+    return nn_model, train_loss.item(), validation_loss
 
 
 def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man, optimizer):
@@ -22,6 +64,7 @@ def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man,
     for epoch in range(0, epochs):
         running_loss = 0
         nbatches = 0
+        start = datetime.datetime.now()
         for i in range(0, len(samples_train), batch_size):
             nbatches += 1
             nodes_embeddings_batch = nodes_embed_train[i: i + batch_size]
@@ -30,14 +73,15 @@ def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man,
             const_mult_batch = mult_const[i: i + batch_size]
             const_add_batch = add_const[i: i + batch_size]
             Rbcs_batch = Rbcs_train[i: i + batch_size]
-            predicted_rbc = nn_model(nodes_embeddings_batch, graphs_embeddings_batch, Ts_batch, const_mult_batch, const_add_batch)
+            predicted_rbc = nn_model(nodes_embeddings_batch, graphs_embeddings_batch, Ts_batch, const_mult_batch,
+                                     const_add_batch)
             train_loss = loss_fn(predicted_rbc, Rbcs_batch)
             running_loss += train_loss.item()
             optimizer.zero_grad()
             train_loss.backward()
             optimizer.step()
 
-        print(f'[{epoch}] {running_loss / nbatches}')
+        print(f'[{epoch}] {running_loss / nbatches}, time: {datetime.datetime.now() - start}')
     return nn_model, train_loss.item(), validation_loss
 
 
@@ -188,7 +232,7 @@ def train_model_4_embeddings(nn_model, train_samples, validation_samples, p_man:
             train_loss.backward()
             optimizer.step()
 
-        if epoch % 5 == 0:
+        if epoch % 1 == 0:
             nn_model.eval()
             with torch.no_grad():
                 val_running_loss = 0.0
@@ -269,6 +313,20 @@ def predict_graph_embedding(model, embeddings, p_man: EmbeddingsParams):
             torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).view(1, embeddings.shape[0]))
     model.train()
     return model_pred.view((p_man.num_nodes,) * 4)
+
+
+def predict_routing_policy_optimize_st_routing(model, embeddings, p_man, graph):
+    model.eval()
+    with torch.no_grad():
+        num_nodes = p_man.num_nodes
+        batch_node_embeddings = torch.tensor(embeddings, device=p_man.device, dtype=p_man.dtype).unsqueeze(dim=0)
+        mult_const = torch.tensor(nx.to_numpy_matrix(graph), device=p_man.device, dtype=p_man.dtype).fill_diagonal_(0)
+        add_const = torch.zeros(size=(num_nodes, num_nodes), device=p_man.device, dtype=p_man.dtype).fill_diagonal_(1)
+
+        predicted_R = model(batch_node_embeddings, mult_const.unsqueeze(dim=0), add_const.unsqueeze(dim=0)).squeeze()
+
+    model.train()
+    return predicted_R
 
 
 def get_loss_fun(error_type):

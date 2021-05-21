@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
 from LearningRouting.NeuralNetwork import EmbeddingNeuralNetwork, \
     NeuralNetworkNodesEmbeddingRouting, \
     NeuralNetworkGraphEmbeddingRouting, NeuralNetworkGraphEmbeddingRbc, NeuralNetworkNodeEmbeddingSourceTargetRouting, \
-    NisuyNN
+    NisuyNN, StRoutingModel
 from LearningRouting import EmbeddingML
 from LearningRouting.Test import Paths
 from LearningRouting.Test.PreProcessor import PreProcessor
@@ -47,7 +47,8 @@ def run_test(pr_st):
     trained_model, train_err, validation_err, train_time = train_res
 
     # testing
-    test_res = test_model(trained_model, params_man, test_data, embed_test)
+    # test_res = test_model(trained_model, params_man, test_data, embed_test)
+    test_res = test_model(trained_model, params_man, test_data, embed_train) # todo: delete this
     # expected_rbcs, actual_rbcs, euclidean_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = test_res
 
     # update param manager object
@@ -142,7 +143,7 @@ def get_combined_embeddings(train_data, validation_data, test_data, params_man):
 
 def get_embeddings_by_technique(technique, preprocessor, all_graphs, all_seeds, embedding_alg):
     if technique in [Techniques.node_embedding_to_value, Techniques.node_embedding_to_routing,
-                     Techniques.node_embedding_s_t_routing]:
+                     Techniques.node_embedding_s_t_routing, Techniques.optimize_st_routing]:
         embeddings = preprocessor.compute_node_embeddings(all_graphs, all_seeds, embedding_alg)
     if technique == Techniques.graph_embedding_to_routing:
         embeddings = preprocessor.compute_graphs_embeddings(all_graphs, all_seeds, embedding_alg)
@@ -190,6 +191,8 @@ def init_nn_model(param_embed):
         model = NeuralNetworkGraphEmbeddingRbc(embed_dimension, param_embed['num_nodes'], device, dtype)
     if technique == Techniques.optimize_centrality:
         model = NisuyNN(embed_dimension, param_embed['num_nodes'], device, dtype)
+    if technique == Techniques.optimize_st_routing:
+        model = StRoutingModel(embed_dimension, param_embed['num_nodes'], device, dtype)
 
     return model
 
@@ -226,6 +229,8 @@ def generate_samples_by_technique(p_man, preprocessor, embeddings, data):
         samples = preprocessor.generate_all_samples_embeddings_to_rbc(embeddings, data['Rs'])
     if technique == Techniques.optimize_centrality:
         samples = preprocessor.generate_samples_to_centrality_optim(embeddings, data['Ts'], data['Gs'], data['Rbcs'])
+    if technique == Techniques.optimize_st_routing:
+        samples = preprocessor.generate_samples_to_st_routing_optim(embeddings, data['Gs'], data['Rs'])
 
     return samples
 
@@ -243,6 +248,8 @@ def train_model_by_technique(model, p_man, optimizer, samples_train, samples_val
         train_res = EmbeddingML.train_model_embed_to_rbc(model, samples_train, samples_val, p_man, optimizer)
     if technique == Techniques.optimize_centrality:
         train_res = EmbeddingML.train_model_optimize_centrality(model, samples_train, samples_val, p_man, optimizer)
+    if technique == Techniques.optimize_st_routing:
+        train_res = EmbeddingML.train_model_optimize_st_routing(model, samples_train, samples_val, p_man, optimizer)
 
     return train_res
 
@@ -251,7 +258,7 @@ def test_model(model, p_man: EmbeddingsParams, test_data, test_embeddings):
     expected_rbcs, actual_rbcs = compute_rbcs(model, p_man, test_data, test_embeddings)
     euclid_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = calc_test_statistics(expected_rbcs, actual_rbcs)
     np.set_printoptions(precision=3)
-    # print(f'expected rbcs: {expected_rbcs}\n actual rbcs: {actual_rbcs}')
+    print(f'expected rbcs: {expected_rbcs}\n actual rbcs: {actual_rbcs}')
 
     return expected_rbcs, actual_rbcs, euclid_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg
 
@@ -266,14 +273,18 @@ def compute_rbcs(model, p_man: EmbeddingsParams, test_data, test_embeddings):
 
 
 def compute_rbcs_direct(model, p_man, test_data, test_embeddings):
-
     device, dtype = p_man.device, p_man.dtype
-    nodes_embeddings_batch = torch.stack([torch.tensor(embeddings[0], device=device, dtype=dtype) for embeddings in test_embeddings])
+    nodes_embeddings_batch = torch.stack(
+        [torch.tensor(embeddings[0], device=device, dtype=dtype) for embeddings in test_embeddings])
     Ts_batch = torch.stack(test_data['Ts'])
-    mult_const = torch.stack([torch.tensor(nx.to_numpy_matrix(G), device=device, dtype=dtype).fill_diagonal_(0) for G in test_data['Gs']])
-    add_const = torch.stack([torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=device, dtype=dtype).fill_diagonal_(1) for G in test_data['Gs']])
+    mult_const = torch.stack(
+        [torch.tensor(nx.to_numpy_matrix(G), device=device, dtype=dtype).fill_diagonal_(0) for G in test_data['Gs']])
+    add_const = torch.stack(
+        [torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=device, dtype=dtype).fill_diagonal_(1) for
+         G in test_data['Gs']])
     expected_rbcs = [actual_rbc.cpu().detach().numpy() for actual_rbc in test_data['Rbcs']]
-    actual_rbcs = list(EmbeddingML.predict_centrality_direct(model, nodes_embeddings_batch, Ts_batch, mult_const, add_const).cpu().detach().numpy())
+    actual_rbcs = list(EmbeddingML.predict_centrality_direct(model, nodes_embeddings_batch, Ts_batch, mult_const,
+                                                             add_const).cpu().detach().numpy())
     return expected_rbcs, actual_rbcs
 
 
@@ -290,7 +301,8 @@ def compute_rbcs_via_routing_prediction(model, p_man: EmbeddingsParams, test_dat
     for R, T, g, test_embedding in zip(test_data['Rs'], test_data['Ts'], test_data['Gs'], test_embeddings):
         i += 1
         print(f'{i} out of {num_gs}')
-        predicted_r_policy = predict_routing_policy(p_man.technique, model, test_embedding, p_man)
+        predicted_r_policy = predict_routing_policy(p_man.technique, model, test_embedding, p_man, g)
+
         expected_rbc = rbc_handler.compute_rbc(g, R, T).cpu().detach().numpy()
         expected_rbcs.append(expected_rbc)
         actual_rbc = rbc_handler.compute_rbc(g, predicted_r_policy, T).cpu().detach().numpy()
@@ -299,7 +311,7 @@ def compute_rbcs_via_routing_prediction(model, p_man: EmbeddingsParams, test_dat
     return expected_rbcs, actual_rbcs
 
 
-def predict_routing_policy(technique, model, test_embedding, p_man):
+def predict_routing_policy(technique, model, test_embedding, p_man, graph):
     if technique == Techniques.node_embedding_to_value:
         test_r_policy = EmbeddingML.predict_routing(model, test_embedding, p_man)
     if technique == Techniques.node_embedding_s_t_routing:
@@ -308,6 +320,8 @@ def predict_routing_policy(technique, model, test_embedding, p_man):
         test_r_policy = EmbeddingML.predict_routing_all_nodes_embed(model, test_embedding, p_man)
     if technique == Techniques.graph_embedding_to_routing or technique == Techniques.graph_embedding_to_rbc:
         test_r_policy = EmbeddingML.predict_graph_embedding(model, test_embedding, p_man)
+    if technique == Techniques.optimize_st_routing:
+        test_r_policy = EmbeddingML.predict_routing_policy_optimize_st_routing(model, test_embedding, p_man, graph)
 
     return test_r_policy
 
@@ -357,18 +371,18 @@ if __name__ == '__main__':
 
     num_nodes = 9
     n_seeds_train_graph = 1
-    path_obj = Paths.SameNumNodes_SameNumEdges_DifferentGraph_OptimCentrality()
+    path_obj = Paths.SameNumberNodes_SameNumberEdges_DifferentGraphs()
 
     params_statistics1 = {
         EmbStat.centrality: Centralities.SPBC,
         EmbStat.embd_dim: num_nodes - 1,
-        EmbStat.embedding_alg: [EmbeddingAlgorithms.glee, EmbeddingAlgorithms.graph_2_vec],
+        EmbStat.embedding_alg: [EmbeddingAlgorithms.glee],
         'seed_range': 100000,
-        'technique': Techniques.optimize_centrality,
+        'technique': Techniques.optimize_st_routing,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-3,
-        HyperParams.epochs: 5,
-        HyperParams.batch_size: 16,
+        HyperParams.epochs: 50,
+        HyperParams.batch_size: 1,
         HyperParams.weight_decay: 0.0000,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
@@ -385,7 +399,7 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-    n_seeds_lst = [5]
+    n_seeds_lst = [1]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)
