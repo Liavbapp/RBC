@@ -1,6 +1,7 @@
 import os
 
 import sys
+from itertools import product
 
 import numpy as np
 import networkx as nx
@@ -19,17 +20,28 @@ class PreProcessor:
         self.dimensions = dim
 
     def generate_samples_to_st_routing_optim(self, embeddings, Gs, Rs):
-        nodes_embed_lst = []
-        mult_const = [torch.tensor(nx.to_numpy_matrix(G), device=self.device, dtype=self.dtype).fill_diagonal_(0) for G
-                      in Gs]
-        add_const = [torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=self.device,
-                                 dtype=self.dtype).fill_diagonal_(1) for G in Gs]
+        # nodes_embed_lst = []
+        # mult_const = [torch.tensor(nx.to_numpy_matrix(G), device=self.device, dtype=self.dtype).fill_diagonal_(0) for G
+        #               in Gs]
+        # add_const = [torch.zeros(size=(G.number_of_nodes(), G.number_of_nodes()), device=self.device,
+        #                          dtype=self.dtype).fill_diagonal_(1) for G in Gs]
+        #
+        # for node_embedding in embeddings:
+        #     nodes_embed_lst.append(torch.tensor(node_embedding, device=self.device, dtype=self.dtype))
+        #
+        # return list(
+        #     map(lambda lst: torch.stack(lst), [nodes_embed_lst, mult_const, add_const, Rs]))
+        lst_samples = []
+        for embedding, R in zip(embeddings, Rs):
+            num_nodes = len(R)
+            s_lst, t_lst = zip(*product(range(num_nodes), range(num_nodes)))
+            samples = list(map(lambda s, t: torch.cat([torch.tensor(embedding[s], device=self.device, dtype=self.dtype),
+                                                       torch.tensor(embedding[t], device=self.device, dtype=self.dtype),
+                                                       torch.flatten(R[s, t])]), s_lst, t_lst))
+            lst_samples.append(torch.stack(samples))
+        samples = torch.cat(lst_samples, dim=0)
+        return samples
 
-        for node_embedding in embeddings:
-            nodes_embed_lst.append(torch.tensor(node_embedding, device=self.device, dtype=self.dtype))
-
-        return list(
-            map(lambda lst: torch.stack(lst), [nodes_embed_lst, mult_const, add_const, Rs]))
 
     def generate_samples_to_centrality_optim(self, embeddings, Ts, Gs, Rbcs):
 
