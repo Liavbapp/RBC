@@ -1,7 +1,7 @@
 import datetime
 
 from Utils import Saver
-from Utils.CommonStr import  HyperParams, LearningParams, OptimizerTypes, EmbeddingStatistics as EmbStas, EmbeddingOutputs
+from Utils.CommonStr import  HyperParams, LearningParams, OptimizerTypes, EmbeddingStatistics, EmbeddingOutputs
 
 
 def get_centrality_params(centrality, device, dtype):
@@ -19,16 +19,16 @@ class EmbeddingsParams:
         self.graphs_root_path = self.path_obj.root_path
         self.graphs_desc = self.path_obj.description
 
-        self.seeds_per_train_graph = params_dict[EmbStas.n_seeds_train_graph]
-        self.n_rand_samples_graph = params_dict[EmbStas.n_random_samples_per_graph]
-        self.centrality = params_dict[EmbStas.centrality]
-        self.csv_path = params_dict[EmbStas.csv_save_path]
+        self.seeds_per_train_graph = params_dict[EmbeddingStatistics.n_seeds_train_graph]
+        self.n_rand_samples_graph = params_dict[EmbeddingStatistics.n_random_samples_per_graph]
+        self.centrality = params_dict[EmbeddingStatistics.centrality]
+        self.csv_path = params_dict[EmbeddingStatistics.csv_save_path]
         self.trained_model_path = params_dict[EmbeddingOutputs.trained_model_root_path]
-        self.embedding_dimensions = params_dict[EmbStas.embd_dim]
-        self.device = params_dict[EmbStas.device]
-        self.dtype = params_dict[EmbStas.dtype]
+        self.embedding_dimensions = params_dict[EmbeddingStatistics.embd_dim]
+        self.device = params_dict[EmbeddingStatistics.device]
+        self.dtype = params_dict[EmbeddingStatistics.dtype]
         self.seed_range = params_dict['seed_range']
-        self.embedding_alg_name = params_dict[EmbStas.embedding_alg]
+        self.embedding_alg_name = params_dict[EmbeddingStatistics.embedding_alg]
         centrality_params = get_centrality_params(self.centrality, self.device, self.dtype)
 
         self.hyper_params = {HyperParams.learning_rate: params_dict[HyperParams.learning_rate],
@@ -42,7 +42,7 @@ class EmbeddingsParams:
                              }
         self.learning_params = {LearningParams.hyper_parameters: self.hyper_params,
                                 LearningParams.centrality_params: centrality_params,
-                                LearningParams.eigenvector_method: params_dict[EmbStas.eigenvector_method],
+                                LearningParams.eigenvector_method: params_dict[EmbeddingStatistics.eigenvector_method],
                                 LearningParams.device: self.device,
                                 LearningParams.dtype: self.dtype
                                 }
@@ -70,40 +70,40 @@ class EmbeddingsParams:
         params_statistic_dict = {
                                  EmbeddingOutputs.graphs_root_path: self.graphs_root_path,
                                  EmbeddingOutputs.trained_model_root_path: self.trained_model_path,
-                                 EmbStas.csv_save_path: self.csv_path,
-                                 EmbStas.id: datetime.datetime.now(),
-                                 EmbStas.centrality: self.centrality,
-                                 EmbStas.centrality_params: self.learning_params[LearningParams.centrality_params],
-                                 EmbStas.n_graphs_train: self.n_graphs_train,
-                                 EmbStas.n_graphs_validation: self.n_graphs_validation,
-                                 EmbStas.n_graphs_test: self.n_graphs_test,
-                                 EmbStas.n_seeds_train_graph: self.seeds_per_train_graph,
-                                 EmbStas.n_routing_policy_per_graph: self.n_routing_policy_per_graph,
-                                 EmbStas.n_random_samples_per_graph: self.n_rand_samples_graph,
-                                 EmbStas.graphs_desc: self.graphs_desc,
-                                 EmbStas.embedding_alg: self.embedding_alg_name,
-                                 EmbStas.embd_dim: self.embedding_dimensions,
-                                 EmbStas.rbcs_expected: self.expected_rbcs,
-                                 EmbStas.rbcs_actual: self.actual_rbcs,
-                                 EmbStas.train_error: self.train_error,
-                                 EmbStas.validation_error: self.validation_error,
-                                 EmbStas.error_type: self.learning_params[LearningParams.hyper_parameters][HyperParams.error_type],
-                                 EmbStas.euclidean_distance_median: self.euclidean_dis_median,
-                                 EmbStas.kendall_tau_b_avg: self.kendall_tau_avg,
-                                 EmbStas.pearson_avg: self.pearson_avg,
-                                 EmbStas.spearman_avg: self.spearman_avg,
-                                 EmbStas.train_runtime: self.train_runtime,
-                                 EmbStas.network_structure: self.network_structure,
-                                 EmbStas.learning_rate: self.hyper_params[EmbStas.learning_rate],
-                                 EmbStas.epochs: self.hyper_params[EmbStas.epochs],
-                                 EmbStas.batch_size: self.hyper_params[EmbStas.batch_size],
-                                 EmbStas.weight_decay: self.hyper_params[EmbStas.weight_decay],
-                                 EmbStas.optimizer: self.hyper_params[EmbStas.optimizer],
-                                 EmbStas.optimizer_params: self.optimizer_params,
-                                 EmbStas.eigenvector_method: self.learning_params[LearningParams.eigenvector_method],
-                                 EmbStas.pi_max_err: self.hyper_params[EmbStas.pi_max_err],
-                                 EmbStas.device: self.learning_params[LearningParams.device],
-                                 EmbStas.dtype: self.learning_params[LearningParams.dtype],
+                                 EmbeddingStatistics.csv_save_path: self.csv_path,
+                                 EmbeddingStatistics.id: datetime.datetime.now(),
+                                 EmbeddingStatistics.centrality: self.centrality,
+                                 EmbeddingStatistics.centrality_params: self.learning_params[LearningParams.centrality_params],
+                                 EmbeddingStatistics.n_graphs_train: self.n_graphs_train,
+                                 EmbeddingStatistics.n_graphs_validation: self.n_graphs_validation,
+                                 EmbeddingStatistics.n_graphs_test: self.n_graphs_test,
+                                 EmbeddingStatistics.n_seeds_train_graph: self.seeds_per_train_graph,
+                                 EmbeddingStatistics.n_routing_policy_per_graph: self.n_routing_policy_per_graph,
+                                 EmbeddingStatistics.n_random_samples_per_graph: self.n_rand_samples_graph,
+                                 EmbeddingStatistics.graphs_desc: self.graphs_desc,
+                                 EmbeddingStatistics.embedding_alg: self.embedding_alg_name,
+                                 EmbeddingStatistics.embd_dim: self.embedding_dimensions,
+                                 EmbeddingStatistics.rbcs_expected: self.expected_rbcs,
+                                 EmbeddingStatistics.rbcs_actual: self.actual_rbcs,
+                                 EmbeddingStatistics.train_error: self.train_error,
+                                 EmbeddingStatistics.validation_error: self.validation_error,
+                                 EmbeddingStatistics.error_type: self.learning_params[LearningParams.hyper_parameters][HyperParams.error_type],
+                                 EmbeddingStatistics.euclidean_distance_median: self.euclidean_dis_median,
+                                 EmbeddingStatistics.kendall_tau_b_avg: self.kendall_tau_avg,
+                                 EmbeddingStatistics.pearson_avg: self.pearson_avg,
+                                 EmbeddingStatistics.spearman_avg: self.spearman_avg,
+                                 EmbeddingStatistics.train_runtime: self.train_runtime,
+                                 EmbeddingStatistics.network_structure: self.network_structure,
+                                 EmbeddingStatistics.learning_rate: self.hyper_params[EmbeddingStatistics.learning_rate],
+                                 EmbeddingStatistics.epochs: self.hyper_params[EmbeddingStatistics.epochs],
+                                 EmbeddingStatistics.batch_size: self.hyper_params[EmbeddingStatistics.batch_size],
+                                 EmbeddingStatistics.weight_decay: self.hyper_params[EmbeddingStatistics.weight_decay],
+                                 EmbeddingStatistics.optimizer: self.hyper_params[EmbeddingStatistics.optimizer],
+                                 EmbeddingStatistics.optimizer_params: self.optimizer_params,
+                                 EmbeddingStatistics.eigenvector_method: self.learning_params[LearningParams.eigenvector_method],
+                                 EmbeddingStatistics.pi_max_err: self.hyper_params[EmbeddingStatistics.pi_max_err],
+                                 EmbeddingStatistics.device: self.learning_params[LearningParams.device],
+                                 EmbeddingStatistics.dtype: self.learning_params[LearningParams.dtype],
                                  EmbeddingOutputs.trained_model: self.trained_model,
                                  }
         self.emb_params_statistics = params_statistic_dict
@@ -111,12 +111,12 @@ class EmbeddingsParams:
     def prepare_stuck_params_statistics(self, centrality, learning_target, learning_params, err_msg,
                                         optimizer_params):
         stuck_params_statistic_dict = {
-            EmbStas.id: datetime.datetime.now(),
-            EmbStas.csv_save_path: self.csv_path,
-            EmbStas.centrality: centrality,
-            EmbStas.rbcs_expected: learning_target,
+            EmbeddingStatistics.id: datetime.datetime.now(),
+            EmbeddingStatistics.csv_save_path: self.csv_path,
+            EmbeddingStatistics.centrality: centrality,
+            EmbeddingStatistics.rbcs_expected: learning_target,
             LearningParams.name: learning_params,
-            EmbStas.comments: err_msg,
+            EmbeddingStatistics.comments: err_msg,
             OptimizerTypes: optimizer_params
         }
         self.emb_params_stuck_statics = stuck_params_statistic_dict

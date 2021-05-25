@@ -1,13 +1,7 @@
-import datetime
-
 import torch
 import torch.nn as nn
-from multiprocessing import pool
 from RBC import PowerIteration
-from multiprocessing import Pool, TimeoutError
 import concurrent.futures
-import time
-import os
 from itertools import product
 
 
@@ -288,14 +282,6 @@ class NisuyNN(nn.Module):
 
         return deltas
 
-        #
-        # deltas = torch.full(size=(batch_size, self.num_nodes), fill_value=0.0, dtype=self.dtype, device=self.device)
-        # for s in (range(self.num_nodes)):
-        #     for t in (range(self.num_nodes)):
-        #         embedding_s, embedding_t, s_idx = node_embeddings_batch[:, s], node_embeddings_batch[:, t], s
-        #         Ts_st = Ts_batch[:, s, t]
-        #         deltas += self.compute_delta_st(embedding_s, embedding_t, node_embeddings_batch, s_idx, Ts_st, batch_size)
-
     def compute_delta_st(self, s_embed, t_embed, node_embeddings_batch, s_idx, T_st, batch_size):
         """
         compute the delta vector of the [source, target] pair, of the whole batch
@@ -347,6 +333,8 @@ class NisuyNN(nn.Module):
         return n_eigenvector
 
 
+
+
 class StRoutingModel(nn.Module):
     def __init__(self, dim, num_nodes, device, dtype):
         super(StRoutingModel, self).__init__()
@@ -354,23 +342,26 @@ class StRoutingModel(nn.Module):
         self.flatten = nn.Flatten()
         self.num_nodes = num_nodes
         self.embed_dim = dim
-        self.pi_handler = PowerIteration.PowerIteration(device=device, dtype=dtype, max_error=0.00001)
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(2 * self.embed_dim, 4096),
+            nn.Conv1d(in_channels=4, out_channels=100, kernel_size=(1,4)),
             nn.LeakyReLU(),
-            nn.Conv1d(in_channels=2, out_channels=50, kernel_size=2),
-            nn.ReLU(),
-            # nn.Dropout(0.5),
+            nn.Flatten(),
+            nn.Linear(100 * (dim-3), 4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(),
             nn.Linear(4096, 2048),
             nn.LeakyReLU(),
-            # nn.Dropout(0.5),
             nn.Linear(2048, 1024),
             nn.LeakyReLU(),
-            nn.Linear(1024, self.num_nodes ** 2),
+            nn.Linear(1024, 1),
             nn.LeakyReLU()
         ).to(device=device, dtype=dtype)
 
-    def forward(self, embed_s, embed_t):
+
+
+
+    def forward(self, suvt):
         """
         predicting the routing policy of the [source, target] pair
         :param uv_batch: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
@@ -379,13 +370,57 @@ class StRoutingModel(nn.Module):
         :param batch_size:
         :return:
         """
-        x = torch.cat([embed_s, embed_t], dim=1)
+        batch_size = suvt.shape[0]
+        x = suvt.view(suvt.shape[1] * batch_size, suvt.shape[2])
+        x = x.view(x.shape[0], 4, 1, self.embed_dim)
         out = self.linear_relu_stack(x)
-        # st_stack = torch.stack([embed_s, embed_t]).view(batch_size, 2 * self.embed_dim)
-        # out = self.linear_relu_stack(st_stack).view(batch_size, self.num_nodes, self.num_nodes)
-        # out = torch.mul(out, self.mult_const) + self.add_const
+        out = out.view(batch_size, suvt.shape[1], 1)
 
         return out
+
+
+# class StRoutingModel(nn.Module):
+#     def __init__(self, dim, num_nodes, device, dtype):
+#         super(StRoutingModel, self).__init__()
+#         self.device, self.dtype = device, dtype
+#         self.flatten = nn.Flatten()
+#         self.num_nodes = num_nodes
+#         self.embed_dim = dim
+#         self.pi_handler = PowerIteration.PowerIteration(device=device, dtype=dtype, max_error=0.00001)
+#         self.linear_relu_stack = nn.Sequential(
+#             nn.Linear(2 * self.embed_dim, 4096),
+#             nn.LeakyReLU(),
+#             nn.Conv1d(in_channels=2, out_channels=50, kernel_size=2),
+#             nn.ReLU(),
+#             # nn.Dropout(0.5),
+#             nn.Linear(4096, 2048),
+#             nn.LeakyReLU(),
+#             # nn.Dropout(0.5),
+#             nn.Linear(2048, 1024),
+#             nn.LeakyReLU(),
+#             nn.Linear(1024, self.num_nodes ** 2),
+#             nn.LeakyReLU()
+#         ).to(device=device, dtype=dtype)
+#
+#
+
+
+    # def forward(self, embed_s, embed_t, uv_indices):
+    #     """
+    #     predicting the routing policy of the [source, target] pair
+    #     :param uv_batch: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
+    #     :param embed_s: embedding vector of source node, of the whole batch, dimensions: batch_size x embed_dim
+    #     :param embed_t:  embedding vector of target node, of the whole batch, dimensions: batch_size x embed_dim
+    #     :param batch_size:
+    #     :return:
+    #     """
+    #     x = torch.cat([embed_s, embed_t], dim=1)
+    #     out = self.linear_relu_stack(x)
+    #     # st_stack = torch.stack([embed_s, embed_t]).view(batch_size, 2 * self.embed_dim)
+    #     # out = self.linear_relu_stack(st_stack).view(batch_size, self.num_nodes, self.num_nodes)
+    #     # out = torch.mul(out, self.mult_const) + self.add_const
+    #
+    #     return out
 
 
     # def forward(self, batch_node_embeddings, mult_const_batch, add_const_batch):

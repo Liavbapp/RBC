@@ -20,7 +20,7 @@ from LearningRouting.Test.PreProcessor import PreProcessor
 from Utils.Optimizer import Optimizer
 from RBC.RBC import RBC
 from LearningRouting.Test.EmbeddingsParams import EmbeddingsParams
-from Utils.CommonStr import EigenvectorMethod, EmbeddingStatistics as EmbStat, Centralities, TorchDevice, TorchDtype, \
+from Utils.CommonStr import EigenvectorMethod, EmbeddingStatistics, Centralities, TorchDevice, TorchDtype, \
     HyperParams, OptimizerTypes, ErrorTypes, EmbeddingOutputs, EmbeddingAlgorithms, Techniques, \
     NumRandomSamples
 
@@ -59,7 +59,7 @@ def run_test(pr_st):
 
 
 def init_optimizer(pr_st, nn_model):
-    optimizer_name, lr, momentum = pr_st[EmbStat.optimizer], pr_st[EmbStat.learning_rate], pr_st[HyperParams.momentum]
+    optimizer_name, lr, momentum = pr_st[EmbeddingStatistics.optimizer], pr_st[EmbeddingStatistics.learning_rate], pr_st[HyperParams.momentum]
     wd = pr_st[HyperParams.weight_decay]
     optimizer = Optimizer(model=nn_model, name=optimizer_name, learning_rate=lr, momentum=momentum, weight_decay=wd)
 
@@ -173,9 +173,9 @@ def split_embeddings(embeddings, train_len, validation_len, test_len):
 
 
 def init_nn_model(param_embed):
-    device = param_embed[EmbStat.device]
-    dtype = param_embed[EmbStat.dtype]
-    embed_dimension = param_embed[EmbStat.embd_dim]
+    device = param_embed[EmbeddingStatistics.device]
+    dtype = param_embed[EmbeddingStatistics.dtype]
+    embed_dimension = param_embed[EmbeddingStatistics.embd_dim]
     technique = param_embed['technique']
 
     if technique == Techniques.node_embedding_to_value:
@@ -288,7 +288,7 @@ def compute_rbcs_direct(model, p_man, test_data, test_embeddings):
 
 
 def compute_rbcs_via_routing_prediction(model, p_man: EmbeddingsParams, test_data, test_embeddings):
-    pi_err, eig_vec_mt = p_man.hyper_params[HyperParams.pi_max_err], p_man.learning_params[EmbStat.eigenvector_method]
+    pi_err, eig_vec_mt = p_man.hyper_params[HyperParams.pi_max_err], p_man.learning_params[EmbeddingStatistics.eigenvector_method]
     device, dtype = p_man.device, p_man.dtype
     rbc_handler = RBC(eigenvector_method=eig_vec_mt, pi_max_error=pi_err, device=device, dtype=dtype)
 
@@ -300,7 +300,7 @@ def compute_rbcs_via_routing_prediction(model, p_man: EmbeddingsParams, test_dat
     for R, T, g, test_embedding in zip(test_data['Rs'], test_data['Ts'], test_data['Gs'], test_embeddings):
         i += 1
         print(f'{i} out of {num_gs}')
-        predicted_r_policy = predict_routing_policy(p_man.technique, model, test_embedding, p_man, g)
+        predicted_r_policy = predict_routing_policy(p_man.technique, model, test_embedding, p_man)
 
         expected_rbc = rbc_handler.compute_rbc(g, R, T).cpu().detach().numpy()
         expected_rbcs.append(expected_rbc)
@@ -310,7 +310,7 @@ def compute_rbcs_via_routing_prediction(model, p_man: EmbeddingsParams, test_dat
     return expected_rbcs, actual_rbcs
 
 
-def predict_routing_policy(technique, model, test_embedding, p_man, graph):
+def predict_routing_policy(technique, model, test_embedding, p_man):
     if technique == Techniques.node_embedding_to_value:
         test_r_policy = EmbeddingML.predict_routing(model, test_embedding, p_man)
     if technique == Techniques.node_embedding_s_t_routing:
@@ -320,7 +320,7 @@ def predict_routing_policy(technique, model, test_embedding, p_man, graph):
     if technique == Techniques.graph_embedding_to_routing or technique == Techniques.graph_embedding_to_rbc:
         test_r_policy = EmbeddingML.predict_graph_embedding(model, test_embedding, p_man)
     if technique == Techniques.optimize_st_routing:
-        test_r_policy = EmbeddingML.predict_routing_policy_optimize_st_routing(model, test_embedding, p_man, graph)
+        test_r_policy = EmbeddingML.predict_routing_policy_optimize_st_routing(model, test_embedding, p_man)
 
     return test_r_policy
 
@@ -373,32 +373,32 @@ if __name__ == '__main__':
     path_obj = Paths.SameNumberNodes_SameNumberEdges_DifferentGraphs()
 
     params_statistics1 = {
-        EmbStat.centrality: Centralities.SPBC,
-        EmbStat.embd_dim: num_nodes - 1,
-        EmbStat.embedding_alg: [EmbeddingAlgorithms.glee],
+        EmbeddingStatistics.centrality: Centralities.SPBC,
+        EmbeddingStatistics.embd_dim: num_nodes - 1,
+        EmbeddingStatistics.embedding_alg: [EmbeddingAlgorithms.glee],
         'seed_range': 100000,
         'technique': Techniques.optimize_st_routing,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
         HyperParams.epochs: 50,
-        HyperParams.batch_size: 128,
+        HyperParams.batch_size: 1,
         HyperParams.weight_decay: 0.0000,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
-        EmbStat.n_random_samples_per_graph: NumRandomSamples.N_power_2,
+        EmbeddingStatistics.n_random_samples_per_graph: NumRandomSamples.N_power_2,
         'path_obj': path_obj,
         'num_nodes': num_nodes,
-        EmbStat.device: TorchDevice.gpu,
-        EmbStat.dtype: TorchDtype.float,
-        EmbStat.csv_save_path: csv_save_path,
+        EmbeddingStatistics.device: TorchDevice.gpu,
+        EmbeddingStatistics.dtype: TorchDtype.float,
+        EmbeddingStatistics.csv_save_path: csv_save_path,
         EmbeddingOutputs.graphs_root_path: path_obj.root_path,
         EmbeddingOutputs.trained_model_root_path: trained_models_path,
-        EmbStat.n_seeds_train_graph: n_seeds_train_graph,
-        EmbStat.eigenvector_method: EigenvectorMethod.torch_eig,
+        EmbeddingStatistics.n_seeds_train_graph: n_seeds_train_graph,
+        EmbeddingStatistics.eigenvector_method: EigenvectorMethod.torch_eig,
         HyperParams.pi_max_err: 0.00001
     }
 
-    n_seeds_lst = [5]
+    n_seeds_lst = [1]
     for train_seeds in n_seeds_lst:
-        params_statistics1[EmbStat.n_seeds_train_graph] = train_seeds
+        params_statistics1[EmbeddingStatistics.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)

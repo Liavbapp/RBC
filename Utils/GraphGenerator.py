@@ -89,7 +89,7 @@ class GraphGenerator:
 
     def same_num_nodes_same_num_edges_diffrent_graphs(self, num_nodes, num_edges):
         lst_graphs = []
-        while len(lst_graphs) < 25:
+        while len(lst_graphs) < 100:
             g = nx.Graph()
             g.add_nodes_from(range(0, num_nodes))
             while not nx.is_connected(g) or len(g.edges) < num_edges:
@@ -178,8 +178,8 @@ if __name__ == '__main__':
     # GraphGenerator('bb').custom_graph()
     # GraphGenerator('bb').read_gxef(path=r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Code\NCA-GE\Graphs\Train')
     GraphGenerator('bb').split_graphs_train_val_test(
-        r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_4\Data\SPBC',
-        r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_4\Data\SPBC')
+        r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_5\Data\SPBC',
+        r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_5\Data\SPBC')
     # for res in GraphGenerator('bb').same_num_nodes_different_num_edges_graphs(10):
     #     nx.draw(res, with_labels=True)
     #     plt.show()
