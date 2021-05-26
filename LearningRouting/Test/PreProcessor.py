@@ -31,24 +31,46 @@ class PreProcessor:
             embedding = torch.from_numpy(embedding).to(device=self.device, dtype=self.dtype)
             dim = embedding.shape[1]
             uv_tensor = create_uv_matrix_ordered(embedding, self.device)
-            rand_uv_idx = torch.randint(low=0, high=num_nodes ** 2, size=(num_nodes,), device=self.device)
-            uv_rand = torch.index_select(uv_tensor, 0, rand_uv_idx)
-
             st_tuples = list(product(range(num_nodes), range(num_nodes)))
             s_lst, t_lst = zip(*st_tuples)
-
-            def gen_st_samples(s, t):
-                emb_s, emb_t = embedding[s].repeat(repeats=(num_nodes, 1)), embedding[t].repeat(repeats=(num_nodes, 1))
-                R_st = torch.index_select(torch.flatten(R[0, 0]).unsqueeze(dim=1), 0, rand_uv_idx)
-                sample = torch.cat([emb_s, uv_rand, emb_t, R_st], dim=1)
-                return sample
-
-            samples = list(map(gen_st_samples, s_lst, t_lst))
+            samples = list(map(lambda s, t: torch.cat([embedding[s].repeat(repeats=(num_nodes ** 2, 1)),
+                                                       uv_tensor,
+                                                       embedding[t].repeat(repeats=(num_nodes ** 2, 1)),
+                                                       torch.flatten(R[s, t]).unsqueeze(dim=1)],
+                                                      dim=1), s_lst, t_lst))
             lst_samples.append(torch.cat(samples, dim=0))
 
-        # samples = torch.cat(lst_samples, dim=0)
         samples = torch.stack(lst_samples)
         return samples
+
+    # def generate_samples_to_st_routing_optim(self, embeddings, Gs, Rs):
+    #
+    #     lst_samples = []
+    #     i = 0
+    #     for embedding, R in zip(embeddings, Rs):
+    #         i += 1
+    #         num_nodes = len(R)
+    #
+    #         embedding = torch.from_numpy(embedding).to(device=self.device, dtype=self.dtype)
+    #         uv_tensor = create_uv_matrix_ordered(embedding, self.device)
+    #         rand_uv_idx = torch.randint(low=0, high=num_nodes, size=(num_nodes,), device=self.device)
+    #         uv_rand = torch.index_select(uv_tensor, 0, rand_uv_idx)
+    #
+    #         st_tuples = list(product(range(num_nodes), range(num_nodes)))
+    #         s_lst, t_lst = zip(*st_tuples)
+    #
+    #         def gen_st_samples(s, t):
+    #             emb_s, emb_t = embedding[s].repeat(repeats=(num_nodes, 1)), embedding[t].repeat(repeats=(num_nodes, 1))
+    #             R_st = torch.index_select(torch.flatten(R[0, 0]).unsqueeze(dim=1), 0, rand_uv_idx)
+    #             sample = torch.cat([emb_s, uv_rand, emb_t, R_st], dim=1)
+    #             return sample
+    #
+    #         samples = list(map(gen_st_samples, s_lst, t_lst))
+    #         lst_samples.append(torch.cat(samples, dim=0))
+    #
+    #     # samples = torch.cat(lst_samples, dim=0)
+    #     samples = torch.stack(lst_samples)
+    #     return samples
 
     def generate_samples_to_centrality_optim(self, embeddings, Ts, Gs, Rbcs):
 

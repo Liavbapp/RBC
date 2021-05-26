@@ -25,19 +25,24 @@ def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man:
     val_loader = torch.utils.data.DataLoader(samples_val, batch_size=batch_size, shuffle=False)
 
     n_batches = len(train_loader)
+    n_inner_batches = p_man.num_nodes ** 2
+    inner_batch_size = p_man.num_nodes ** 2
+
     for epoch in range(0, epochs):
         train_running_loss = 0.0
         for i, inputs in enumerate(train_loader):
-            s_u_v_t_embedding = inputs[:, :, :embed_dim * 4]
-            Expected_Rst = inputs[:, :, embed_dim * 4:]
-            Actual_Rst = nn_model(s_u_v_t_embedding)
-            train_loss = loss_fn(Expected_Rst, Actual_Rst)
-            train_running_loss += train_loss.item()
-            optimizer.zero_grad()
-            train_loss.backward()
-            optimizer.step()
+            for j in range(0, n_inner_batches):
+                start_idx, end_idx = j * inner_batch_size, (j+1) * inner_batch_size
+                s_u_v_t_embedding = inputs[:, start_idx: end_idx, :embed_dim * 4]
+                Expected_Rst = inputs[:, start_idx: end_idx, embed_dim * 4:]
+                Actual_Rst = nn_model(s_u_v_t_embedding)
+                train_loss = loss_fn(Expected_Rst, Actual_Rst)
+                train_running_loss += train_loss.item()
+                optimizer.zero_grad()
+                train_loss.backward()
+                optimizer.step()
 
-        if epoch % 2 == 0:
+        if epoch % 5 == 0:
             nn_model.eval()
             with torch.no_grad():
                 val_running_loss = 0.0
@@ -49,7 +54,7 @@ def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man:
                     val_loss = loss_fn(Expected_Rst, Actual_Rst)
                     val_running_loss += val_loss.item()
             nn_model.train()
-            print(f'[{epoch}] validation loss: {val_running_loss / n_batches_val}')
+            print(f'\n[{epoch}] validation loss: {val_running_loss / n_batches_val}\n')
 
         print(f'[{epoch}] train loss: {train_running_loss / n_batches}')
 
@@ -371,7 +376,7 @@ def predict_routing_policy_optimize_st_routing(model, embeddings, p_man: Embeddi
     with torch.no_grad():
         num_nodes, embd_dim = embeddings.shape[0], embeddings.shape[1]
         embeddings = torch.from_numpy(embeddings).to(device=p_man.device)
-        uv_tensor = create_uv_matrix_ordered(embeddings, p_man)
+        uv_tensor = create_uv_matrix_ordered(embeddings, p_man.device)
         st_tuples = list(product(range(num_nodes), range(num_nodes)))
         s_lst, t_lst = zip(*st_tuples)
 

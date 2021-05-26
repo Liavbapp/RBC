@@ -47,11 +47,12 @@ def run_test(pr_st):
     trained_model, train_err, validation_err, train_time = train_res
 
     # testing
-    test_res = test_model(trained_model, params_man, test_data, embed_test)
+    # test_res = test_model(trained_model, params_man, test_data, embed_test)
+    test_res = test_model(trained_model, params_man, test_data, embed_train)  # todo: only for debug remove this line
     # expected_rbcs, actual_rbcs, euclidean_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = test_res
 
     # update param manager object
-    update_params_man(params_man, split_data_res, train_res, test_res, optimizer)
+    # update_params_man(params_man, split_data_res, train_res, test_res, optimizer)
 
     # save results to csv
     # params_man.prepare_params_statistics()
@@ -59,7 +60,8 @@ def run_test(pr_st):
 
 
 def init_optimizer(pr_st, nn_model):
-    optimizer_name, lr, momentum = pr_st[EmbeddingStatistics.optimizer], pr_st[EmbeddingStatistics.learning_rate], pr_st[HyperParams.momentum]
+    optimizer_name, lr, momentum = pr_st[EmbeddingStatistics.optimizer], pr_st[EmbeddingStatistics.learning_rate], \
+                                   pr_st[HyperParams.momentum]
     wd = pr_st[HyperParams.weight_decay]
     optimizer = Optimizer(model=nn_model, name=optimizer_name, learning_rate=lr, momentum=momentum, weight_decay=wd)
 
@@ -288,7 +290,8 @@ def compute_rbcs_direct(model, p_man, test_data, test_embeddings):
 
 
 def compute_rbcs_via_routing_prediction(model, p_man: EmbeddingsParams, test_data, test_embeddings):
-    pi_err, eig_vec_mt = p_man.hyper_params[HyperParams.pi_max_err], p_man.learning_params[EmbeddingStatistics.eigenvector_method]
+    pi_err, eig_vec_mt = p_man.hyper_params[HyperParams.pi_max_err], p_man.learning_params[
+        EmbeddingStatistics.eigenvector_method]
     device, dtype = p_man.device, p_man.dtype
     rbc_handler = RBC(eigenvector_method=eig_vec_mt, pi_max_error=pi_err, device=device, dtype=dtype)
 
@@ -365,8 +368,8 @@ def update_params_man(params_man, train_val_test, train_res, test_res, optimizer
 
 if __name__ == '__main__':
     random.seed(42)
-    csv_save_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\Statistics\statistics.csv'
-    trained_models_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_2\TrainedModels'
+    csv_save_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_5\Statistics\statistics.csv'
+    trained_models_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_5\TrainedModels'
 
     num_nodes = 9
     n_seeds_train_graph = 1

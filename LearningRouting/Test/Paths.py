@@ -77,3 +77,13 @@ class SmallWorld_SameNumNodes:
         self.validation_graphs_path = f'{self.root_path}\\validation'
         self.test_graphs_path = f'{self.root_path}\\test'
         self.description = r'Small word graphs same number of nodes'
+
+
+class Experiment5:
+    def __init__(self):
+        self.n_routing_per_graph = 1
+        self.root_path = r'C:\Users\LiavB\OneDrive\Desktop\Msc\Thesis\Experiments\Experiments_5\Data\SPBC'
+        self.train_graphs_path = f'{self.root_path}\\train'
+        self.validation_graphs_path = f'{self.root_path}\\validation'
+        self.test_graphs_path = f'{self.root_path}\\test'
+        self.description = r'Experiment5'
