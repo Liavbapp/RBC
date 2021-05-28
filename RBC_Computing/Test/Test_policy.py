@@ -2,8 +2,8 @@ import unittest
 import networkx as nx
 import torch
 
-from RBC.Policy import BetweennessPolicy
-from RBC.RBC import RBC
+from RBC_Computing.Policy import BetweennessPolicy
+from RBC_Computing.RBC import RBC
 from Utils import Saver
 from Utils.CommonStr import EigenvectorMethod, Centralities
 from Utils.GraphGenerator import GraphGenerator
@@ -41,7 +41,7 @@ class Tests(unittest.TestCase):
     #     Ts = [torch.full(size=(graph.number_of_nodes(),) * 2, fill_value=0.5, dtype=torch.float) for graph in graphs]
     #     for t, graph in zip(Ts, graphs):
     #         t[torch.eye(graph.number_of_nodes()).byte()] = 0
-    #     rbc_hanlder = RBC(EigenvectorMethod.torch_eig, 0.00001, torch.device('cpu'), torch.float)
+    #     rbc_hanlder = RBC_Computing(EigenvectorMethod.torch_eig, 0.00001, torch.device('cpu'), torch.float)
     #     RBCs = [rbc_hanlder.compute_rbc(graph, r, t) for graph, r, t in zip(graphs, Rs, Ts)]
     #     i = 0
     #     for graph, r, t in zip(graphs, Rs, Ts):

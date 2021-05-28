@@ -10,7 +10,7 @@ from LearningCentrality.RbcNetwork import RbcNetwork
 from Utils.CommonStr import HyperParams, TorchDevice, TorchDtype, RbcMatrices, OptimizerTypes, ErrorTypes, \
     EigenvectorMethod
 from LearningCentrality.RbcML import learn_models
-from RBC.RBC import RBC
+from RBC_Computing.RBC import RBC
 from Utils.CommonStr import LearningParams
 from Utils.CommonStr import Centralities, StatisticsParams as StatsParams
 from Utils.GraphGenerator import GraphGenerator
@@ -18,7 +18,7 @@ from LearningCentrality.Test.ParamsManager import ParamsManager
 
 
 #
-# sys.path.append('C:\\Users\\LiavB\\PycharmProjects\\RBC\\Components')
+# sys.path.append('C:\\Users\\LiavB\\PycharmProjects\\RBC_Computing\\Components')
 
 
 def init_model(learning_params):

@@ -18,7 +18,7 @@ from LearningRouting import EmbeddingML
 from LearningRouting.Test import Paths
 from LearningRouting.Test.PreProcessor import PreProcessor
 from Utils.Optimizer import Optimizer
-from RBC.RBC import RBC
+from RBC_Computing.RBC import RBC
 from LearningRouting.Test.EmbeddingsParams import EmbeddingsParams
 from Utils.CommonStr import EigenvectorMethod, EmbeddingStatistics, Centralities, TorchDevice, TorchDtype, \
     HyperParams, OptimizerTypes, ErrorTypes, EmbeddingOutputs, EmbeddingAlgorithms, Techniques, \
@@ -161,7 +161,7 @@ def get_embeddings_by_technique(technique, preprocessor, all_graphs, all_seeds, 
     #     eig_method, pi_max_err = params_man.learning_params[EmbStat.eigenvector_method], params_man.hyper_params[
     #         EmbStat.pi_max_err]
     #     device, dtype = params_man.device, params_man.dtype
-    #     rbc_handler = RBC(eigenvector_method=eig_method, pi_max_error=pi_max_err, device=device, dtype=dtype)
+    #     rbc_handler = RBC_Computing(eigenvector_method=eig_method, pi_max_error=pi_max_err, device=device, dtype=dtype)
     #     rbcs = [rbc_handler.compute_rbc(g, R, T) for g, R, T in zip(all_graphs, all_rs, all_ts)]
     #     embeddings = list(zip(embeddings, all_graphs, all_rs, all_ts, rbcs))
 
@@ -231,7 +231,7 @@ def generate_samples_by_technique(p_man, preprocessor, embeddings, data):
     if technique == Techniques.optimize_centrality:
         samples = preprocessor.generate_samples_to_centrality_optim(embeddings, data['Ts'], data['Gs'], data['Rbcs'])
     if technique == Techniques.optimize_st_routing:
-        samples = preprocessor.generate_samples_to_st_routing_optim(embeddings, data['Gs'], data['Rs'])
+        samples = preprocessor.generate_samples_to_st_routing_optim(embeddings, data['Rs'], data['Ts'])
 
     return samples
 
@@ -383,7 +383,7 @@ if __name__ == '__main__':
         'technique': Techniques.optimize_st_routing,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 50,
+        HyperParams.epochs: 10,
         HyperParams.batch_size: 1,
         HyperParams.weight_decay: 0.0000,
         HyperParams.momentum: 0.0,

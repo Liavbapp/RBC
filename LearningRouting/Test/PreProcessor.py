@@ -1,12 +1,14 @@
 import os
 import random
+
+from RBC_Computing.RBC import RBC
 from Utils.Auxaliry import create_uv_matrix_ordered, create_uv_matrix_combined
 import sys
 from itertools import product
-
+from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import networkx as nx
-from Utils.CommonStr import NumRandomSamples
+from Utils.CommonStr import NumRandomSamples, EigenvectorMethod
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.curdir))))
 
@@ -20,55 +22,55 @@ class PreProcessor:
         self.dtype = dtype
         self.dimensions = dim
 
-    def generate_samples_to_st_routing_optim(self, embeddings, Gs, Rs):
+    def generate_samples_to_st_routing_optim(self, embeddings, Rs, Ts):
 
         lst_samples = []
+        lst_labels = []
         i = 0
-        for embedding, R in zip(embeddings, Rs):
+
+        rbc_handler = RBC(eigenvector_method=EigenvectorMethod.torch_eig, pi_max_error=0.00001, device=self.device,
+                          dtype=self.dtype)
+
+        for embedding, R, T in zip(embeddings, Rs, Ts):
             i += 1
             num_nodes = len(R)
 
             embedding = torch.from_numpy(embedding).to(device=self.device, dtype=self.dtype)
-            dim = embedding.shape[1]
+
             uv_tensor = create_uv_matrix_ordered(embedding, self.device)
-            st_tuples = list(product(range(num_nodes), range(num_nodes)))
-            s_lst, t_lst = zip(*st_tuples)
-            samples = list(map(lambda s, t: torch.cat([embedding[s].repeat(repeats=(num_nodes ** 2, 1)),
-                                                       uv_tensor,
-                                                       embedding[t].repeat(repeats=(num_nodes ** 2, 1)),
-                                                       torch.flatten(R[s, t]).unsqueeze(dim=1)],
-                                                      dim=1), s_lst, t_lst))
-            lst_samples.append(torch.cat(samples, dim=0))
 
-        samples = torch.stack(lst_samples)
-        return samples
+            for s in range(num_nodes):
+                for t in range(num_nodes):
+                    embedding_s = embedding[s].repeat(repeats=(num_nodes ** 2, 1))
+                    embedding_t = embedding[t].repeat(repeats=(num_nodes ** 2, 1))
+                    embedding_suvt = torch.cat([embedding_s, uv_tensor, embedding_t], dim=1)
+                    st_eig = rbc_handler.accumulate_delta(s, R[s, t], T[s, t], t)
+                    lst_samples.append((embedding_suvt, s, t, T[s, t]))
+                    lst_labels.append(st_eig)
 
-    # def generate_samples_to_st_routing_optim(self, embeddings, Gs, Rs):
+        return lst_samples, lst_labels
+
+    # def generate_samples_to_st_routing_optim(self, embeddings, Rs, Ts):
     #
     #     lst_samples = []
     #     i = 0
-    #     for embedding, R in zip(embeddings, Rs):
+    #     for embedding, R, T in zip(embeddings, Rs, Ts):
     #         i += 1
     #         num_nodes = len(R)
     #
     #         embedding = torch.from_numpy(embedding).to(device=self.device, dtype=self.dtype)
+    #         dim = embedding.shape[1]
     #         uv_tensor = create_uv_matrix_ordered(embedding, self.device)
-    #         rand_uv_idx = torch.randint(low=0, high=num_nodes, size=(num_nodes,), device=self.device)
-    #         uv_rand = torch.index_select(uv_tensor, 0, rand_uv_idx)
-    #
     #         st_tuples = list(product(range(num_nodes), range(num_nodes)))
     #         s_lst, t_lst = zip(*st_tuples)
     #
-    #         def gen_st_samples(s, t):
-    #             emb_s, emb_t = embedding[s].repeat(repeats=(num_nodes, 1)), embedding[t].repeat(repeats=(num_nodes, 1))
-    #             R_st = torch.index_select(torch.flatten(R[0, 0]).unsqueeze(dim=1), 0, rand_uv_idx)
-    #             sample = torch.cat([emb_s, uv_rand, emb_t, R_st], dim=1)
-    #             return sample
-    #
-    #         samples = list(map(gen_st_samples, s_lst, t_lst))
+    #         samples = list(map(lambda s, t: torch.cat([embedding[s].repeat(repeats=(num_nodes ** 2, 1)),
+    #                                                    uv_tensor,
+    #                                                    embedding[t].repeat(repeats=(num_nodes ** 2, 1)),
+    #                                                    torch.flatten(R[s, t]).unsqueeze(dim=1)],
+    #                                                   dim=1), s_lst, t_lst))
     #         lst_samples.append(torch.cat(samples, dim=0))
     #
-    #     # samples = torch.cat(lst_samples, dim=0)
     #     samples = torch.stack(lst_samples)
     #     return samples
 

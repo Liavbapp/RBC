@@ -2,7 +2,7 @@ import torch
 
 
 class RbcMatrices:
-    name = "RBC Matrices"
+    name = "RBC_Computing Matrices"
     root_path = "Root Path"
     adjacency_matrix = 'Adjacency Matrix'
     routing_policy = "Routing Policy"

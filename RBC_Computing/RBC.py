@@ -1,7 +1,7 @@
 import networkx as nx
 import torch
-import RBC.Policy as Policy
-from RBC.PowerIteration import PowerIteration
+from RBC_Computing import Policy
+from RBC_Computing.PowerIteration import PowerIteration
 from Utils.CommonStr import EigenvectorMethod
 
 
@@ -15,7 +15,6 @@ class RBC:
     def compute_rbcs(self, Gs, Rs, Ts):
         return torch.stack([self.compute_rbc(g, R, T) for g, R, T in zip(Gs, Rs, Ts)])
 
-
     def compute_rbc(self, g, R, T):
         nodes_map = {k: v for v, k in enumerate(list(g.nodes()))}
         s_mapping = [nodes_map[node] for node in g.nodes()]
@@ -27,8 +26,9 @@ class RBC:
     def accumulate_delta(self, src, predecessor_prob_matrix, T_val, t):
         if self.eigenvector_method == EigenvectorMethod.torch_eig:
             eigenvalues, eigenvectors = torch.eig(input=predecessor_prob_matrix, eigenvectors=True)
-            # eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))  # todo: find out which impl is right this or below
             eigenvector = eigenvectors[:, torch.argmax(eigenvalues.t()[0])]
+            # eigenvector = get_eigenvector_by_eigenvalue(eigenvalues, eigenvectors, torch.tensor([[1.0, 0.0]]))  # todo: find out which impl is right this or above
+
         elif self.eigenvector_method == EigenvectorMethod.power_iteration:
             eigenvalues, eigenvector = self.pi_handler.power_iteration(A=predecessor_prob_matrix)
         else:
@@ -62,4 +62,5 @@ if __name__ == '__main__':
     res = RBC(eigenvector_method=EigenvectorMethod.power_iteration, pi_max_error=0.0001,
               device=torch.device('cpu'), dtype=torch.float).compute_rbc(graph, R, T)
 
-    print(f'networkx result: {nx.betweenness_centrality(graph, endpoints=True, normalized=False).values()}, actual result: {res}')
+    print(
+        f'networkx result: {nx.betweenness_centrality(graph, endpoints=True, normalized=False).values()}, actual result: {res}')

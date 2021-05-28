@@ -293,5 +293,5 @@ if __name__ == '__main__':
     adj_mat, routing_policy, traffic_mat = load_info(path)
     a = 1
     # routing_policy, traffic_mat = torch.tensor(routing_policy, device=device, dtype=dtype), torch.tensor(traffic_mat, device=device, dtype=dtype)
-    # rbc_handler = RBC(eigenvector_method=EigenvectorMethod.torch_eig, pi_max_error=0.0000, device=device, dtype=dtype)
+    # rbc_handler = RBC_Computing(eigenvector_method=EigenvectorMethod.torch_eig, pi_max_error=0.0000, device=device, dtype=dtype)
     # print(rbc_handler.compute_rbc(nx.convert_matrix.from_numpy_matrix(adj_mat), routing_policy, traffic_mat))
