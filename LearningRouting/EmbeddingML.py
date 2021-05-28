@@ -14,7 +14,7 @@ from Utils.CustomLoader import CustomDataset, custom_collate_fn
 import networkx as nx
 
 
-def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man: EmbeddingsParams, optimizer):
+def train_model_optimize_st_eig(nn_model, samples_train, samples_val, p_man: EmbeddingsParams, optimizer):
     print(f'starting training')
 
     hyper_params = p_man.hyper_params
@@ -22,8 +22,8 @@ def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man:
     batch_size, epochs = hyper_params[HyperParams.batch_size], hyper_params[HyperParams.epochs]
     train_loss, validation_loss = np.inf, np.inf
 
-
-    train_ldr = DataLoader(CustomDataset(samples_train), batch_size=batch_size, shuffle=True, collate_fn=custom_collate_fn)
+    train_ldr = DataLoader(CustomDataset(samples_train), batch_size=batch_size, shuffle=True,
+                           collate_fn=custom_collate_fn)
     val_ldr = DataLoader(CustomDataset(samples_val), batch_size=batch_size, shuffle=False, collate_fn=custom_collate_fn)
 
     n_batches = len(train_ldr)
@@ -57,38 +57,50 @@ def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man:
 
     return nn_model, train_loss.item(), validation_loss
 
-    # nodes_embed_train = samples_train[0]
-    # mult_const, add_const, Rs_train = samples_train[1], samples_train[2], samples_train[3]
 
-    # for epoch in range(0, epochs):
-    #     running_loss = 0
-    #     nbatches = 0
-    #     start = datetime.datetime.now()
-    #     if batch_size == 1:
-    #         nbatches = 1
-    #         predicted_routing = nn_model(nodes_embed_train, mult_const, add_const)
-    #         train_loss = loss_fn(predicted_routing, Rs_train)
-    #         running_loss += train_loss.item()
-    #         optimizer.zero_grad()
-    #         train_loss.backward()
-    #         optimizer.step()
-    #     else:
-    #         for i in range(0, len(samples_train), batch_size):
-    #             nbatches += 1
-    #             nodes_embeddings_batch = nodes_embed_train[i: i + batch_size]
-    #             const_mult_batch = mult_const[i: i + batch_size]
-    #             const_add_batch = add_const[i: i + batch_size]
-    #             Rs_batch = Rs_train[i: i + batch_size]
-    #             predicted_routing = nn_model(nodes_embeddings_batch, const_mult_batch, const_add_batch)
-    #             train_loss = loss_fn(predicted_routing, Rs_batch)
-    #             running_loss += train_loss.item()
-    #             optimizer.zero_grad()
-    #             train_loss.backward()
-    #             optimizer.step()
-    #
-    #     print(f'[{epoch}] {running_loss / nbatches}, time: {datetime.datetime.now() - start}')
+def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man: EmbeddingsParams, optimizer):
+    print(f'starting training')
 
-    # return nn_model, train_loss.item(), validation_loss
+    hyper_params = p_man.hyper_params
+    loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])
+    batch_size, epochs = hyper_params[HyperParams.batch_size], hyper_params[HyperParams.epochs]
+    train_loss, validation_loss = np.inf, np.inf
+
+    train_loader = DataLoader(samples_train, batch_size=batch_size, shuffle=True)
+    validation_loader = DataLoader(samples_val, batch_size=batch_size, shuffle=False)
+
+    nodes_embed_train = samples_train[0]
+    mult_const, add_const, Rs_train = samples_train[1], samples_train[2], samples_train[3]
+
+    for epoch in range(0, epochs):
+        running_loss = 0
+        nbatches = 0
+        start = datetime.datetime.now()
+        if batch_size == 1:
+            nbatches = 1
+            predicted_routing = nn_model(nodes_embed_train, mult_const, add_const)
+            train_loss = loss_fn(predicted_routing, Rs_train)
+            running_loss += train_loss.item()
+            optimizer.zero_grad()
+            train_loss.backward()
+            optimizer.step()
+        else:
+            for i in range(0, len(samples_train), batch_size):
+                nbatches += 1
+                nodes_embeddings_batch = nodes_embed_train[i: i + batch_size]
+                const_mult_batch = mult_const[i: i + batch_size]
+                const_add_batch = add_const[i: i + batch_size]
+                Rs_batch = Rs_train[i: i + batch_size]
+                predicted_routing = nn_model(nodes_embeddings_batch, const_mult_batch, const_add_batch)
+                train_loss = loss_fn(predicted_routing, Rs_batch)
+                running_loss += train_loss.item()
+                optimizer.zero_grad()
+                train_loss.backward()
+                optimizer.step()
+
+        print(f'[{epoch}] {running_loss / nbatches}, time: {datetime.datetime.now() - start}')
+
+    return nn_model, train_loss.item(), validation_loss
 
 
 def train_model_optimize_centrality(nn_model, samples_train, samples_val, p_man, optimizer):
@@ -387,6 +399,29 @@ def predict_routing_policy_optimize_st_routing(model, embeddings, p_man: Embeddi
         return pred
 
 
+def predict_st_eig(model, embeddings, T, p_man: EmbeddingsParams):
+    model.eval()
+    with torch.no_grad():
+        lst_st_eig = []
+        device, dtype = p_man.device, p_man.dtype
+        num_nodes, embd_dim = embeddings.shape[0], embeddings.shape[1]
+        embeddings = torch.from_numpy(embeddings).to(device=p_man.device)
+        uv_tensor = create_uv_matrix_ordered(embeddings, p_man.device)
+        embed_rep_dict = {}
+
+        for i in range(num_nodes):
+            embed_rep_dict[i] = embeddings[i].repeat(repeats=(num_nodes ** 2, 1))
+
+        for s in range(num_nodes):
+            s_embedding = embed_rep_dict[s]
+            for t in range(num_nodes):
+                t_embedding = embed_rep_dict[t]
+                suvt = torch.cat([s_embedding, uv_tensor, t_embedding], dim=1).to(dtype=dtype)
+                s_idx, t_idx = torch.tensor([s], device=device), torch.tensor([t], device=device)
+                st_eig = model((suvt,), (s_idx,), (t_idx,), (T[s, t],))
+                lst_st_eig.append(st_eig)
+
+        return lst_st_eig
 
 
 def get_loss_fun(error_type):

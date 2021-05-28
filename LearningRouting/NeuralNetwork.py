@@ -382,3 +382,48 @@ class StRoutingModel(nn.Module):
         routing_policy = self.linear_relu_stack(x).view(x_lengths[0], x_lengths[0])
         eig_vals = self.rbc_handler.accumulate_delta(s_idx[0], routing_policy, Ts[0], t_idx[0])
         return eig_vals
+
+
+class EigModel(nn.Module):
+    def __init__(self, dim, device, dtype):
+        super(EigModel, self).__init__()
+        self.device, self.dtype = device, dtype
+        self.flatten = nn.Flatten()
+        self.rbc_handler = RBC(eigenvector_method=EigenvectorMethod.power_iteration, pi_max_error=0.00001,
+                               device=self.device, dtype=self.dtype)
+        self.embed_dim = dim
+        self.linear_relu_stack = nn.Sequential(
+            nn.Conv1d(in_channels=4, out_channels=100, kernel_size=(1, 3)),
+            nn.LeakyReLU(),
+            nn.Flatten(),
+            nn.Linear(100 * (dim - 2), 4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096, 2048),
+            nn.LeakyReLU(),
+            nn.Linear(2048, 1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024, 512),
+            nn.LeakyReLU(),
+            nn.Linear(512, 256),
+            nn.LeakyReLU(),
+            nn.Linear(256, 8),
+            nn.LeakyReLU(),
+            nn.Linear(8, 1),
+            nn.Sigmoid()
+        ).to(device=device, dtype=dtype)
+
+    def forward(self, x, s_idx, t_idx, Ts):
+        """
+        predicting the routing policy of the [source, target] pair
+        :param uv_batch: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
+        :param embed_s: embedding vector of source node, of the whole batch, dimensions: batch_size x embed_dim
+        :param embed_t:  embedding vector of target node, of the whole batch, dimensions: batch_size x embed_dim
+        :param batch_size:
+        :return:
+        """
+        x_lengths = [int(math.sqrt(suvt_embd.shape[0])) for suvt_embd in x]
+        x = torch.cat(x, dim=0)
+        x = x.view(x.shape[0], 4, 1, self.embed_dim)
+        routing_policy = self.linear_relu_stack(x).view(x_lengths[0], x_lengths[0])
+        eig_vals = self.rbc_handler.accumulate_delta(s_idx[0], routing_policy, Ts[0], t_idx[0])
+        return eig_vals

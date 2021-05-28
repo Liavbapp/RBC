@@ -216,6 +216,7 @@ class Techniques:
     graph_embedding_to_rbc = "graph_embedding_rbc"
     optimize_centrality = "Optimize Centrality"
     optimize_st_routing = "Optimize st Routing"
+    optimize_st_eig = "Optimize st Eig"
 
 
 class RoutingTypes:
