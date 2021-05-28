@@ -47,8 +47,8 @@ def run_test(pr_st):
     trained_model, train_err, validation_err, train_time = train_res
 
     # testing
-    # test_res = test_model(trained_model, params_man, test_data, embed_test)
-    test_res = test_model(trained_model, params_man, test_data, embed_train)  # todo: only for debug remove this line
+    test_res = test_model(trained_model, params_man, test_data, embed_test)
+    # test_res = test_model(trained_model, params_man, test_data, embed_train)  # todo: only for debug remove this line
     # expected_rbcs, actual_rbcs, euclidean_dist_median, kendall_tau_avg, spearman_avg, pearsonr_avg = test_res
 
     # update param manager object
@@ -403,8 +403,8 @@ if __name__ == '__main__':
         'technique': Techniques.optimize_st_eig,
         HyperParams.optimizer: OptimizerTypes.Adam,
         HyperParams.learning_rate: 1e-4,
-        HyperParams.epochs: 5,
-        HyperParams.batch_size: 1,
+        HyperParams.epochs: 10,
+        HyperParams.batch_size: 64,
         HyperParams.weight_decay: 0.0000,
         HyperParams.momentum: 0.0,
         HyperParams.error_type: ErrorTypes.mse,
@@ -421,7 +421,7 @@ if __name__ == '__main__':
         HyperParams.pi_max_err: 0.00001
     }
 
-    n_seeds_lst = [1]
+    n_seeds_lst = [5]
     for train_seeds in n_seeds_lst:
         params_statistics1[EmbeddingStatistics.n_seeds_train_graph] = train_seeds
         run_test(pr_st=params_statistics1)

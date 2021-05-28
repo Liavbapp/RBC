@@ -344,8 +344,6 @@ class StRoutingModel(nn.Module):
         self.device, self.dtype = device, dtype
         self.flatten = nn.Flatten()
         self.num_nodes = num_nodes
-        self.rbc_handler = RBC(eigenvector_method=EigenvectorMethod.power_iteration, pi_max_error=0.00001,
-                               device=self.device, dtype=self.dtype)
         self.embed_dim = dim
         self.linear_relu_stack = nn.Sequential(
             nn.Conv1d(in_channels=4, out_channels=100, kernel_size=(1, 3)),
@@ -367,7 +365,7 @@ class StRoutingModel(nn.Module):
             nn.Sigmoid()
         ).to(device=device, dtype=dtype)
 
-    def forward(self, x, s_idx, t_idx, Ts):
+    def forward(self, suvt):
         """
         predicting the routing policy of the [source, target] pair
         :param uv_batch: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
@@ -376,12 +374,16 @@ class StRoutingModel(nn.Module):
         :param batch_size:
         :return:
         """
-        x_lengths = [int(math.sqrt(suvt_embd.shape[0])) for suvt_embd in x]
-        x = torch.cat(x, dim=0)
+
+        batch_size = suvt.shape[0]
+        x = suvt.view(suvt.shape[1] * batch_size, suvt.shape[2])
         x = x.view(x.shape[0], 4, 1, self.embed_dim)
-        routing_policy = self.linear_relu_stack(x).view(x_lengths[0], x_lengths[0])
-        eig_vals = self.rbc_handler.accumulate_delta(s_idx[0], routing_policy, Ts[0], t_idx[0])
-        return eig_vals
+        out = self.linear_relu_stack(x)
+        out = out.view(batch_size, suvt.shape[1], 1)
+
+        return out
+
+
 
 
 class EigModel(nn.Module):
@@ -393,10 +395,11 @@ class EigModel(nn.Module):
                                device=self.device, dtype=self.dtype)
         self.embed_dim = dim
         self.linear_relu_stack = nn.Sequential(
-            nn.Conv1d(in_channels=4, out_channels=100, kernel_size=(1, 3)),
-            nn.LeakyReLU(),
-            nn.Flatten(),
-            nn.Linear(100 * (dim - 2), 4096),
+            # nn.Conv1d(in_channels=4, out_channels=100, kernel_size=(1, 3)),
+            # nn.LeakyReLU(),
+            # nn.Flatten(),
+            # nn.Linear(100 * (dim - 2), 4096),
+            nn.Linear(self.embed_dim * 4, 4096),
             nn.LeakyReLU(),
             nn.Linear(4096, 2048),
             nn.LeakyReLU(),
@@ -404,15 +407,15 @@ class EigModel(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(1024, 512),
             nn.LeakyReLU(),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(),
-            nn.Linear(256, 8),
-            nn.LeakyReLU(),
-            nn.Linear(8, 1),
+            # nn.Linear(512, 256),
+            # nn.LeakyReLU(),
+            # nn.Linear(256, 8),
+            # nn.LeakyReLU(),
+            nn.Linear(512, 1),
             nn.Sigmoid()
         ).to(device=device, dtype=dtype)
 
-    def forward(self, x, s_idx, t_idx, Ts):
+    def forward(self, x, s_idx, t_idx, T_st):
         """
         predicting the routing policy of the [source, target] pair
         :param uv_batch: uv_tensor of the [source, target] pair, dimension: batch_size x (2 * embedding_dim)
@@ -421,9 +424,28 @@ class EigModel(nn.Module):
         :param batch_size:
         :return:
         """
-        x_lengths = [int(math.sqrt(suvt_embd.shape[0])) for suvt_embd in x]
+
+
+        # single batch option
+        # x_lengths = [int(math.sqrt(suvt_embd.shape[0])) for suvt_embd in x]
+        # x = torch.cat(x, dim=0)
+        # # x = x.view(x.shape[0], 4, 1, self.embed_dim) # conv layer input
+        #
+        # routing_policy = self.linear_relu_stack(x).view(x_lengths[0], x_lengths[0])
+        # eig_vals = self.rbc_handler.accumulate_delta(s_idx[0], routing_policy, T_st[0], t_idx[0])
+
+        # # num batches option
+        x_lengths = [suvt_embd.shape[0] for suvt_embd in x]
         x = torch.cat(x, dim=0)
-        x = x.view(x.shape[0], 4, 1, self.embed_dim)
-        routing_policy = self.linear_relu_stack(x).view(x_lengths[0], x_lengths[0])
-        eig_vals = self.rbc_handler.accumulate_delta(s_idx[0], routing_policy, Ts[0], t_idx[0])
+        # x = x.view(x.shape[0], 4, 1, self.embed_dim) # conv layer input
+        routing_policies = self.linear_relu_stack(x)
+        eig_vals = []
+        i, c = 0, 0
+        for x_len in x_lengths:
+            policy = routing_policies[i: i + x_len, :].view(int(math.sqrt(x_len)), int(math.sqrt(x_len)))
+            eig_vals.append(self.rbc_handler.accumulate_delta(s_idx[c], policy, T_st[c], t_idx[c]))
+            i += x_len
+            c += 1
+
+        eig_vals = torch.cat(eig_vals, dim=0)
         return eig_vals

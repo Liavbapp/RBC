@@ -33,19 +33,20 @@ class PreProcessor:
         for embedding, R, T in zip(embeddings, Rs, Ts):
             i += 1
             num_nodes = len(R)
+            all_s_t = list(product(range(num_nodes), range(num_nodes)))
+            rand_s_t = random.choices(all_s_t, k=num_nodes)
 
             embedding = torch.from_numpy(embedding).to(device=self.device, dtype=self.dtype)
 
             uv_tensor = create_uv_matrix_ordered(embedding, self.device)
 
-            for s in range(num_nodes):
-                for t in range(num_nodes):
-                    embedding_s = embedding[s].repeat(repeats=(num_nodes ** 2, 1))
-                    embedding_t = embedding[t].repeat(repeats=(num_nodes ** 2, 1))
-                    embedding_suvt = torch.cat([embedding_s, uv_tensor, embedding_t], dim=1)
-                    st_eig = rbc_handler.accumulate_delta(s, R[s, t], T[s, t], t)
-                    lst_samples.append((embedding_suvt, s, t, T[s, t]))
-                    lst_labels.append(st_eig)
+            for s, t in rand_s_t:
+                embedding_s = embedding[s].repeat(repeats=(num_nodes ** 2, 1))
+                embedding_t = embedding[t].repeat(repeats=(num_nodes ** 2, 1))
+                embedding_suvt = torch.cat([embedding_s, uv_tensor, embedding_t], dim=1)
+                st_eig = rbc_handler.accumulate_delta(s, R[s, t], T[s, t], t)
+                lst_samples.append((embedding_suvt, s, t, T[s, t]))
+                lst_labels.append(st_eig)
 
         return lst_samples, lst_labels
 

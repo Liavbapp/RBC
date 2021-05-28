@@ -33,7 +33,7 @@ def train_model_optimize_st_eig(nn_model, samples_train, samples_val, p_man: Emb
         for i, sample in enumerate(train_ldr):
             inputs, s_idx, t_idx, Ts_vals, expected_st_eig = sample[0], sample[1], sample[2], sample[3], sample[4]
             actual_st_eig = nn_model(inputs, s_idx, t_idx, Ts_vals)
-            train_loss = loss_fn(expected_st_eig[0], actual_st_eig)
+            train_loss = loss_fn(torch.cat(expected_st_eig, dim=0), actual_st_eig)
             train_running_loss += train_loss.item()
             optimizer.zero_grad()
             train_loss.backward()
@@ -62,43 +62,47 @@ def train_model_optimize_st_routing(nn_model, samples_train, samples_val, p_man:
     print(f'starting training')
 
     hyper_params = p_man.hyper_params
+    embed_dim = p_man.embedding_dimensions
     loss_fn = get_loss_fun(hyper_params[HyperParams.error_type])
     batch_size, epochs = hyper_params[HyperParams.batch_size], hyper_params[HyperParams.epochs]
     train_loss, validation_loss = np.inf, np.inf
 
-    train_loader = DataLoader(samples_train, batch_size=batch_size, shuffle=True)
-    validation_loader = DataLoader(samples_val, batch_size=batch_size, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(samples_train, batch_size=batch_size, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(samples_val, batch_size=batch_size, shuffle=False)
 
-    nodes_embed_train = samples_train[0]
-    mult_const, add_const, Rs_train = samples_train[1], samples_train[2], samples_train[3]
+    n_batches = len(train_loader)
+    n_inner_batches = p_man.num_nodes ** 2
+    inner_batch_size = p_man.num_nodes ** 2
 
     for epoch in range(0, epochs):
-        running_loss = 0
-        nbatches = 0
-        start = datetime.datetime.now()
-        if batch_size == 1:
-            nbatches = 1
-            predicted_routing = nn_model(nodes_embed_train, mult_const, add_const)
-            train_loss = loss_fn(predicted_routing, Rs_train)
-            running_loss += train_loss.item()
-            optimizer.zero_grad()
-            train_loss.backward()
-            optimizer.step()
-        else:
-            for i in range(0, len(samples_train), batch_size):
-                nbatches += 1
-                nodes_embeddings_batch = nodes_embed_train[i: i + batch_size]
-                const_mult_batch = mult_const[i: i + batch_size]
-                const_add_batch = add_const[i: i + batch_size]
-                Rs_batch = Rs_train[i: i + batch_size]
-                predicted_routing = nn_model(nodes_embeddings_batch, const_mult_batch, const_add_batch)
-                train_loss = loss_fn(predicted_routing, Rs_batch)
-                running_loss += train_loss.item()
+        train_running_loss = 0.0
+        for i, inputs in enumerate(train_loader):
+            for j in range(0, n_inner_batches):
+                start_idx, end_idx = j * inner_batch_size, (j + 1) * inner_batch_size
+                s_u_v_t_embedding = inputs[:, start_idx: end_idx, :embed_dim * 4]
+                Expected_Rst = inputs[:, start_idx: end_idx, embed_dim * 4:]
+                Actual_Rst = nn_model(s_u_v_t_embedding)
+                train_loss = loss_fn(Expected_Rst, Actual_Rst)
+                train_running_loss += train_loss.item()
                 optimizer.zero_grad()
                 train_loss.backward()
                 optimizer.step()
+        #
+        # if epoch % 5 == 0:
+        #     nn_model.eval()
+        #     with torch.no_grad():
+        #         val_running_loss = 0.0
+        #         n_batches_val = len(val_loader)
+        #         for i, inputs in enumerate(val_loader):
+        #             s_u_v_t_embedding = inputs[:, :, :embed_dim * 4]
+        #             Expected_Rst = inputs[:, :, embed_dim * 4:]
+        #             Actual_Rst = nn_model(s_u_v_t_embedding)
+        #             val_loss = loss_fn(Expected_Rst, Actual_Rst)
+        #             val_running_loss += val_loss.item()
+        #     nn_model.train()
+        #     print(f'\n[{epoch}] validation loss: {val_running_loss / n_batches_val}\n')
 
-        print(f'[{epoch}] {running_loss / nbatches}, time: {datetime.datetime.now() - start}')
+        print(f'[{epoch}] train loss: {train_running_loss / (n_batches * n_inner_batches)}')
 
     return nn_model, train_loss.item(), validation_loss
 
